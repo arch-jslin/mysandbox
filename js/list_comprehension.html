@@ -1,0 +1,8 @@
+<html>
+  <body>
+    <script type='text/javascript'>
+      Number.prototype.__iterator__=function(){for (let i=0; i<this; i++) yield i} 
+      var s = [2*i for (i in 100) if (i*i>3)]
+    </script>
+  </body>
+</html>
