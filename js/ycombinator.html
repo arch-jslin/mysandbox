@@ -1,0 +1,26 @@
+<html>
+  <body>
+    <script type='text/javascript'>
+//     Y(F) = F(Y(F))
+//     Note that Y does not reference itself:
+  
+      var Y = function (F) {
+        return (function (x) {
+          return F(function (y) { return (x(x))(y);});
+        })(function (x){
+             return F(function (y) { return (x(x))(y);});
+           });
+      };
+
+    // (In fact, all functions above are anonymous!)
+  
+      var FactGen = function (fact) {
+        return (function(n) {
+          return ((n == 0) ? 1 : (n*fact(n-1))) ;
+        });
+      };
+
+      document.writeln( (Y(FactGen))(6) );
+    </script>
+  </body>
+</html>
