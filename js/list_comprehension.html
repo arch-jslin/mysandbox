@@ -20,6 +20,13 @@
       }
       
       document.writeln( [2 * x for (x in range(50, 100)) if (x * x > 3)] );
+      
+      function testslice(arg) {
+        args = Array.prototype.slice.apply(arguments, [1]);
+        document.writeln( args );
+      }
+      testslice({value: 1, value2: 2});
+      document.writeln([1,2,3].slice(0));
     </script>
   </body>
 </html>
