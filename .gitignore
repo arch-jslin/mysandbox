@@ -1,0 +1,16 @@
+.DS_Store
+.svn
+*.a
+*.la
+*.so
+*.dylib
+*.lib
+*.dll
+*.o
+*.obj
+*.layout
+*.depend
+*.workspace
+
+bin/Release
+bin/Debug
