@@ -48,6 +48,33 @@
         return g(n-1) + g(n-2) ;
       }) ; }) ;
 
+      document.writeln( fib(100) );
+
+      var memoizer = function (memo, fundamental) {
+        var shell = function () {
+          var result = memo[ n+','+m ];
+          if (typeof result !== 'number') {
+            result = fundamental(shell, n);
+            memo[ n+','+m ] = result;
+          }
+          return result;
+        };
+        return shell;
+      };
+      
+      //arguments[0] is m
+      //arguments[1] is n
+      var ack = memoizer([1], function(shell) {
+        if( arguments[0] === 0 ) return arguments[1] + 1;
+        if( arguments[0] > 0 && arguments[1] === 0 ) return shell(arguments[0]-1, 1);
+        if( arguments[0] > 0 && arguments[1] > 0 )   return shell(arguments[0]-1, shell(arguments[0], arguments[1]-1) );
+      });
+      
+      var func = function() {
+         document.writeln( Array.prototype.slice.apply(arguments) );
+      }
+      func(0,1,2,3);
+
     </script>
   </body>
 </html>
