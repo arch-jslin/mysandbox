@@ -51,29 +51,44 @@
       document.writeln( fib(100) );
 
       var memoizer = function (memo, fundamental) {
+        
+        var make_query = function(args) {
+          var i = 0, query = '';
+          for( ; i < args.length - 1 ; i += 1 ) {
+            query += args[i] + ',';
+          }
+          query += args[i]; // i == args.length - 1
+          return query;
+        };
+        
         var shell = function () {
-          var result = memo[ n+','+m ];
+          var args = Array.prototype.slice.apply(arguments);
+          var query = make_query(args);
+          var result = memo[ query ];
           if (typeof result !== 'number') {
-            result = fundamental(shell, n);
-            memo[ n+','+m ] = result;
+            result = fundamental.apply(null, [shell].concat(args) );
+            memo[ query ] = result;
+            document.writeln('<br>used cache: ack('+query+')='+result);
           }
           return result;
         };
+        
         return shell;
       };
       
-      //arguments[0] is m
-      //arguments[1] is n
-      var ack = memoizer([1], function(shell) {
-        if( arguments[0] === 0 ) return arguments[1] + 1;
-        if( arguments[0] > 0 && arguments[1] === 0 ) return shell(arguments[0]-1, 1);
-        if( arguments[0] > 0 && arguments[1] > 0 )   return shell(arguments[0]-1, shell(arguments[0], arguments[1]-1) );
+      //arguments[1] is m
+      //arguments[2] is n
+      var ack = memoizer({}, function(shell) {
+        if( arguments[1] === 0 )                     return arguments[2] + 1;
+        if( arguments[1] === 1 )                     return arguments[2] + 2;                //special case
+        if( arguments[1] === 2 )                     return arguments[2]*2 + 3;              //special case
+        if( arguments[1] === 3 )                     return Math.pow(2, arguments[2]+3) - 3; //special case
+        if( arguments[1] > 0 && arguments[2] === 0 ) return shell(arguments[1]-1, 1);
+        if( arguments[1] > 0 && arguments[2] > 0 )   return shell(arguments[1]-1, shell(arguments[1], arguments[2]-1) );
+        return NaN; //you shouldn't get this.
       });
       
-      var func = function() {
-         document.writeln( Array.prototype.slice.apply(arguments) );
-      }
-      func(0,1,2,3);
+      document.writeln( ack(4,2) ); //This will just resolve to infinity ......... 
 
     </script>
   </body>
