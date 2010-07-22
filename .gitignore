@@ -12,6 +12,7 @@
 *.depend
 *.workspace
 *.class
+*.exe
 
 bin/Release
 bin/Debug

@@ -13,9 +13,19 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-Wmain" />
+					<Add option="-Wall" />
+					<Add option="-D_WIN32_WINNT=0x0501" />
+					<Add option="-DBOOST_ASIO_DISABLE_IOCP" />
+					<Add option="-DBOOST_HAS_GCC_TR1" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add library="boost_date_time-mgw45-mt-1_43" />
+					<Add library="boost_system-mgw45-mt-1_43" />
+					<Add library="boost_thread-mgw45-mt-1_43" />
+					<Add library="wsock32" />
+					<Add library="ws2_32" />
 				</Linker>
 			</Target>
 		</Build>
