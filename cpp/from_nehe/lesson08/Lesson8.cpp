@@ -10,7 +10,6 @@
 #include <stdio.h>			// Header File For Standard Input/Output
 #include <gl\gl.h>			// Header File For The OpenGL32 Library
 #include <gl\glu.h>			// Header File For The GLu32 Library
-#include <gl\glaux.h>		// Header File For The Glaux Library
 
 HDC			hDC=NULL;		// Private GDI Device Context
 HGLRC		hRC=NULL;		// Permanent Rendering Context
@@ -41,71 +40,54 @@ GLuint	texture[3];			// Storage For 3 Textures
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
-AUX_RGBImageRec *LoadBMP(char *Filename)				// Loads A Bitmap Image
+bool NeHeLoadBitmap(LPTSTR szFileName, GLuint* texid)					// Creates Texture From A Bitmap File
 {
-	FILE *File=NULL;									// File Handle
+	HBITMAP hBMP;														// Handle Of The Bitmap
+	BITMAP	BMP;														// Bitmap Structure
 
-	if (!Filename)										// Make Sure A Filename Was Given
-	{
-		return NULL;									// If Not Return NULL
-	}
+	glGenTextures(3, &texture[0]);											// Create The Texture
+	hBMP=(HBITMAP)LoadImage(GetModuleHandle(NULL), szFileName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE );
 
-	File=fopen(Filename,"r");							// Check To See If The File Exists
+	if (!hBMP)															// Does The Bitmap Exist?
+		return FALSE;													// If Not Return False
 
-	if (File)											// Does The File Exist?
-	{
-		fclose(File);									// Close The Handle
-		return auxDIBImageLoad(Filename);				// Load The Bitmap And Return A Pointer
-	}
+	GetObject(hBMP, sizeof(BMP), &BMP);									// Get The Object
+																		// hBMP:        Handle To Graphics Object
+																		// sizeof(BMP): Size Of Buffer For Object Information
+																		// &BMP:        Buffer For Object Information
 
-	return NULL;										// If Load Failed Return NULL
+	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);								// Pixel Storage Mode (Word Alignment / 4 Bytes)
+
+	// Typical Texture Generation Using Data From The Bitmap
+	glBindTexture(GL_TEXTURE_2D, texid[0]);								// Bind To The Texture ID
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	// Linear Min Filter
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	// Linear Mag Filter
+	glTexImage2D(GL_TEXTURE_2D, 0, 1, BMP.bmWidth, BMP.bmHeight, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, BMP.bmBits);
+
+    // Create Linear Filtered Texture
+    glBindTexture(GL_TEXTURE_2D, texid[1]);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, 1, BMP.bmWidth, BMP.bmHeight, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, BMP.bmBits);
+
+    // Create MipMapped Texture
+    glBindTexture(GL_TEXTURE_2D, texid[2]);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+    gluBuild2DMipmaps(GL_TEXTURE_2D, 1, BMP.bmWidth, BMP.bmHeight, GL_LUMINANCE, GL_UNSIGNED_BYTE, BMP.bmBits);
+
+	DeleteObject(hBMP);													// Delete The Object
+
+	return TRUE;														// Loading Was Successful
 }
 
 int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 {
-	int Status=FALSE;									// Status Indicator
+	// Start Of User Initialization
+	if (!NeHeLoadBitmap("Data/NeHe_gray.bmp", texture))					// Load The Bitmap
+		return FALSE;													// Return False If Loading Failed
 
-	AUX_RGBImageRec *TextureImage[1];					// Create Storage Space For The Texture
-
-	memset(TextureImage,0,sizeof(void *)*1);           	// Set The Pointer To NULL
-
-	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
-	if (TextureImage[0]=LoadBMP("Data/glass.bmp"))
-	{
-		Status=TRUE;									// Set The Status To TRUE
-
-		glGenTextures(3, &texture[0]);					// Create Three Textures
-
-		// Create Nearest Filtered Texture
-		glBindTexture(GL_TEXTURE_2D, texture[0]);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
-
-		// Create Linear Filtered Texture
-		glBindTexture(GL_TEXTURE_2D, texture[1]);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
-
-		// Create MipMapped Texture
-		glBindTexture(GL_TEXTURE_2D, texture[2]);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
-	}
-
-	if (TextureImage[0])								// If Texture Exists
-	{
-		if (TextureImage[0]->data)						// If Texture Image Exists
-		{
-			free(TextureImage[0]->data);				// Free The Texture Image Memory
-		}
-
-		free(TextureImage[0]);							// Free The Image Structure
-	}
-
-	return Status;										// Return The Status
+    return TRUE;										// Return The Status
 }
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
@@ -127,7 +109,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 	glLoadIdentity();									// Reset The Modelview Matrix
 }
 
-int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
+int InitGL()										// All Setup For OpenGL Goes Here
 {
 	if (!LoadGLTextures())								// Jump To Texture Loading Routine
 	{
@@ -147,13 +129,15 @@ int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 	glLightfv(GL_LIGHT1, GL_POSITION,LightPosition);	// Position The Light
 	glEnable(GL_LIGHT1);								// Enable Light One
 
-	glColor4f(1.0f, 1.0f, 1.0f, 0.5);					// Full Brightness.  50% Alpha
+    GLfloat color[4] = {1.0f, 1.0f, 1.0f, 0.7f};
+	//glColor4f(1.0f, 0.0f, 0.0f, 0.5);					// Full Brightness.  50% Alpha
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);					// Set The Blending Function For Translucency
 
 	return TRUE;										// Initialization Went OK
 }
 
-int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
+int DrawGLScene()									// Here's Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
 	glLoadIdentity();									// Reset The View
@@ -208,7 +192,7 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 	return TRUE;										// Keep Going
 }
 
-GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
+GLvoid KillGLWindow()								// Properly Kill The Window
 {
 	if (fullscreen)										// Are We In Fullscreen Mode?
 	{
@@ -255,7 +239,7 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
  *	height			- Height Of The GL Window Or Fullscreen Mode			*
  *	bits			- Number Of Bits To Use For Color (8/16/24/32)			*
  *	fullscreenflag	- Use Fullscreen Mode (TRUE) Or Windowed Mode (FALSE)	*/
- 
+
 BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscreenflag)
 {
 	GLuint		PixelFormat;			// Holds The Results After Searching For A Match
@@ -287,7 +271,7 @@ BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		MessageBox(NULL,"Failed To Register The Window Class.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;											// Return FALSE
 	}
-	
+
 	if (fullscreen)												// Attempt Fullscreen Mode?
 	{
 		DEVMODE dmScreenSettings;								// Device Mode
@@ -363,14 +347,14 @@ BOOL CreateGLWindow(char* title, int width, int height, int bits, bool fullscree
 		0,											// Shift Bit Ignored
 		0,											// No Accumulation Buffer
 		0, 0, 0, 0,									// Accumulation Bits Ignored
-		16,											// 16Bit Z-Buffer (Depth Buffer)  
+		16,											// 16Bit Z-Buffer (Depth Buffer)
 		0,											// No Stencil Buffer
 		0,											// No Auxiliary Buffer
 		PFD_MAIN_PLANE,								// Main Drawing Layer
 		0,											// Reserved
 		0, 0, 0										// Layer Masks Ignored
 	};
-	
+
 	if (!(hDC=GetDC(hWnd)))							// Did We Get A Device Context?
 	{
 		KillGLWindow();								// Reset The Display
