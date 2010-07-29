@@ -18,10 +18,10 @@ def indent_with_list_identifier(str)
     str = "==== #{str[0..-2]} ====\n"   #Chinese 1~10
   elsif d =~ /^\"\(\\(xA4@|xA4G|xA4T|xA5\||xA4\\xAD|xA4\\xBB|xA4C|xA4K|xA4E|xA4Q)/
     if str.size < 20 
-	  str = "=== #{str[0..-2]} ===\n"   #Chinese (1~10
-	else
-	  str = "  --#{str[3..-1]}"         #But if it is too long (and usually there's no sub content) we use wiki list.
-	end
+      str = "=== #{str[0..-2]} ===\n"   #Chinese (1~10
+    else
+      str = "  --#{str[3..-1]}"         #But if it is too long (and usually there's no sub content) we use wiki list.
+    end
   elsif d =~ /^\"[0-9]+\\xA1B/           
     str = "  --#{str[2..-1]}"           #digit followed by a chinese dot
   elsif d =~ /^\"\([0-9]+/
@@ -56,45 +56,55 @@ def post_modify(str)
   a = str.split("\n")
   result = ""
   a.size.times { |i|
-    if !(a[i][0] =~ /( |=)/)
-	  if a[i-1] =~ /^ +-+/ && a[i-1].size < 15
-	    a[i] = get_leading_space(a[i-1]) + ".." + a[i] + "\n"
-      elsif a[i].size < 20
-	    a[i-1].chop! #took out newline so this line will combine with last line
-		a[i] += "\n"
-	  else
-	    last_leading = a[i-1] ? get_leading_space(a[i-1]) : ""
-		next_leading = a[i+1] ? get_leading_space(a[i+1]) : ""
-	    if last_leading.size > 0 && next_leading.size > 0
-		  if last_leading.size == next_leading.size
-		    a[i] = last_leading + ".." + a[i] + "\n"
-		  else
-		    a[i] = next_leading + ".." + a[i] + "\n"
-		  end
-		elsif last_leading.size > 0 || next_leading.size > 0
-		  a[i] = (last_leading.size > 0 ? last_leading : next_leading) + ".." + a[i] + "\n"
-		else
-		  p a[i-1], a[i], a[i+1]
-		  p "-------------------------"
-		  a[i] += "\n"
+    if !(a[i][0] =~ /( |=)/)                                      #if it is not a headline and not a list-item
+      if a[i-1] =~ /^ +-+/ && a[i-1].size < 15                    #and the last line is very short
+        a[i] = get_leading_space(a[i-1]) + ".." + a[i] + "\n"     #we assume it is a multi-line item to the last line
+      elsif a[i].size < 20                                        #otherwise, if this line is very short
+        a[i-1].chop!                                              #took out newline on last line so it will combine with last line
+        a[i] += "\n"
+      else                                                        #otherwise,
+        last_leading = a[i-1] ? get_leading_space(a[i-1]) : ""   
+        next_leading = a[i+1] ? get_leading_space(a[i+1]) : ""
+        if last_leading.size > 0 && next_leading.size > 0         
+          if last_leading.size == next_leading.size               #if next line and last line seems to be on the same level
+            a[i] = last_leading + ".." + a[i] + "\n"              #we can pretty sure this multi-line item is on the same level
+          else                                                    #as the last line (inner)
+            a[i] = next_leading + ".." + a[i] + "\n"              #or we'll assume this line is on the same level as next line
+          end                                                     #(probably outer)
+        elsif last_leading.size > 0 || next_leading.size > 0
+          a[i] = (last_leading.size > 0 ? last_leading : next_leading) + ".." + a[i] + "\n" #lastly, resolve to a valid one anyway
+        else
+          p a[i-1], a[i], a[i+1]                                  #and the process should not arrive at here.
+          p "-------------------------"
+          a[i] += "\n"
         end
       end
-	else
-	  if a[i] =~ /^ +-+/
-	    this_leading = get_leading_space(a[i])
-		next_leading = get_leading_space(a[i+1])
-		if next_leading.size > this_leading.size && this_leading.size < 5
-		  a[i].gsub!(/( +-+)(.+)/) {|match|
-		    if $2.size < 20
-		      match = $1 + "**" + $2 + "**"
-			else 
-			  match
-			end
-		  }
-		end
-	  end
-	  a[i] += "\n"
-	end
+    else
+      if a[i] =~ /^ +-+/                                          #on the other hand, 
+        this_leading = get_leading_space(a[i])
+        next_leading = get_leading_space(a[i+1])                  #we should make list items with its own sub items BOLD
+        if next_leading.size > this_leading.size && this_leading.size < 5 
+          a[i].gsub!(/( +-+)(.+)/) {|match|                       #so it stands out, but if the level is too deep don't do that
+            if $2.size < 20                                       #and if it's a long line, don't do that too
+              match = $1 + "**" + $2 + "**"
+            else 
+              match
+            end
+          }
+        end
+      end
+      a[i].dump.sub(/^\"=== \((\\xA4@|\\xA4G|\\xA4T|\\xA5\||\\xA4\\xAD|\\xA4\\xBB|\\xA4C|\\xA4K|\\xA4E|\\xA4Q)(\\xA4@|\\xA4G|\\xA4T|\\xA5\||\\xA4\\xAD|\\xA4\\xBB|\\xA4C|\\xA4K|\\xA4E|\\xA4Q)*\)/) {
+        flag = ($2 == nil)                                        # this is very bad method: now we try to make big items
+        if a[i].size > 25 || !(a[i+1] =~ /^ +-+/)                 # with chinese numerical listing but without sub items
+          if flag                                                 # to downgrade to normal list items. but I can only think of
+            a[i] = "  --" + a[i][7..-4]                           # this stupid regexp to match multi-digit chinese numbers.
+          else                                                    # the magical number 7 and 8 is the length to skip
+            a[i] = "  --" + a[i][8..-4]                           # for different situations.
+          end
+        end
+      }
+      a[i] += "\n"
+    end
   }
   result = a.join
 end
@@ -114,8 +124,8 @@ def main(filename)
       str += dokuwikify(line)
     end
     str.squeeze!("\n")
-	str = post_modify(str)
-	str = back_link.encode + str + "\n====== ======\n" + back_link.encode
+    str = post_modify(str)
+    str = back_link.encode + str + "\n====== ======\n" + back_link.encode
     write_to_output(filename, str)
   else
     p "Unknown file."
