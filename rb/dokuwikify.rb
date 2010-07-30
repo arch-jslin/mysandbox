@@ -52,8 +52,10 @@ end
 
 def get_leading_space(str)
   i = 0
-  while str[i] == " "
-    i += 1
+  if str #add nil guard
+    while str[i] == " "
+      i += 1
+    end
   end
   " " * i
 end
