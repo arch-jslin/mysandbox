@@ -17,24 +17,43 @@ def indent_with_list_identifier(str)
   if d =~ /^\"\\(xA4@|xA4G|xA4T|xA5\||xA4\\xAD|xA4\\xBB|xA4C|xA4K|xA4E|xA4Q)/
     str = "==== #{str[0..-2]} ====\n"   #Chinese 1~10
   elsif d =~ /^\"\(\\(xA4@|xA4G|xA4T|xA5\||xA4\\xAD|xA4\\xBB|xA4C|xA4K|xA4E|xA4Q)/
-    if str.size < 20 
-      str = "=== #{str[0..-2]} ===\n"   #Chinese (1~10
-    else
-      str = "  --#{str[3..-1]}"         #But if it is too long (and usually there's no sub content) we use wiki list.
-    end
-  elsif d =~ /^\"[0-9]+\\xA1B/           
-    str = "  --#{str[2..-1]}"           #digit followed by a chinese dot
-  elsif d =~ /^\"\([0-9]+/
-    str = "    --#{str[3..-1]}"         #enclosed digit 
-  elsif d =~ /^\"[A-Z]\\xA1B/
-    str = "      --#{str[2..-1]}"       #uppercase alphabet followed by a chinese dot
-  elsif d =~ /^\"\([A-Z]/
-    str = "        --#{str[3..-1]}"     #enclosed uppercase alphabet
-  elsif d =~ /^\"[a-z]\\xA1B/
-    str = "          --#{str[2..-1]}"   #lowercase alphabet followed by a chinese dot
-  elsif d =~ /^\"\([a-z]/ 
-    str = "            --#{str[3..-1]}" #enclosed lowercase alphabet
+    str = "=== #{str[0..-2]} ===\n"     #Chinese (1~10
+  else
+    d.sub(/^\"(\(*)(\w+)/) { |m| 
+      parenth = $1
+      index = $2
+      add_digit = $2.size > 1 ? 1 : 0
+      substr = str[2+parenth.size+add_digit..-1];
+      if parenth.size > 0
+        case index
+        when /[0-9]/ then str = "    --#{substr}"         #enclosed digit 
+        when /[A-Z]/ then str = "        --#{substr}"     #enclosed uppercase alphabet
+        when /[a-z]/ then str = "            --#{substr}" #enclosed lowercase alphabet
+        else p "Something wrong when parsing list item. (1)"
+        end
+      else
+        case index
+        when /[0-9]/ then str = "  --#{substr}"           #digit followed by a chinese dot
+        when /[A-Z]/ then str = "      --#{substr}"       #uppercase alphabet followed by a chinese dot
+        when /[a-z]/ then str = "          --#{substr}"   #lowercase alphabet followed by a chinese dot
+        else p "Something wrong when parsing list item. (2)"
+        end
+      end
+    }
   end
+  #elsif d =~ /^\"[0-9]+\\xA1B/           
+  #  str = "  --#{str[2..-1]}"           #digit followed by a chinese dot
+  #elsif d =~ /^\"\([0-9]+/
+  #  str = "    --#{str[3..-1]}"         #enclosed digit 
+  #elsif d =~ /^\"[A-Z]\\xA1B/
+  #  str = "      --#{str[2..-1]}"       #uppercase alphabet followed by a chinese dot
+  #elsif d =~ /^\"\([A-Z]/
+  #  str = "        --#{str[3..-1]}"     #enclosed uppercase alphabet
+  #elsif d =~ /^\"[a-z]\\xA1B/
+  #  str = "          --#{str[2..-1]}"   #lowercase alphabet followed by a chinese dot
+  #elsif d =~ /^\"\([a-z]/ 
+  #  str = "            --#{str[3..-1]}" #enclosed lowercase alphabet
+  #end
   str
 end
 
