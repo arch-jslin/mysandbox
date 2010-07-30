@@ -41,19 +41,6 @@ def indent_with_list_identifier(str)
       end
     }
   end
-  #elsif d =~ /^\"[0-9]+\\xA1B/           
-  #  str = "  --#{str[2..-1]}"           #digit followed by a chinese dot
-  #elsif d =~ /^\"\([0-9]+/
-  #  str = "    --#{str[3..-1]}"         #enclosed digit 
-  #elsif d =~ /^\"[A-Z]\\xA1B/
-  #  str = "      --#{str[2..-1]}"       #uppercase alphabet followed by a chinese dot
-  #elsif d =~ /^\"\([A-Z]/
-  #  str = "        --#{str[3..-1]}"     #enclosed uppercase alphabet
-  #elsif d =~ /^\"[a-z]\\xA1B/
-  #  str = "          --#{str[2..-1]}"   #lowercase alphabet followed by a chinese dot
-  #elsif d =~ /^\"\([a-z]/ 
-  #  str = "            --#{str[3..-1]}" #enclosed lowercase alphabet
-  #end
   str
 end
 
