@@ -11,7 +11,7 @@
              return F(function (y) { return (x(x))(y);});
            });
       };
-
+     
     // (In fact, all functions above are anonymous!)
   
       var FactGen = function (fact) {
@@ -93,6 +93,21 @@
       document.writeln( ack(4,2) ); //This will just resolve to infinity ......... 
 
       document.writeln( fibon(12) );
+      
+      var Y2 = function (F) { 
+        return function (x) { 
+          return F(arguments.callee)(x);  //this referenced itself. it's not a combinator...
+        }
+      }  
+    
+      function fact2(f){ 
+        return (function(n) {
+          if( n<1 ) return 1; 
+          else      return n*f(n-1); 
+        });
+      }      
+    
+      document.writeln( Y2(fact2)(12) ) ;
       
     </script>
   </body>
