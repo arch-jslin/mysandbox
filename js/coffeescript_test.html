@@ -1,0 +1,15 @@
+<html>
+<body>
+<script src="../../../libs/js/coffee-script.js"></script>
+<script type="text/coffeescript">
+
+Y = (f)->((x)->f((y)->(x x) y)) (x)->f((y)->(x x) y)
+
+almost_fac = (f) -> 
+  (n) -> if n == 1 then 1 else n*f(n-1)
+
+alert (Y(almost_fac))(10)
+
+</script>
+</body>
+</html>
