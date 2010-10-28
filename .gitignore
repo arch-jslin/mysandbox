@@ -14,6 +14,7 @@
 *.class
 *.exe
 *.txt
+*.luac
 
 bin/Release
 bin/Debug
