@@ -30,4 +30,20 @@ print( type(nil) )
 print( type({}) )
 print( type([[]]) )
 
+-- Short Anonymous Functions from lua user wiki -
+
+function fn(s, ...) -- Short Anonymous Function from lua users wiki
+  local src = [[
+    local L1, L2, L3, L4, L5, L6, L7, L8, L9 = ...
+    return function(P1,P2,P3,P4,P5,P6,P7,P8,P9) return ]] .. s .. [[ end
+  ]]
+  print(  )
+  return loadstring(src)(...)
+end
+
+-------------------------------------------------
+
+print(0 and 'true' or 'false')
+print(nil and 'true' or 'false')
+print(4, 0.4, 4.5e-3, 0.3e12, 5e+20)
 
