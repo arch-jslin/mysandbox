@@ -62,18 +62,32 @@ do
   end
 end
 
-local compiled_string = {}
+local compiled_string = {} -- stores the compiled "string lambdas"
 
+-- the input is a string, which will be compiled into a function,
+-- the args must be assigned to be used with setfenv(), otherwise 
+-- it will call upvalues(), using debug module which should NOT be
+-- a good idea in production code.. (very slow) 
+-- and I used a CRC32 checksum to make each "string lambdas" unique.
+-- any good hash function should do. I just want to make this example
+-- depend on as less external libs as possible.
+-- lastly when the lazy object(table) is called through __call, 
+-- it forces the result, which should return a function, and pass
+-- the arguments to the delayed function; however, if the original
+-- "string lambda" would not return a function, then this call simply
+-- returns the delayed result.
 function lazy(src, args)
   local f = {}
-  local key = "aaaa" --CRC32(src)
+  local key = CRC32(src)
   if not compiled_string[key] then 
     compiled_string[key] = assert(loadstring("return "..src))
   end
-  setfenv(compiled_string[key], args and args or upvalues())
+  local fun = compiled_string[key]
+  setfenv(fun, args and args or upvalues())
   setmetatable(f, {__call = 
-    function(t, ...) 
-      return force(compiled_string[key])(...)
+    function(t, ...)
+      local forced_res = force(fun)
+      return type(forced_res) == "function" and forced_res(...) or forced_res
     end
   })
   return f
@@ -81,9 +95,9 @@ end
 
 local Y = function(f)
   return (function(x)
-    return f( lazy('x(x)',{x=x}) )
+    return f( lazy("x(x)",{x=x}) )
   end) (function(x)
-      return f ( lazy('x(x)',{x=x}) )
+      return f ( lazy("x(x)",{x=x}) )
     end)
 end
 
@@ -95,47 +109,14 @@ end
 
 print( Y(almost_fac)(10) )
 
---Method #2------------------------------------------
-
-function force2(co, ...)
-  return (function(...) bool, res = coroutine.resume(co, ...); return res end)(...)
-end
-
-function lazy2(src, args)
-  local f = assert(loadstring("return "..src))
-  setfenv(f, args);
-  local co = coroutine.create(f)
-  return co
-end
-
-local Yc= function(f)
-  return (function(x)
-    return f( lazy2('x(x)',{x=x}) )
-  end) (function(x)
-      return f ( lazy2('x(x)',{x=x}) )
-    end)
-end
-
-local almost_fac = function(f)
-  return function(n)
-    return n < 1 and 1 or n * force2(f)(n-1)
-  end
-end
-
-print( Yc(almost_fac)(10) )
-
--- Speed test about lazy and lazy2 ------------------
+-- performance test about lazy --------------------------
 
 local a = 5; local b = 10;
-local c = 8; local d = 16;
 
 local t = os.clock()
 for i = 0, 100000 do
-  local func = lazy('a+b', {a=a, b=b})
+  local func = lazy("a+b", {a=a, b=b})
+  func()
 end
 local t2= os.clock()
 print( "time: "..(t2-t) )
-for i = 0, 100000 do
-  local func = lazy2('c+d', {c=c, d=d})
-end
-print( "time: "..(os.clock()-t2) ) 
