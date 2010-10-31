@@ -46,6 +46,7 @@ function lazy(src, args)
   return f
 end
 
+-- The Y-Combinator, with lazy evaluation
 local Y = function(f)
   return (function(x)
     return f( lazy("x(x)",{x=x}) )
@@ -54,15 +55,16 @@ local Y = function(f)
     end)
 end
 
+-- Hello functional world.
 local almost_fac = function(f)
   return function(n)
     return n < 1 and 1 or n * f(n-1)
   end
 end
 
-print( Y(almost_fac)(10) )
+print( Y(almost_fac)(10) ) -- 3628800
 
--- performance test about lazy --------------------------
+-- some lazy usage (mostly with Y-Combinator) -----------
 
 local a = 5; local b = 10;
 
