@@ -42,7 +42,7 @@ print( fn('L1*L2*P1', 5, 10)(15) )
 
 print(0 and 'true' or 'false')
 print(nil and 'true' or 'false')
-print(4, 0.4, 4.5e-3, 0.3e12, 5e+20)
+print(4, 0.4, 4.5e-3, 0.3e12, 5e+20, 0xab)
 
 
 
