@@ -36,7 +36,44 @@ v[i] = "aaa"
 v[j] = "bbb"
 v[k] = "ccc"
 print( v[i]..v[j]..v[k]..v[tonumber(j)]..v[tonumber(k)] )
+print( "---\n" )
 
--- Basics of functions.. ---------------------------
+-- Expressions worth noting -----------------------------
 
+local x = math.pi
+print( x - x%0.01 ) -- a%b == a - floor(a/b)*b
+
+-- Some control structure practices ---------------------
+
+local i = 0 -- faster than numeric for
+while i < 10 do
+  local j = 0
+  while j < i do
+    io.write "*"; 
+    j = j + 1
+  end
+  i = i + 1
+  print ""
+end
+
+for i=0,10 do
+  for j=0, 10-i do io.write " " end
+  for j=0, i do io.write "*" end
+  print ""
+end
+
+local line
+repeat
+  line = io.read()
+until line ~= ""
+print(line)
+
+print(math.huge) -- this is funny 
+
+-- builds a reverse table
+local reverse_of = function(t)
+  local res = {}
+  for k,v in pairs(t) do res[v] = k end
+  return res
+end
 
