@@ -1,1 +1,6 @@
--- some basic/rudimentary practices ----------------
+-- some basic/rudimentary table usages ------------------
+
+
+
+
+
