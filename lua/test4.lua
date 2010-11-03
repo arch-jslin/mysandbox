@@ -28,7 +28,8 @@ local function foreach(factory, block)
   local _iter, _invariant, _variable = factory()
   while true do
     local var_table = {_iter(_invariant, _variable)}
-	if var_table[1] == nil then break end
+    _variable = var_table[1]
+	if _variable == nil then break end
 	  block(unpack(var_table))
   end  
 end
@@ -64,7 +65,4 @@ end
 -- state can change, but the real invariant is the reference to state.
 -- otherwise use closures, it should be cheaper compare to tables). 
 -- (From Pil 7.4 Summary)
-
-
-
 
