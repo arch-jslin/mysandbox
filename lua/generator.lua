@@ -41,3 +41,11 @@ print( os.clock() - t )
 
 foreach(function() return range(1,5) end,
         function(x) return print(x) end)
+        
+for x in range(1,5) do
+  for y in range(1,5) do
+    for z in range(1,5) do
+      --print(x,y,z)
+    end
+  end
+end
