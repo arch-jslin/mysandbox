@@ -49,3 +49,18 @@ for x in range(1,5) do
     end
   end
 end
+
+local function clist(block, factory)
+  --[[local _iter, _invariant, _variable = factory--]]
+  while true do
+    local var_table = {factory()--[[_iter(_invariant, _variable)--]]}
+    _variable = var_table[1]
+	if _variable == nil then break end
+	  block(unpack(var_table))
+  end
+end
+
+clist(function(x) if x > 5 then print(2*x) end end, range2(1,10))
+--crude try on list comprehension, it might actually usable
+--if adapt to list style or iterator style. (change clist() function)
+--that's it for now..
