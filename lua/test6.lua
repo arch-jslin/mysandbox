@@ -53,6 +53,10 @@ consumer(filter(producer()))
 
 -- powerset test -----------------------------------
 
+local function each(t, f)
+  for _,v in ipairs(t) do f(v) end
+end
+
 local function map(t, f)
   local res = t and {unpack(t)} or {}
   for i=1, #res do res[i] = f(res[i]) end
@@ -65,21 +69,21 @@ local function cons(t1, t2)
   return res
 end
 
-local function powerset(h, ...)
+local function powerset(h, ...) -- done through head::tail pattern matching..
   if h == nil then
     return {{}}
   else
     local temp = powerset(...)
-    return cons(temp, map(temp, function(x) return {h, unpack(x)} end) )    
+    return cons(map(temp, function(x) return {h, unpack(x)} end), temp)    
   end
 end
 
 a = {1,2}
-b = {3,4}
+b = {3}
 c = cons(a,b)
 
 t = powerset(unpack(c))
-for i = 1, #t do
+for i = 1, #t do                -- this is ugly to traverse.
   for j = 1, #(t[i]) do
     io.write(t[i][j], ", ")
   end
@@ -87,4 +91,22 @@ for i = 1, #t do
 end
 
 -- now lets try to change that powerset thing into iterator --
+-- note: try to remember what makes an general iterator factory:
+--   the iterator itself, and the invariant, lastly the variable.
+-- the pattern matching way probably can't achieve this objective.
 
+local function unpac_rem(t, n, i)
+  i = i or 1
+  if t[i] and i <= #t - n then 
+    return t[i], unpac_rem(t, 1, i+1)
+  end
+end
+
+local function powerset2(list)
+ 
+end
+
+local h = {unpac_rem({1,2,3}, 1)}
+--each(h, io.write) print()
+
+powerset2({1,2,3})
