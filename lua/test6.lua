@@ -102,11 +102,42 @@ local function unpac_rem(t, n, i)
   end
 end
 
-local function powerset2(list)
- 
-end
-
 local h = {unpac_rem({1,2,3}, 1)}
 --each(h, io.write) print()
 
-powerset2({1,2,3})
+local function powerset2(list, i, stack)
+  if i > #list then return end
+  table.insert(stack, list[i])
+  coroutine.yield(stack)
+  powerset2(list, i+1, stack)
+  table.remove(stack)
+  powerset2(list, i+1, stack)
+end
+
+local function powerset_it(list)
+  local co = coroutine.create(function() powerset2(list, 1, {}) end)
+  return function()
+    local err, result = coroutine.resume(co)
+    return result
+  end
+end
+
+for v in powerset_it({1,2,3}) do
+  io.write("{ ")
+  for _,u in ipairs(v) do 
+    io.write(u, " ") 
+  end
+  print("}")
+end
+
+local function powerset_it2(list)
+  return coroutine.wrap(function() powerset2(list, 1, {}) end)
+end
+
+iter = powerset_it2{1,2,3} -- powerset_it will do just fine
+local v = iter()
+while v do 
+  for _,u in ipairs(v) do io.write(u, " ") end
+  print()
+  v = iter()
+end
