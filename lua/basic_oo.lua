@@ -98,6 +98,12 @@ Vec4D = function(data)
     __metatable = function() 
       error("Don't mess with library code.")
     end}
+    
+  -- We still have someplaces to improve about metatable usage:
+  -- 1. It shall not create "mt" each time it creates a Vec4D object.
+  -- 2. __add won't be overridable (which actually should be),
+  --    unless we remove __metatable restriction.
+    
   setmetatable(o, mt)
   return o
 end
@@ -127,6 +133,5 @@ print((s5+s5).x)
 print(s5.abs())
 print(s5.volume())
 -- s5.w = 4 -- No, you can't directly assign w to a Vec4D object.
-
 
 
