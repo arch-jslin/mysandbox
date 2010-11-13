@@ -81,6 +81,8 @@ print(s3.abs())
 -- The method from Javascript the Good Parts ------------
 
 Vec4D = function(data) 
+  function data.abs() return math.sqrt(data.w*data.w + data.x*data.x +
+                                       data.y*data.y + data.z*data.z) end
   local o = {}
   local mt = {
     __index = function(self, k) 
@@ -89,14 +91,14 @@ Vec4D = function(data)
     __add = function(a, b)
       return Vec4D{w = a.w+b.w, x = a.x+b.x,
                    y = a.y+b.y, z = a.z+b.z}
+    end,
+    __newindex = function(self, k)
+      error("No, you can't directly assign "..k.." to a Vec4D object.")
+    end,
+    __metatable = function() 
+      error("Don't mess with library code.")
     end}
   setmetatable(o, mt)
-  function o.abs() return math.sqrt(o.w*o.w + o.x*o.x + o.y*o.y + o.z*o.z) end
-  
-  mt.__newindex = function(self, k)
-    error("No, you can't directly assign "..k.." to a Vec4D object.")
-  end
-  
   return o
 end
 
@@ -106,30 +108,25 @@ print(v4.w)
 print((v4+v4).y)
 print(v4.abs())
 
+Size4D = function(data)
+  data = data or {}
+  data.w, data.x, data.y, data.z = 1,1,1,1
+  local o = Vec4D(data)
+  -- if you want to super anything, cache it here first, before overidding
+  -- if you need anything overridden, write it after this line.
+  function data.volume() return data.w*data.x*data.y*data.z end
+  function data.setW(w) data.w = w; return o end
+  function data.setX(x) data.x = x; return o end
+  return o
+end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+s5 = Size4D()
+print(s5.w)
+s5.setW(2).setX(3)
+print((s5+s5).x)
+print(s5.abs())
+print(s5.volume())
+-- s5.w = 4 -- No, you can't directly assign w to a Vec4D object.
 
 
 
