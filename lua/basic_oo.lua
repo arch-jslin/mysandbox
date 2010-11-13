@@ -134,4 +134,5 @@ print(s5.abs())
 print(s5.volume())
 -- s5.w = 4 -- No, you can't directly assign w to a Vec4D object.
 
+-- Try Mixin
 
