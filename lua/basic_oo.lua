@@ -78,3 +78,58 @@ print(s2.volume() + s3.volume())
 print(s3.abs())
 -- print((s2+s3).getY()) -- must override operator, of course... 
 
+-- The method from Javascript the Good Parts ------------
+
+Vec4D = function(data) 
+  local o = {}
+  local mt = {
+    __index = function(self, k) 
+      return data[k]
+    end,
+    __add = function(a, b)
+      return Vec4D{w = a.w+b.w, x = a.x+b.x,
+                   y = a.y+b.y, z = a.z+b.z}
+    end}
+  setmetatable(o, mt)
+  function o.abs() return math.sqrt(o.w*o.w + o.x*o.x + o.y*o.y + o.z*o.z) end
+  
+  mt.__newindex = function(self, k)
+    error("No, you can't directly assign "..k.." to a Vec4D object.")
+  end
+  
+  return o
+end
+
+v4 = Vec4D{w=1, x=2, y=3, z=4}
+
+print(v4.w)
+print((v4+v4).y)
+print(v4.abs())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
