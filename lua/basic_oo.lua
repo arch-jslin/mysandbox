@@ -139,7 +139,7 @@ Subject = function(data)
   function data.notifyAll()      for _,v in ipairs(observers) do v() end end
   function data.addObserver(obs) table.insert(observers, obs) end
   local o = {}
-  local mt = {__index = data, __newindex = nil}
+  local mt = {__index = data, __newindex = function() error('No harnessing.') end}
   setmetatable(o, mt)
   return o
 end
@@ -185,4 +185,3 @@ b2= Button2{}
 b2.onClick(function() print("observer2: doh") end)
 b2.click()
 b2.click() -- with VetoableClick trait, this will not show.
-
