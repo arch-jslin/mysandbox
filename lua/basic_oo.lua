@@ -163,7 +163,15 @@ end
 
 Button = function(data)
   local o = ObservableClick(data)
-  local inherited_click = --[[data.click--]] VetoableClick(data).click
+  local inherited_click = data.click 
+  function data.click() print("Button is clicked."); inherited_click() end
+  function data.onClick(f) data.addObserver(f) end
+  return o
+end
+
+Button2= function(data)
+  local o = ObservableClick(data)
+  local inherited_click = VetoableClick(data).click
   function data.click() print("Button is clicked."); inherited_click() end
   function data.onClick(f) data.addObserver(f) end
   return o
@@ -173,7 +181,7 @@ b = Button{}
 b.onClick(function() print("observer: hello") end)
 b.click()
 
-b2= Button{}
+b2= Button2{}
 b2.onClick(function() print("observer2: doh") end)
 b2.click()
 b2.click() -- with VetoableClick trait, this will not show.
