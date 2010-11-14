@@ -172,6 +172,10 @@ end
 Button2= function(data)
   local o = ObservableClick(data)
   local inherited_click = VetoableClick(data).click
+  --[[ preferred syntax:
+  local o, super = createClass(data, ObservableCLick, VetoableClick)
+  ... and then you can use super.click already. super should be a class with data(prototype) in mind.
+  --]]
   function data.click() print("Button is clicked."); inherited_click() end
   function data.onClick(f) data.addObserver(f) end
   return o
