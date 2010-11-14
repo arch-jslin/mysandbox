@@ -85,9 +85,7 @@ Vec4D = function(data)
                                        data.y*data.y + data.z*data.z) end
   local o = {}
   local mt = {
-    __index = function(self, k) 
-      return data[k]
-    end,
+    __index = data,
     __add = function(a, b)
       return Vec4D{w = a.w+b.w, x = a.x+b.x,
                    y = a.y+b.y, z = a.z+b.z}
@@ -116,7 +114,7 @@ print(v4.abs())
 
 Size4D = function(data)
   data = data or {}
-  data.w, data.x, data.y, data.z = 1,1,1,1
+  data.w, data.x, data.y, data.z = data.w or 1, data.x or 1, data.y or 1, data.z or 1
   local o = Vec4D(data)
   -- if you want to super anything, cache it here first, before overidding
   -- if you need anything overridden, write it after this line.
@@ -126,7 +124,7 @@ Size4D = function(data)
   return o
 end
 
-s5 = Size4D()
+s5 = Size4D{w=1, x=1, y=2, z=3}
 print(s5.w)
 s5.setW(2).setX(3)
 print((s5+s5).x)
@@ -134,5 +132,49 @@ print(s5.abs())
 print(s5.volume())
 -- s5.w = 4 -- No, you can't directly assign w to a Vec4D object.
 
--- Try Mixin
+-- Try Multiple Inheritance (this example is too simplified.)
+
+Subject = function(data)
+  local observers = {}
+  function data.notifyAll()      for _,v in ipairs(observers) do v() end end
+  function data.addObserver(obs) table.insert(observers, obs) end
+  local o = {}
+  local mt = {__index = data, __newindex = nil}
+  setmetatable(o, mt)
+  return o
+end
+
+VetoableClick = function(data)
+  local limit, count = 1, 0
+  function data.click() 
+    if count < limit then
+      count = count + 1
+      data.notifyAll()
+    end
+  end
+  return data
+end
+
+ObservableClick = function(data)
+  local o = Subject(data)
+  function data.click() data.notifyAll() end
+  return o
+end
+
+Button = function(data)
+  local o = ObservableClick(data)
+  local inherited_click = --[[data.click--]] VetoableClick(data).click
+  function data.click() print("Button is clicked."); inherited_click() end
+  function data.onClick(f) data.addObserver(f) end
+  return o
+end
+
+b = Button{}
+b.onClick(function() print("observer: hello") end)
+b.click()
+
+b2= Button{}
+b2.onClick(function() print("observer2: doh") end)
+b2.click()
+b2.click() -- with VetoableClick trait, this will not show.
 
