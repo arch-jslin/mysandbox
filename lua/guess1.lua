@@ -27,10 +27,10 @@ local AIPhase = function(lowerb, upperb)
 	    upperb = guess - 1
 	    guess = floor((upperb + lowerb)/2)
 	    coroutine.yield(guess)
-	  elseif hint == "s" then
+    elseif hint == "s" then
 	    lowerb = guess + 1
 	    guess = floor((upperb + lowerb)/2)
-	    coroutine.yield(guess)
+      coroutine.yield(guess)
   	else -- got it
   	  print("Got'cha!")
 	    return false
@@ -50,16 +50,16 @@ local main = function(lowerb, upperb)
   local ai_ans   = lowerb + random(upperb - lowerb)
   
   repeat 
-    local guess, res = nil, true
+    local guess, hint, res = nil, nil, true
     repeat 
       guess = tonumber(ask_for_your_guess(lowerb, upperb-1))
     until guess and guess >= lowerb and guess < upperb
     if guess > ai_ans then
       print("Your guess is too big.")
-      res = ai_phase()
+      res = ai_phase() -- call to resume
     elseif guess < ai_ans then
       print("Your guess is too small.")
-      res = ai_phase()
+      res = ai_phase() -- call to resume
     else -- you got it
       print("You got it.")
       break
