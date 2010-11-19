@@ -35,23 +35,22 @@ local ask_for_preemption = function()
 end
 
 local AIPhase = function(lowerb, upperb)
-  local guess, hint = nil, nil
-  repeat 
-	  if hint == nil then -- first round
-      guess = lowerb + random(upperb - lowerb) -- initial guess
-    elseif hint == "s" then
-	    lowerb = guess + 1
-	    guess = floor((upperb + lowerb)/2)
+  local guess, hint = lowerb + random(upperb - lowerb), nil
+  while upperb > lowerb do 
+    if hint == "s" then
+      lowerb = guess + 1
+      guess = floor((upperb + lowerb)/2)
     elseif hint == "b" then 
       upperb = guess - 1
-	    guess = floor((upperb + lowerb)/2)
-  	elseif hint == "y" then
-  	  print("Got'cha!")
-	    return false
-  	end
+      guess = floor((upperb + lowerb)/2)
+    elseif hint == "y" then
+      print("Got'cha!")
+      return false
+    end
+    if upperb == lowerb then break end
     hint = coroutine.yield(guess) 
-  until upperb <= lowerb
-  print("Your answer must be "..lowerb.."!")
+  end
+  print("Your answer must be "..guess.."!")
   return false -- means "computer wins"
 end
 
