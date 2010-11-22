@@ -53,7 +53,7 @@ end
 
 local rule1 = {0, 0, 1, 1, 0, 0, 0, 0, 0}
 local rule2 = {0, 0, 0, 1, 0, 0, 0, 0, 0}
-local function ruleset(n, now)
+local function ruleset(now, n)
   return now > 0 and rule1[n+1] or rule2[n+1]
 end
 
@@ -61,7 +61,7 @@ local function grid_iteration(old_grid, new_grid, w, h)
   w, h = w or 15, h or 15
   for y = 1, h do
     for x = 1, w do
-      new_grid[y][x] = ruleset( neighbor_count(old_grid, y, x, h, w), old_grid[y][x] )
+      new_grid[y][x] = ruleset( old_grid[y][x], neighbor_count(old_grid, y, x, h, w) )
     end
   end
   for y = 1, h do 
@@ -74,10 +74,11 @@ end
 
 ---------
 
+local now = new_grid(15, 15)
+local new = new_grid(15, 15)
+randomseed(os.time())
+
 local function test_by_hand()
-  local now = new_grid(15, 15)
-  local new = new_grid(15, 15)
-  randomseed(os.time())
   for i=1, 45 do
     now[random(15)+1][random(15)+1] = 1  -- random seeding
   end
@@ -90,9 +91,6 @@ local function test_by_hand()
 end
 
 local function bench_test(n)
-  local now = new_grid(15,15)
-  local new = new_grid(15,15)
-  randomseed(os.time())
   for i=1, 45 do
     now[random(15)+1][random(15)+1] = 1  -- random seeding
   end
