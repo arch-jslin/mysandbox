@@ -2,7 +2,7 @@
 require 'luarocks.loader'
 require 'socket'
 
-local data = string.rep("oisdjoirgiwuhfiu", 1024) -- 76800 bytes of data
+local data = string.rep("oisdjoirgiwuhfiu", 1024)
 local s = socket.tcp()
 s:bind('localhost', 45678)
 assert(s:listen(1))
