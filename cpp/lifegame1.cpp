@@ -4,11 +4,11 @@
 #include <ctime>
 
 template<typename T, size_t W, size_t H>
-void grid_print(T (&grid)[H][W], size_t w = W, size_t h = H)
+void grid_print(T const (&grid)[H][W])
 {
-    if( !grid ) return;
-    for( size_t y = 0; y < h; ++y ) {
-        for( size_t x = 0; x < w; ++x )
+    if( !grid || !H || !W ) return;
+    for( size_t y = 0; y < H; ++y ) {
+        for( size_t x = 0; x < W; ++x )
             printf("%d ", grid[y][x]);
         printf("\n");
     }
@@ -16,7 +16,7 @@ void grid_print(T (&grid)[H][W], size_t w = W, size_t h = H)
 
 int dir[8][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
 template<typename T, size_t W, size_t H>
-int neighbor_count(T (&old_grid)[H][W], int y, int x)
+int neighbor_count(T const (&old_grid)[H][W], int y, int x)
 {
     int count = 0;
     for( int i = 0; i < 8; ++i ) {
