@@ -3,6 +3,7 @@ require 'luarocks.loader'
 require 'socket'
 
 local data = string.rep("oisdjoirgiwuhfiu", 1024)
+data = data .. "\000"
 local s = socket.tcp()
 s:bind('localhost', 45678)
 assert(s:listen(1))
@@ -16,6 +17,7 @@ for i=1, 100 do
   c:send(data)
   len = len + #data
 end
+print( os.clock() - t ) 
 print('('..#data..' bytes per packet): '..( len / (os.clock() - t) / 1024 / 1024 )..' MBytes per second\n')
 
 s:close()
