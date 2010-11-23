@@ -4,7 +4,7 @@ require 'socket'
 
 local data = string.rep("oisdjoirgiwuhfiu", 1024) -- 76800 bytes of data
 local s = socket.tcp()
-s:bind('localhost', 12345)
+s:bind('localhost', 45678)
 assert(s:listen(1))
 c = s:accept()
 print("a client connected from "..c:getsockname()..", stat:"..c:getstats())

@@ -2,7 +2,7 @@
 require 'luarocks.loader'
 require 'socket'
 
-local c = assert(socket.connect('localhost', 12345))
+local c = assert(socket.connect('localhost', 45678))
 print('connected to a server, start receiving..')
 t = os.clock()
 data = assert(c:receive('*a')) -- *all
