@@ -17,7 +17,6 @@ for i=1, 100 do
   c:send(data)
   len = len + #data
 end
-print( os.clock() - t ) 
 print('('..#data..' bytes per packet): '..( len / (os.clock() - t) / 1024 / 1024 )..' MBytes per second\n')
 
 s:close()
