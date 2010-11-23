@@ -15,6 +15,8 @@
 *.exe
 *.txt
 *.luac
+*.fla
+*.swf
 
 bin/Release
 bin/Debug
