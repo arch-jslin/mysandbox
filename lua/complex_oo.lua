@@ -80,3 +80,25 @@ DerivedC = Class(
 
 --]]
 
+EntityTemplate = {
+  hp = 10,
+  mp = 10,
+  damage = function(self, n) self.hp = self.hp - n end
+  cast   = function(self, n) self.mp = self.mp - n end
+}
+
+function inspect(t)
+  -- put table inspect code here (which can inspect respectively
+end
+
+function shallow_copy(src)
+  local dest = {}
+  -- shallow copy code
+  return dest
+end
+
+function Klass(...) 
+  local class = {}
+  local method_pool = shallow_copy(select(1, ...))
+  return class
+end
