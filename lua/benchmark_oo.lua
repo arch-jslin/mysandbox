@@ -60,6 +60,16 @@ function makeob4()
 end
 addbenchmark("Object using closures (noself)", "ob.test()", makeob4())
 
+function makeob5()
+  local data = 0
+  return function(action, v)
+    if action == "get" then return data
+    elseif action == "set" then data = v
+    end    
+  end
+end
+addbenchmark("Single method (PiL 16.5)", "ob('set', ob('get')+1)", makeob5())
+
 addbenchmark("Direct Access", "ob.data = ob.data + 1", makeob1())
 
 addbenchmark("Local Variable", "ob = ob + 1", 0)

@@ -26,13 +26,32 @@ function Class(...)
 end
 
 BaseA = Class()
+BaseA.hp = 10
+BaseA.mp = 10
 BaseB = Class()
+function BaseB:damage(n)
+  self.hp = self.hp - n
+end
+function BaseB:cast(n)
+  self.mp = self.mp - n
+end
 
 b = BaseA:new()
 
 DerivedC = Class(BaseA, BaseB)
+function DerivedC:heal()
+  self:damage(-5)
+  self:cast(5)
+end
+function DerivedC:fireball(enemy)
+  enemy:damage(5)
+  self:cast(5)
+end
 
 c = DerivedC:new()
+d = DerivedC:new()
+c:fireball(d)
+d:heal()
 
 --[[
 BaseA = Class({}, {
