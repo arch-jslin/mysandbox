@@ -12,7 +12,9 @@ function Class(...)
   local superclasses = {...}
   
   setmetatable(c, {__index = function(t, k)
-    return search(k, superclasses)
+    local v = search(k, superclasses)
+    t[k] = v
+    return v
   end})
   c.__index = c
   
@@ -83,22 +85,41 @@ DerivedC = Class(
 EntityTemplate = {
   hp = 10,
   mp = 10,
-  damage = function(self, n) self.hp = self.hp - n end
+  damage = function(self, n) self.hp = self.hp - n end,
   cast   = function(self, n) self.mp = self.mp - n end
 }
 
-function inspect(t)
-  -- put table inspect code here (which can inspect respectively
+local function inspect(t, indent)
+  indent = indent or 0
+  local heading = indent > 0 and string.rep(" ", indent) or ""
+  for k,v in pairs(t) do
+    if type(v) == "table" then 
+      if v == t then io.write(heading..k.."\tself\n")
+      else io.write(heading..k.."\t"..tostring(v).."\n"); inspect(v, indent+8) end
+    else io.write(heading..k.."\t"..tostring(v).."\n") end
+  end
 end
 
-function shallow_copy(src)
+local function union(a, b)
   local dest = {}
-  -- shallow copy code
+  inspect(b)
+  local function shallow_cp(s, d) for k,v in pairs(s) do d[k] = v end end
+  shallow_cp(a, dest); 
+  shallow_cp(b, dest); 
   return dest
 end
+--some problem with union... bad shallow copy (duplicate)
 
 function Klass(...) 
   local class = {}
-  local method_pool = shallow_copy(select(1, ...))
+  local superclasses = {...}
+  local method_pool = {}
+  for i = 1, #superclasses do
+    print("-----------")
+    method_pool = union(method_pool, superclasses[i])
+  end  
+  inspect(method_pool)
   return class
 end
+
+Klass(BaseA)
