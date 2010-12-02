@@ -100,23 +100,24 @@ local function union(a, b)
   shallow_cp(b, dest); 
   return dest
 end
---some problem with union... bad shallow copy (duplicate)
 
 function Klass(...) 
   local class = {}
   local superclasses = {...}
   local method_pool = {}
   for i = 1, #superclasses do
-    method_pool = union(method_pool, superclasses[i])
+    local mt = getmetatable(superclasses[i])
+    method_pool = union(method_pool, mt and mt.__index or superclasses[i])
   end  
   setmetatable(class, {__index = method_pool})
   class.__index = class
 
   function class:new(data)
-    local o = data or {}
-    --local mt = {__index = self, __newindex = function() error('No harnessing.') end}
-    --setmetatable(o, mt)
-    setmetatable(o, self)
+    local o = {}
+    o.data = data or {}
+    setmetatable(o, {
+      __index = function(t, k) return data[k] and data[k] or self[k] end,
+      __newindex = function() error('No harnessing 2.') end, __metatable = false})
     return o
   end
 
@@ -126,14 +127,27 @@ end
 EntityTemplate = {
   hp = 10,
   mp = 10,
-  damage = function(self, n) self.hp = self.hp - n end,
-  cast   = function(self, n) self.mp = self.mp - n end
+  damage = function(self, n) self.data.hp = self.hp - n end,
+  cast   = function(self, n) self.data.mp = self.mp - n end
 }
 
+EntityTemplate2 = {
+  fireball = function(self, enemy) enemy:damage(5); self:cast(5) end,
+  heal     = function(self) self:damage(-5); self:cast(5) end
+}
+--[[
 C1 = Klass(EntityTemplate)
-obj = C1:new{hp=5}
+C2 = Klass(C1)
+C2.fireball = EntityTemplate2.fireball
+C2.heal = EntityTemplate2.heal
+obj = C2:new{hp=5}
 inspect(obj)
 obj:damage(5)
 inspect(obj)
-obj.hp = obj.hp - 5
+--obj.hp = obj.hp - 5
+obj2= C2:new{hp=20, mp=20}
+obj:fireball(obj2)
+obj2:heal()
 inspect(obj)
+inspect(obj2) 
+--]]
