@@ -82,13 +82,6 @@ DerivedC = Class(
 
 --]]
 
-EntityTemplate = {
-  hp = 10,
-  mp = 10,
-  damage = function(self, n) self.hp = self.hp - n end,
-  cast   = function(self, n) self.mp = self.mp - n end
-}
-
 local function inspect(t, indent)
   indent = indent or 0
   local heading = indent > 0 and string.rep(" ", indent) or ""
@@ -102,7 +95,6 @@ end
 
 local function union(a, b)
   local dest = {}
-  inspect(b)
   local function shallow_cp(s, d) for k,v in pairs(s) do d[k] = v end end
   shallow_cp(a, dest); 
   shallow_cp(b, dest); 
@@ -115,11 +107,33 @@ function Klass(...)
   local superclasses = {...}
   local method_pool = {}
   for i = 1, #superclasses do
-    print("-----------")
     method_pool = union(method_pool, superclasses[i])
   end  
-  inspect(method_pool)
+  setmetatable(class, {__index = method_pool})
+  class.__index = class
+
+  function class:new(data)
+    local o = data or {}
+    --local mt = {__index = self, __newindex = function() error('No harnessing.') end}
+    --setmetatable(o, mt)
+    setmetatable(o, self)
+    return o
+  end
+
   return class
 end
 
-Klass(BaseA)
+EntityTemplate = {
+  hp = 10,
+  mp = 10,
+  damage = function(self, n) self.hp = self.hp - n end,
+  cast   = function(self, n) self.mp = self.mp - n end
+}
+
+C1 = Klass(EntityTemplate)
+obj = C1:new{hp=5}
+inspect(obj)
+obj:damage(5)
+inspect(obj)
+obj.hp = obj.hp - 5
+inspect(obj)
