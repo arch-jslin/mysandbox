@@ -33,7 +33,7 @@ do
   end
   
   function ScopeHandler.accessor(class)
-    local accessors = {}
+    local accessors = {} 
     for k,v in pairs(class) do
       if type(v) ~= "function" and type(k) == "string" then
         local get_name = "get"..k
@@ -41,7 +41,9 @@ do
         accessors[get_name] = function(self) return private[self][k] end
         accessors[set_name] = function(self, v) private[self][k] = v end
       end
-    end
+    end 
+    accessors.get = function(self, k) return private[self][k] end
+    accessors.set = function(self, k, v) private[self][k] = v end
     return accessors
   end
 
@@ -56,7 +58,6 @@ do
     method_pool = union(method_pool, ScopeHandler.accessor(method_pool))
     setmetatable(class, {__index = method_pool})
     class.__index = class
-    class.__newindex = function(t, k, v) rawset(t, k, v) end --JIT fallback workaround
     class.new = function(self, o)
       o = o or {}
       private[o] = o --init private stuff
@@ -84,7 +85,6 @@ do
   }
   
   C = Klass(EntityTemplate)
-  print("---")
   C2= Klass(C)
   C2.new = C.new
   C2.fireball = EntityTemplate2.fireball
@@ -94,11 +94,11 @@ end
 local function my_klass1(n)
   local m = C2:new{hp=5}
   local m1= C2:new{mp=20}
-  print(m:gethp(), m:getmp())
-  print(m1:gethp(), m1:getmp())
+  print(m:get("hp"), m:get("mp"))
+  print(m1:get("hp"), m1:get("mp"))
   m:fireball(m1)
-  print(m:gethp(), m:getmp())
-  print(m1:gethp(), m1:getmp())
+  print(m:get("hp"), m:get("mp"))
+  print(m1:get("hp"), m1:get("mp"))
   for i = 1, n do
     for j = 1, 50 do
       m:fireball(m1)
