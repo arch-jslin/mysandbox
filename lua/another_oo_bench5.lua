@@ -56,7 +56,7 @@ do
     method_pool = union(method_pool, ScopeHandler.accessor(method_pool))
     setmetatable(class, {__index = method_pool})
     class.__index = class
-    --class.__newindex = function(t, k, v) rawset(t, k, v) end --JIT fallback workaround
+    class.__newindex = function(t, k, v) rawset(t, k, v) end --JIT fallback workaround
     class.new = function(self, o)
       o = o or {}
       private[o] = o --init private stuff
@@ -115,6 +115,6 @@ local function my_klass1_m(n)
   print ("Memory in use for "..n.." units: "..collectgarbage ("count").." Kbytes")
 end
 
-bench("my_klass1 for 1M iterations: ", function() return my_klass1(100000) end)
+bench("my_klass1 for 1M iterations: ", function() return my_klass1(1000000) end)
 bench("my_klass1 mem-usage: ", function() return my_klass1_m(100000) end)
 
