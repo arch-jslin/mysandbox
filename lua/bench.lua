@@ -7,8 +7,21 @@ local random = function(n)
   return floor(rand()*abs(n)) 
 end
 
-function bench(desc, f)
-  local t = os.clock()
-  f()
-  print( desc or "", os.clock() - t )
+local function _bench(f, times)
+  local total_t, best, worst = 0, math.huge, 0
+  for i = 1, times do
+    local t1 = os.clock()
+    f()
+    local delta = os.clock() - t1
+    total_t = total_t + delta
+    if delta < best then best = delta end
+    if delta > worst then worst = delta end
+  end
+  return total_t / times, best, worst
+end
+
+function bench(desc, f, times)
+  times = times or 1
+  local avg, best, worst = _bench(f, times)
+  print( (desc or "Benchmark result: ").."Avg. "..avg..(times > 1 and " ("..times.." rnds) (Range: "..best.." - "..worst..")" or "") )
 end

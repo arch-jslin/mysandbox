@@ -38,10 +38,10 @@ do
       if type(v) ~= "function" and type(k) == "string" then
         local get_name = "get"..k
         local set_name = "set"..k
-        accessors[get_name] = loadstring("return function(self) return private[self]."..k.." end")()
-        accessors[set_name] = loadstring("return function(self, v) private[self]."..k.." = v end")()
-        setfenv(accessors[get_name], {private = private})
-        setfenv(accessors[set_name], {private = private})
+        local code1 = "local private = ...; return function(self) return private[self]."..k.." end"
+        local code2 = "local private = ...; return function(self, v) private[self]."..k.." = v end"
+        accessors[get_name] = loadstring(code1)(private)
+        accessors[set_name] = loadstring(code2)(private)
       end
     end 
     accessors.get = function(self, k) return private[self][k] end
@@ -96,11 +96,6 @@ end
 local function my_klass1(n)
   local m = C2:new{hp=5}
   local m1= C2:new{mp=20}
-  print(m:get("hp"), m:get("mp"))
-  print(m1:get("hp"), m1:get("mp"))
-  m:fireball(m1)
-  print(m:get("hp"), m:get("mp"))
-  print(m1:get("hp"), m1:get("mp"))
   for i = 1, n do
     m:fireball(m1)
     m:heal()
@@ -115,6 +110,6 @@ local function my_klass1_m(n)
   print ("Memory in use for "..n.." units: "..collectgarbage ("count").." Kbytes")
 end
 
-bench("my_klass1 for 10M iterations: ", function() return my_klass1(10000000) end)
+bench("my_klass1 for 10M iterations: ", function() return my_klass1(10000000) end, 10)
 bench("my_klass1 mem-usage: ", function() return my_klass1_m(100000) end)
 
