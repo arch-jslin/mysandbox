@@ -10,10 +10,8 @@ local function table_approach(n)
   local m = mariner.new ()
   local m1= mariner.new ()
   for i = 1, n do
-    for j = 1, 50 do
-      m:fireball (m1)
-      m:heal ()
-    end
+    m:fireball (m1)
+    m:heal ()
   end
 end
   
@@ -23,10 +21,8 @@ local function closure_approach(n)
   local m = mariner.new ()
   local m1= mariner.new ()
   for i = 1, n do
-     for j = 1, 50 do
-        m.fireball (m1)
-        m.heal ()
-     end
+    m.fireball (m1)
+    m.heal ()
   end
 end
 
@@ -48,7 +44,7 @@ local function closure_approach_m(n)
   print ("Memory in use for "..n.." units: "..collectgarbage ("count").." Kbytes")
 end
 
-bench("table_approach for 1M iterations: ", function() return table_approach(1000000) end)
+bench("table_approach for 10M iterations: ", function() return table_approach(10000000) end, 10)
 bench("table_approach mem-usage: ", function() return table_approach_m(100000) end)
-bench("closure_approach for 1M iterations: ", function() return closure_approach(1000000) end)
+bench("closure_approach for 10M iterations: ", function() return closure_approach(10000000) end, 10)
 bench("closure_approach mem-usage: ", function() return closure_approach_m(100000) end)

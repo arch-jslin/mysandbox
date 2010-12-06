@@ -57,10 +57,8 @@ local function MI_with_methodcache(n)
   local m = DerivedC:new{hp=10, mp=10}
   local m1= DerivedC:new{hp=20, mp=20}
   for i = 1, n do
-    for j = 1, 50 do
-      m:fireball(m1)
-      m:heal()
-    end
+    m:fireball(m1)
+    m:heal()
   end
 end
 
@@ -72,7 +70,7 @@ local function MI_with_methodcache_m(n)
   print ("Memory in use for "..n.." units: "..collectgarbage ("count").." Kbytes")
 end
 
-bench("MI_with_methodcache for 1M iterations: ", function() return MI_with_methodcache(1000000) end)
+bench("MI_with_methodcache for 10M iterations: ", function() return MI_with_methodcache(10000000) end, 10)
 bench("MI_with_methodcache mem-usage: ", function() return MI_with_methodcache_m(100000) end)
 
 --------------------------------------------------------------

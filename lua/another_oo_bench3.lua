@@ -38,10 +38,8 @@ local function MI_mixed_way(n)
   local m = Obj{hp=10, mp=10}
   local m1= Obj{hp=10, mp=10}
   for i = 1, n do
-    for j = 1, 50 do
-      m.fireball(m1)
-      m.heal()
-    end
+    m.fireball(m1)
+    m.heal()
   end
 end
 
@@ -53,6 +51,6 @@ local function MI_mixed_way_m(n)
   print ("Memory in use for "..n.." units: "..collectgarbage ("count").." Kbytes")
 end
 
-bench("MI_mixed_way for 1M iterations: ", function() return MI_mixed_way(1000000) end)
+bench("MI_mixed_way for 10M iterations: ", function() return MI_mixed_way(10000000) end)
 bench("MI_mixed_way mem-usage: ", function() return MI_mixed_way_m(100000) end)
 
