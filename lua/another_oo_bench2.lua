@@ -65,7 +65,7 @@ end
 local function MI_with_methodcache_m(n)  
   local mariners = {}
   for i = 1, n do
-    mariners[i] = DerivedC:new{hp=15, mp=10}
+    mariners[i] = DerivedC:new()
   end
   print ("Memory in use for "..n.." units: "..collectgarbage ("count").." Kbytes")
 end

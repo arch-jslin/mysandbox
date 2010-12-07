@@ -105,7 +105,7 @@ end
 local function my_klass1_m(n)
   local mariners = {}
   for i = 1, n do
-    mariners[i] = C2:new{hp=10, mp=10}
+    mariners[i] = C2:new()
   end
   print ("Memory in use for "..n.." units: "..collectgarbage ("count").." Kbytes")
 end
