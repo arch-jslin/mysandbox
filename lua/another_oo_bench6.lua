@@ -131,9 +131,13 @@ do -- Now this is class defining state -- conceptual compile-time
       end
     },
     public = {
-      accessor = {"hp", "mp"},
-      getter = {"some_caled_value"},
+      --accessor = {"hp", "mp"},
+      --getter = {"some_caled_value"},
       some_public_member = 1,
+      gethp  = function(self) return hidden_stash[self].hp end,
+      sethp  = function(self, v) hidden_stash[self].hp = v end,
+      getmp  = function(self) return hidden_stash[self].mp end,
+      setmp  = function(self, v) hidden_stash[self].mp = v end,
       damage = function(self, n) self:sethp(self:gethp() - n) end,
       cast   = function(self, n) self:setmp(self:getmp() - n) end,
     }
