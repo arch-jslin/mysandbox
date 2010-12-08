@@ -158,6 +158,8 @@ do -- Another Scope for defining derived class
   --Scope.gen_accessors(hidden_stash)
 end
 
+-- THE PROBLEM: CAN HIDDEN STASH BE COMBINED? since the access key is per instance, so why not?
+
 local q = C:new{mp=20}
 print("..", q:gethp(), q:getmp())
 local p = C2:new{hp=5}
