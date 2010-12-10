@@ -205,14 +205,14 @@ LRESULT CALLBACK WndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         case WM_PAINT:
             paint(h);
             break;
-        case WM_MOUSEMOVE:
-        {   /* make some drawn points be controlled by mouse */
-            int x = GET_X_LPARAM(lp), y = GET_Y_LPARAM(lp);
-            POINTS_[MAXPOINTS-1].x = x;
-            POINTS_[MAXPOINTS-1].y = y;
-            InvalidateRect(h, NULL, FALSE);
-            break;
-        }
+//        case WM_MOUSEMOVE:
+//        {   /* make some drawn points be controlled by mouse */
+//            int x = GET_X_LPARAM(lp), y = GET_Y_LPARAM(lp);
+//            POINTS_[MAXPOINTS-1].x = x;
+//            POINTS_[MAXPOINTS-1].y = y;
+//            InvalidateRect(h, NULL, FALSE);
+//            break;
+//        }
         case WM_TOUCH:
             translate_touch(h, wp, lp);
             break;
