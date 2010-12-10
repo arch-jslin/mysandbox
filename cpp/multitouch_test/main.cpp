@@ -29,22 +29,6 @@ struct TrackPoint {
 };
 TrackPoint POINTS_[MAXPOINTS];
 
-// This function is used to return an index given an ID
-TrackPoint* get_contact_point(int dwID){
-  for( int i = 0; i < MAXPOINTS; ++i ) {
-    if (POINTS_[i].id == -1){
-      POINTS_[i].id = dwID;
-      return &(POINTS_[i]);
-    } else {
-      if (POINTS_[i].id == dwID){
-        return &(POINTS_[i]);
-      }
-    }
-  }
-  // Out of contacts
-  return 0;
-}
-
 const char* WINDOW_CLASS_NAME_ = __TEXT("MTTest");
 const int   WIDTH_ = 640;
 const int   HEIGHT_= 480;
@@ -97,6 +81,22 @@ void check_touch_points(PTOUCHINPUT p, UINT input_count)
         if( t.dwFlags & TOUCHEVENTF_PEN )  printf(" pen?");
         printf("\n");
     }
+}
+
+// This function is used to return an index given an ID
+TrackPoint* get_contact_point(int dwID)
+{
+    for( int i = 0; i < MAXPOINTS; ++i ) {
+        if ( POINTS_[i].id == -1 ) {
+            POINTS_[i].id = dwID;
+            return &(POINTS_[i]);
+        } else {
+            if ( POINTS_[i].id == dwID ) {
+                return &(POINTS_[i]);
+            }
+        }
+    }
+    return 0; // Out of contacts
 }
 
 void setup_drawing_points(HWND h, PTOUCHINPUT p, UINT input_count)
