@@ -108,6 +108,9 @@ void setup_drawing_points(HWND h, PTOUCHINPUT p, UINT input_count)
             if( !ScreenToClient(h, &point) ) {
                 printf("Error: contact point %d translation failed.\n", i);
             }
+            //trace:
+            printf(" - point %d will be drawn at: (%ld, %ld)\n", i, point.x, point.y);
+
             if (ti.dwFlags & TOUCHEVENTF_UP) {
                 tp->x = -1;
                 tp->y = -1;
@@ -138,8 +141,11 @@ void translate_touch(HWND h, WPARAM wp, LPARAM lp)
     } else {
         printf("Error: structure for touch inputs not allocated.\n");
     }
-    if ( handled )
+    if ( handled ) {
+        //if the WM_TOUCH message is correctly handled, request a full redraw
+        InvalidateRect(h, NULL, TRUE);
         CloseTouchInputHandle((HANDLE)lp);
+    }
 }
 
 void paint(HWND h)
@@ -185,6 +191,14 @@ LRESULT CALLBACK WndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         case WM_PAINT:
             paint(h);
             break;
+        case WM_MOUSEMOVE:
+        {   /* make some drawn points be controlled by mouse */
+            int x = GET_X_LPARAM(lp), y = GET_Y_LPARAM(lp);
+            POINTS_[MAXPOINTS-1].x = x;
+            POINTS_[MAXPOINTS-1].y = y;
+            InvalidateRect(h, NULL, TRUE);
+            break;
+        }
         case WM_TOUCH:
             translate_touch(h, wp, lp);
             break;
