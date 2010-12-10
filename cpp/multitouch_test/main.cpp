@@ -61,7 +61,7 @@ int main()
     ShowWindow(h, SW_SHOW);
     UpdateWindow(h);
 
-    POINTS_[MAXPOINTS-1].id = 99999;
+    POINTS_[MAXPOINTS-1].id = 99999; // pre-occupy this for system mouse
 
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) { // Main message loop:
