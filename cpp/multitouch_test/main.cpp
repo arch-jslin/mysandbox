@@ -56,10 +56,8 @@ int main()
     ShowWindow(h, SW_SHOW);
     UpdateWindow(h);
 
-    // Main message loop:
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
+    while (GetMessage(&msg, NULL, 0, 0)) { // Main message loop:
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
