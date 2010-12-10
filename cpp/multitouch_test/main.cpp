@@ -18,6 +18,15 @@
 #  define TOUCHEVENTF_DOWN       0x0002
 #endif
 
+HBRUSH colorpens[] = {
+    CreateSolidBrush(RGB(153,255,51)),
+    CreateSolidBrush(RGB(153,0,0)),
+    CreateSolidBrush(RGB(0,153,0)),
+    CreateSolidBrush(RGB(255,255,0)),
+    CreateSolidBrush(RGB(255,51,204)),
+    CreateSolidBrush(RGB(0,0,0)),
+    CreateSolidBrush(RGB(255,255,255)) };
+
 const int MAXPOINTS = 6;
 struct TrackPoint {
     int id, x, y, radius;
@@ -145,15 +154,6 @@ void translate_touch(HWND h, WPARAM wp, LPARAM lp)
         CloseTouchInputHandle((HANDLE)lp);
     }
 }
-
-HBRUSH colorpens[] = {
-    CreateSolidBrush(RGB(153,255,51)),
-    CreateSolidBrush(RGB(153,0,0)),
-    CreateSolidBrush(RGB(0,153,0)),
-    CreateSolidBrush(RGB(255,255,0)),
-    CreateSolidBrush(RGB(255,51,204)),
-    CreateSolidBrush(RGB(0,0,0)),
-    CreateSolidBrush(RGB(255,255,255)) };
 
 void paint(HWND h)
 {
