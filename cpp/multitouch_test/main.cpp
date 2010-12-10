@@ -18,10 +18,6 @@
 #  define TOUCHEVENTF_DOWN       0x0002
 #endif
 
-COLORREF colors[] = {
-    RGB(153,255,51), RGB(153,0,0), RGB(0,153,0),
-    RGB(255,255,0), RGB(255,51,204), RGB(0,0,0) };
-
 const int MAXPOINTS = 6;
 struct TrackPoint {
     int id, x, y, radius;
@@ -55,6 +51,8 @@ int main()
 
     ShowWindow(h, SW_SHOW);
     UpdateWindow(h);
+
+    POINTS_[MAXPOINTS-1].id = 99999;
 
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) { // Main message loop:
@@ -143,23 +141,33 @@ void translate_touch(HWND h, WPARAM wp, LPARAM lp)
     }
     if ( handled ) {
         //if the WM_TOUCH message is correctly handled, request a full redraw
-        InvalidateRect(h, NULL, TRUE);
+        InvalidateRect(h, NULL, FALSE);
         CloseTouchInputHandle((HANDLE)lp);
     }
 }
+
+HBRUSH colorpens[] = {
+    CreateSolidBrush(RGB(153,255,51)),
+    CreateSolidBrush(RGB(153,0,0)),
+    CreateSolidBrush(RGB(0,153,0)),
+    CreateSolidBrush(RGB(255,255,0)),
+    CreateSolidBrush(RGB(255,51,204)),
+    CreateSolidBrush(RGB(0,0,0)),
+    CreateSolidBrush(RGB(255,255,255)) };
 
 void paint(HWND h)
 {
     // For double buffering
     HDC memDC       = 0;
     HBITMAP hMemBmp = 0;
-    HBITMAP hOldBmp = 0;
+    //HBITMAP hOldBmp = 0;
 
     // For drawing / fills
     PAINTSTRUCT ps;
     HDC hdc;
 
     hdc = BeginPaint(h, &ps);
+    //hdc = GetDC(h);
     RECT rect;
     GetClientRect(h, &rect);
 
@@ -168,19 +176,25 @@ void paint(HWND h)
         memDC = CreateCompatibleDC(hdc);
     }
     hMemBmp = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
-    hOldBmp = (HBITMAP)SelectObject(memDC, hMemBmp);
-    FillRect(memDC, &rect, CreateSolidBrush(RGB(255,255,255)));
+    //hOldBmp = (HBITMAP)SelectObject(memDC, hMemBmp);
+    SelectObject(memDC, hMemBmp);
+    FillRect(memDC, &rect, colorpens[6]);
 
     for ( int i = 0; i < MAXPOINTS; ++i ) { //Draw Touched Points
-      SelectObject( memDC, CreateSolidBrush(colors[i]) );
+      SelectObject( memDC, colorpens[i]);
       int x = POINTS_[i].x;
       int y = POINTS_[i].y;
       int r = POINTS_[i].radius;
+      printf("(%d, %d) ", x, y);
       if (x > 0 && y > 0) {
         Ellipse(memDC, x - r, y - r, x + r, y + r);
       }
     }
+    printf("\n");
     BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
+    // Clean up - only need to do this one time as well
+    DeleteDC(memDC);
+    DeleteObject(hMemBmp);
     EndPaint(h, &ps);
 }
 
@@ -196,7 +210,7 @@ LRESULT CALLBACK WndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             int x = GET_X_LPARAM(lp), y = GET_Y_LPARAM(lp);
             POINTS_[MAXPOINTS-1].x = x;
             POINTS_[MAXPOINTS-1].y = y;
-            InvalidateRect(h, NULL, TRUE);
+            InvalidateRect(h, NULL, FALSE);
             break;
         }
         case WM_TOUCH:
@@ -228,14 +242,14 @@ WNDCLASSEX create_window_class(HINSTANCE& hInstance)
 {
     WNDCLASSEX wcex;
     wcex.cbSize			= sizeof(WNDCLASSEX);
-    wcex.style			= CS_HREDRAW | CS_VREDRAW;
+    wcex.style			= 0;//CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc	= WndProc;
     wcex.cbClsExtra		= 0;
     wcex.cbWndExtra		= 0;
     wcex.hInstance		= hInstance;
     wcex.hIcon			= NULL;
     wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
+    wcex.hbrBackground	= NULL;//(HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszMenuName	= 0;
     wcex.lpszClassName	= WINDOW_CLASS_NAME_;
     wcex.hIconSm		= 0;
