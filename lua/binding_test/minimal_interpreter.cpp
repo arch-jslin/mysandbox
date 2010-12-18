@@ -1,6 +1,6 @@
-#include <cstdio>
+
+#include "binding_test.hpp"
 #include <cstring>
-#include <lua.hpp>
 
 int run_simple_interpreter()
 {

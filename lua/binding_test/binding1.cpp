@@ -1,7 +1,4 @@
 
-#include <cstdio>
-#include <cstdlib>
-#include <lua.hpp>
 #include "binding_test.hpp"
 
 int binding1()
