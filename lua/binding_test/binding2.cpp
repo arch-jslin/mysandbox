@@ -104,7 +104,7 @@ int l_dir(lua_State* L)
     return 1; /* return the table (which is already at the top of the stack) */
 }
 
-int l_listmap(lua_State* L)
+int l_listmap(lua_State* L) //not practical when JIT'ed
 {
     luaL_checktype(L, 1, LUA_TTABLE);    //first argument from lua should be table
     luaL_checktype(L, 2, LUA_TFUNCTION); //second arg from lua should be function
@@ -119,10 +119,31 @@ int l_listmap(lua_State* L)
     return 0; // this call to C doesn't have any result
 }
 
+int l_split(lua_State* L) //not practical when JIT'ed
+{
+    char const* s = luaL_checkstring(L, 1);
+    char const* sep = luaL_checkstring(L, 2);
+    char const* e = 0;
+    int i = 1;
+
+    lua_newtable(L); // create the result to be passed back to lua
+
+    while( (e = strchr(s, *sep)) != NULL ) {
+        lua_pushlstring(L, s, e-s); //push substring
+        lua_rawseti(L, -2, i);
+        s = e + 1; ++i;
+    }
+    //push the last substring
+    lua_pushstring(L, s);
+    lua_rawseti(L, -2, i);
+    return 1;
+}
+
 const luaL_Reg mylib[] = { //plain C module
     {"dir", &l_dir},
     {"sine", &l_sin},
     {"listmap", &l_listmap},
+    {"split", &l_split},
     {NULL, NULL}
 };
 

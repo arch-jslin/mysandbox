@@ -24,3 +24,8 @@ local map = mylib.listmap
 local a = {1,2,3,4,5}
 map(a, function(x) return x*2 end)
 for _,v in ipairs(a) do print(v) end
+
+-- test function from c with string input
+local b = "a,b,c,d,e"
+local tt = mylib.split(b, ",")
+for _,v in ipairs(tt) do print(v) end
