@@ -1,18 +1,12 @@
 #include "binding_test.hpp"
 #include <tr1/tuple>
+#include <cmath>
+#include <dirent.h>
+#include <errno.h>
+#include <cstring>
 
 using std::tr1::tuple;
 using std::tr1::get;
-
-bool load_lua_script(lua_State* L, char const* filename)
-{
-    if( luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0) ) {
-        //bad call will return non-zero
-        error(L, "cannot load file: \n  %s", lua_tostring(L, -1) );
-        return true;
-    }
-    return false;
-}
 
 inline void lua_push_(lua_State* L, double const& v) { lua_pushnumber(L, v); }
 inline void lua_push_(lua_State* L, int const& v)    { lua_pushinteger(L, v); }
@@ -65,22 +59,114 @@ call_lua_function(lua_State* L, char const* funcname, Args const&... args)
     return results;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+bool load_lua_script(lua_State* L, char const* filename)
+{
+    if( luaL_loadfile(L, filename) || lua_pcall(L, 0, 0, 0) ) {
+        //bad call will return non-zero
+        error(L, "cannot load file: \n  %s", lua_tostring(L, -1) );
+        return true;
+    }
+    return false;
+}
+
+int l_sin(lua_State* L)
+{
+    double in = luaL_checknumber(L, 1);
+    lua_pushnumber(L, std::sin(in));
+    return 1;
+}
+
+int l_dir(lua_State* L)
+{
+    DIR *dir;
+    struct dirent *entry;
+    char const* path = luaL_checkstring(L, 1); //get input from lua
+
+    /* open directory */
+    dir = opendir(path);
+    if( dir == NULL ) { //error
+        lua_pushnil(L);
+        lua_pushstring(L, strerror(errno)); // where does errno come from?
+        return 2; // 2 results
+    }
+
+    /* create result table */
+    lua_newtable(L);
+    int i = 0;
+    while( (entry = readdir(dir)) != NULL ) {
+        lua_pushnumber(L, ++i);
+        lua_pushstring(L, entry->d_name);
+        lua_settable(L, -3);  //add above entry into this table.
+    }
+    closedir(dir);
+    return 1; /* return the table (which is already at the top of the stack) */
+}
+
+int l_listmap(lua_State* L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);    //first argument from lua should be table
+    luaL_checktype(L, 2, LUA_TFUNCTION); //second arg from lua should be function
+    int n = lua_objlen(L, 1); // get table(array)'s length
+    for( int i = 1; i <= n; ++i ) {
+        lua_pushvalue(L, 2);  // dupe f and push on top
+        lua_rawgeti(L, 1, i); // get t[i] from lua and push on top
+        lua_call(L, 1, 1);    // f(t[i])  -- this will consume two element from top, and push 1 result on top
+        lua_rawseti(L, 1, i); // pop top(result) and assign it to t[i]
+    }
+    //we don't need to pop stack here since the function stack is unique and will be collected.
+    return 0; // this call to C doesn't have any result
+}
+
+const luaL_Reg mylib[] = { //plain C module
+    {"dir", &l_dir},
+    {"sine", &l_sin},
+    {"listmap", &l_listmap},
+    {NULL, NULL}
+};
+
+int luaopen_mylib(lua_State* L)
+{
+    luaL_register(L, "mylib", mylib);
+    return 1;
+}
+
 int binding2()
 {
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
 
-    if( load_lua_script(L, "binding2.lua") )
+/* Extending lua virtual machine right after we open a new lua VM */
+
+    lua_pushcfunction(L, &luaopen_mylib);
+    lua_setglobal(L, "luaopen_mylib");
+
+/* Before we load or execute any script. */
+
+    if( load_lua_script(L, "binding2.lua") ) //will execute once globally
         return 1;
 
-    tuple<int> r = call_lua_function<int>(L, "method1", 3, 4);
+    printf("---- the script is executed globally once after loaded ----\n");
 
+    //try to get some table here...
+    lua_getglobal(L, "config");
+    lua_getfield(L, -1, "key"); //tell lua to push config["key"] to the stack
+
+    //now we retrieve it.
+    double ck = luaL_checknumber(L, -1);
+    lua_pop(L, 1); //pop the retrieved result
+    printf("config.key = %lf\n", ck);
+
+    tuple<int> r = call_lua_function<int>(L, "method1", 3, 4);
     printf("%d\n", get<0>(r));
 
     tuple<int, double, char const*> r2 =
         call_lua_function<int, double, char const*>(L, "identity", 1, 2.0, "3");
-
     printf("%d, %lf, %s\n", get<0>(r2), get<1>(r2), get<2>(r2));
+
+    tuple<double> r3= call_lua_function<double>(L, "call_c", 2.0, 1.14);
+    printf("%lf\n", get<0>(r3));
 
     lua_settop(L, 0);
     lua_close(L);

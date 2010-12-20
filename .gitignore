@@ -17,6 +17,7 @@
 *.luac
 *.fla
 *.swf
+*.mingw
 
 bin/Release
 bin/Debug
