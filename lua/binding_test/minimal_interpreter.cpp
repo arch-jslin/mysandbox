@@ -2,12 +2,10 @@
 #include "binding_test.hpp"
 #include <cstring>
 
-int run_simple_interpreter()
+int run_simple_interpreter(lua_State* L)
 {
     char buf[256] = {0};
     int error = 0;
-    lua_State* L = luaL_newstate();
-    luaL_openlibs(L);
 
     while(fgets(buf, sizeof(buf), stdin) != NULL) {
         error = luaL_loadbuffer(L, buf, strlen(buf), "line") ||
@@ -17,7 +15,5 @@ int run_simple_interpreter()
             lua_pop(L, 1);
         }
     }
-
-    lua_close(L);
     return 0;
 }

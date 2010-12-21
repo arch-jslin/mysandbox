@@ -3,11 +3,15 @@
 
 int main()
 {
-    //binding1();
-    //run_simple_interpreter();
-    //stack();
-    //binding2();
-    storing_state_test();
+    lua_State* L = luaL_newstate();
+    luaL_openlibs(L);
+    //binding1(L);
+    //run_simple_interpreter(L);
+    //stack(L);
+    //binding2(L);
+    storing_state_test(L);
+
+    lua_close(L);
     system("pause");
     return 0;
 }

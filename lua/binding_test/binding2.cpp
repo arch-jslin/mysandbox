@@ -153,11 +153,8 @@ int luaopen_mylib(lua_State* L)
     return 1;
 }
 
-int binding2()
+int binding2(lua_State* L)
 {
-    lua_State* L = luaL_newstate();
-    luaL_openlibs(L);
-
 /* Extending lua virtual machine right after we open a new lua VM */
 
     lua_pushcfunction(L, &luaopen_mylib);
@@ -190,6 +187,5 @@ int binding2()
     printf("%lf\n", get<0>(r3));
 
     lua_settop(L, 0);
-    lua_close(L);
     return 0;
 }

@@ -1,19 +1,10 @@
 
 #include "binding_test.hpp"
 
-int binding1()
+int binding1(lua_State* L)
 {
     int status, result, i;
     double sum;
-    lua_State *L;
-
-    /*
-     * All Lua contexts are held in this structure. We work with it almost
-     * all the time.
-     */
-    L = luaL_newstate();
-
-    luaL_openlibs(L); /* Load Lua libraries */
 
     /* Load the file containing the script we are going to run */
     status = luaL_loadfile(L, "binding1.lua");
@@ -68,6 +59,5 @@ int binding1()
     printf("Script returned: %.0f\n", sum);
 
     lua_pop(L, 1);  /* Take the returned value out of the stack */
-    lua_close(L);   /* Cya, Lua */
     return 0;
 }

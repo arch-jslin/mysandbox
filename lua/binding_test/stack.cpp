@@ -1,9 +1,7 @@
 #include "binding_test.hpp"
 
-int stack()
+int stack(lua_State* L)
 {
-    lua_State* L = luaL_newstate();
-
     lua_pushboolean(L, 1);
     lua_pushnumber(L, 10);
     lua_pushnil(L);

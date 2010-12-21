@@ -33,11 +33,8 @@ int tuple(lua_State* L) {
     return 1;
 }
 
-int storing_state_test()
+int storing_state_test(lua_State* L)
 {
-    lua_State* L = luaL_newstate();
-    luaL_openlibs(L);
-
     lua_pushnumber(L, 10); //store some magical data
     global_r = luaL_ref(L, LUA_REGISTRYINDEX); //this pop things!!!! must push first
 
@@ -46,6 +43,7 @@ int storing_state_test()
 
     if( luaL_dostring(L, "a = check_number(); print(a)") ) {
         printf("Failed.\n");
+        return 1;
     }
 
     //I decided to drop the env table practice
@@ -56,8 +54,7 @@ int storing_state_test()
 
     if( luaL_dostring(L, "b = tuple(1, '2', {}); print(b())") ) {
         printf("Failed.\n");
+        return 1;
     }
-
-    lua_close(L);
     return 0;
 }
