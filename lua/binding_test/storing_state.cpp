@@ -12,6 +12,27 @@ int check_mysterious_number(lua_State* L)
     return 1;
 }
 
+int t_tuple (lua_State* L) {
+    int op = luaL_optint(L, 1, 0);
+    if( op == 0 ) {
+        int i = 1;
+        for(; !lua_isnone(L, lua_upvalueindex(i)); ++i )
+            lua_pushvalue(L, lua_upvalueindex(i)); //dupe upvalue to the stack
+        return i - 1;
+    } else {
+        luaL_argcheck(L, op > 0, 1, "index must be positive");
+        if( lua_isnone(L, lua_upvalueindex(op)) )
+            return 0;
+        lua_pushvalue(L, lua_upvalueindex(op));
+        return 1;
+    }
+}
+
+int tuple(lua_State* L) {
+    lua_pushcclosure(L, &t_tuple, lua_gettop(L));
+    return 1;
+}
+
 int storing_state_test()
 {
     lua_State* L = luaL_newstate();
@@ -25,14 +46,17 @@ int storing_state_test()
 
     if( luaL_dostring(L, "a = check_number(); print(a)") ) {
         printf("Failed.\n");
-        return 1;
     }
 
-    //I've decided to drop the env table practice and upvalue practices
-    //env function will be removed in 5.2
-    //upvalue is pretty crappy. If I need a function with encapsulated values
-    //  and they are all implementable from C++ side, why bother with the slow
-    //  upvalue/stack communications? function objects can do better job than this.
+    //I decided to drop the env table practice
+    //as env function will be removed in 5.2
+
+    lua_pushcfunction(L, &tuple);
+    lua_setglobal(L, "tuple");
+
+    if( luaL_dostring(L, "b = tuple(1, '2', {}); print(b())") ) {
+        printf("Failed.\n");
+    }
 
     lua_close(L);
     return 0;
