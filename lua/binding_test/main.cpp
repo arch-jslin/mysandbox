@@ -6,7 +6,8 @@ int main()
     //binding1();
     //run_simple_interpreter();
     //stack();
-    binding2();
+    //binding2();
+    storing_state_test();
     system("pause");
     return 0;
 }

@@ -9,7 +9,8 @@
 int binding1();               /* example code from: http://lua-users.org/wiki/SimpleLuaApiExample */
 int run_simple_interpreter(); /* example code from PiL 24.1 */
 int stack();                  /* example code from PiL 24.2 */
-int binding2();
+int binding2();               /* example code from PiL 25 ~ 27 */
+int storing_state_test();
 
 extern void error(lua_State* L, char const* fmt, ...);
 extern void stack_dump(lua_State* L);
