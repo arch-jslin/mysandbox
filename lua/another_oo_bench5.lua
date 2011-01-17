@@ -38,10 +38,10 @@ do
       if type(v) ~= "function" and type(k) == "string" then
         local get_name = "get"..k
         local set_name = "set"..k
-        local code1 = "local private = ...; return function(self) return private[self]."..k.." end"
-        local code2 = "local private = ...; return function(self, v) private[self]."..k.." = v end"
-        accessors[get_name] = loadstring(code1)(private)
-        accessors[set_name] = loadstring(code2)(private)
+        local code1 = "return function(priv) return function(self) return priv[self]."..k.." end end"
+        local code2 = "return function(priv) return function(self, v) priv[self]."..k.." = v end end"
+        accessors[get_name] = loadstring(code1)()(private)
+        accessors[set_name] = loadstring(code2)()(private)
       end
     end 
     accessors.get = function(self, k) return private[self][k] end
