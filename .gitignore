@@ -18,6 +18,7 @@
 *.fla
 *.swf
 *.mingw
+*.redcar
 
 bin/Release
 bin/Debug

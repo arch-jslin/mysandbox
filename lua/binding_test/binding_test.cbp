@@ -26,12 +26,14 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="basic_type_binding.cpp" />
 		<Unit filename="binding1.cpp" />
 		<Unit filename="binding2.cpp" />
 		<Unit filename="binding_test.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="minimal_interpreter.cpp" />
 		<Unit filename="stack.cpp" />
+		<Unit filename="storing_state.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
