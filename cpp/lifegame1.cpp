@@ -72,7 +72,7 @@ void bench_test(int n = 0)
 int main()
 {
     std::srand(time(0));
-    bench_test(20000);
+    bench_test(100000);
     system("pause");
     return 0;
 }
