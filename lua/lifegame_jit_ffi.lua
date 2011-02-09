@@ -61,12 +61,8 @@ local function grid_iteration(old_grid, new_grid, w, h)
       new_grid[y*h + x] = ruleset( old_grid[y*h + x], neighbor_count(old_grid, y, x, h, w) )
     end
   end
-  for y = 0, h-1 do 
-    for x = 0, w-1 do 
-      old_grid[y*h + x] = new_grid[y*h + x] -- grid data copy
-      new_grid[y*h + x] = 0                 -- clean new grid data
-    end
-  end
+  ffi.copy(old_grid, new_grid, w*h)
+  ffi.fill(new_grid, w*h)
 end
 
 ---------
