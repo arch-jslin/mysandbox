@@ -3,9 +3,6 @@
   -- The most annoying change would be zero-based / one-based scalar type differences.
 
 local ffi = require "ffi"
-ffi.cdef[[
-
-]]
 
 local randomseed, rand, floor, abs = math.randomseed, math.random, math.floor, math.abs
 local random = function(n) 
@@ -22,14 +19,7 @@ end
 -------------
 
 local function new_grid(w, h) 
-  local grid = ffi.new("char*[?]", h)
-  w, h = w or 15, h or 15
-  for y = 0, h-1 do
-    grid[y] = ffi.new("char[?]", w)
-    for x = 0, w-1 do
-      grid[y][x] = 0
-    end
-  end
+  local grid = ffi.new("char["..h*w.."]")
   return grid
 end
 
@@ -38,7 +28,7 @@ local function grid_print(grid, w, h)
   if not grid then return end
   for y = 0, h-1 do
     for x = 0, w-1 do 
-      io.write(string.format("%d ", grid[y][x]))
+      io.write(string.format("%d ", grid[y*h + x]))
     end
     print()
   end
@@ -50,12 +40,11 @@ local function neighbor_count(old_grid, y, x, h, w)
   for i=0, 7 do
     local ny, nx = y + dir[i][0], x + dir[i][1]
     if ny < 0 then ny = h-1
-    elseif ny > h then ny = 0 end
+    elseif ny >= h then ny = 0 end
     if nx < 0 then nx = w-1
-    elseif nx > w then nx = 0 end
-    if old_grid[ny][nx] > 0 then count = count + 1 end
+    elseif nx >= w then nx = 0 end
+    if old_grid[ny*h + nx] > 0 then count = count + 1 end
   end
-  print("count trace: "..count)
   return count
 end
 
@@ -69,15 +58,13 @@ local function grid_iteration(old_grid, new_grid, w, h)
   w, h = w or 15, h or 15
   for y = 0, h-1 do
     for x = 0, w-1 do
-      io.write(string.format("%4d", old_grid[y][x]))
-      new_grid[y][x] = ruleset( old_grid[y][x], neighbor_count(old_grid, y, x, h, w) )
+      new_grid[y*h + x] = ruleset( old_grid[y*h + x], neighbor_count(old_grid, y, x, h, w) )
     end
-    print''
   end
   for y = 0, h-1 do 
     for x = 0, w-1 do 
-      old_grid[y][x] = new_grid[y][x] -- grid data copy
-      new_grid[y][x] = 0              -- clean new grid data
+      old_grid[y*h + x] = new_grid[y*h + x] -- grid data copy
+      new_grid[y*h + x] = 0                 -- clean new grid data
     end
   end
 end
@@ -90,7 +77,7 @@ randomseed(os.time())
 
 local function test_by_hand()
   for i=1, 45 do
-    now[random(15)][random(15)] = 1  -- random seeding 45 cells
+    now[random(15)*15 + random(15)] = 1  -- random seeding 45 cells
   end
 
   while true do
@@ -102,21 +89,21 @@ end
 
 local function bench_test(n)
   for i=1, 45 do
-    now[random(15)][random(15)] = 1  -- random seeding 45 cells
+    now[random(15)*15 + random(15)] = 1  -- random seeding 45 cells
   end
   local function performance_test(n, now, new)
-    --print("Memory usage before first run: "..collectgarbage("count").." KiB.")
+    print("Memory usage before first run: "..collectgarbage("count").." KiB.")
     for i = 1, n do
       grid_iteration(now, new, 15, 15)
     end
-    --print("Memory usage after last run: "..collectgarbage("count").." KiB.")
+    print("Memory usage after last run: "..collectgarbage("count").." KiB.")
   end
   grid_print(now, 15, 15)
-  bench(string.format("Life's game most easy way %d iter: ", n), 
+  bench(string.format("Conway's Game of Life %d iterations: ", n),
         function() return performance_test(n, now, new) end)
   grid_print(now, 15, 15)
 end
 
-bench_test(2)
+bench_test(100000)
 
 --test_by_hand()

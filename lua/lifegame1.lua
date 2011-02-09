@@ -95,16 +95,18 @@ local function bench_test(n)
     now[random(15)+1][random(15)+1] = 1  -- random seeding
   end
   local function performance_test(n, now, new)
+    print("Memory usage before first run: "..collectgarbage("count").." KiB.")
     for i = 1, n do
       grid_iteration(now, new, 15, 15)
     end
+    print("Memory usage after last run: "..collectgarbage("count").." KiB.")
   end
   grid_print(now, 15, 15)
-  bench(string.format("Life's game most easy way %d iter: ", n), 
+  bench(string.format("Conway's Game of Life %d iterations: ", n), 
         function() return performance_test(n, now, new) end)
   grid_print(now, 15, 15)
 end
 
-bench_test(20000)
+bench_test(100000)
 
 --test_by_hand()
