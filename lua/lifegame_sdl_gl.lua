@@ -13,72 +13,83 @@ local random = function(n)
 end
 
 local function new_grid(w, h) 
-  local grid = ffi.new("char[?]["..(w+2).."]", h+2) -- added automatic padding
+  local grid = {}
+  w, h = w or 15, h or 15
+  for y = 1, h+2 do
+    grid[y] = {}
+    for x = 1, w+2 do
+      grid[y][x] = 0
+    end
+  end
   return grid
 end
 
 local function grid_print(grid, w, h)
   w, h = w or 15, h or 15
   if not grid then return end
-  for y = 1, h do
-    for x = 1, w do 
+  for y = 2, h+1 do
+    for x = 2, w+1 do 
       io.write(string.format("%d ", grid[y][x]))
     end
     print()
   end
 end
 
---local dir = ffi.new("char[8][2]", {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}})
 local function neighbor_count(old, y, x, h, w)
   --[[local count = 0
-  for i=0, 7 do
-    local ny, nx = y + dir[i][0], x + dir[i][1]
+  for i=1, #dir do
+    local ny, nx = y + dir[i][1], x + dir[i][2]
     if ny < 1 then ny = h
     elseif ny > h then ny = 1 end
     if nx < 1 then nx = w
     elseif nx > w then nx = 1 end
-    if old[ny][nx] > 0 then count = count + 1 end
+    if old_grid[ny][nx] > 0 then count = count + 1 end
   end]]
   local count = (old[y-1][x-1] + old[y-1][x] + old[y-1][x+1]) +
-                (old[ y ][x-1] +               old[ y ][x+1]) +
+                (old[y][x-1]   +               old[y][x+1])   +
                 (old[y+1][x-1] + old[y+1][x] + old[y+1][x+1])
   return count
 end
 
-local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0});
-local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0}); 
+local rule1 = {0, 0, 1, 1, 0, 0, 0, 0, 0}
+local rule2 = {0, 0, 0, 1, 0, 0, 0, 0, 0}
 local function ruleset(now, n)
-  return now > 0 and rule1[n] or rule2[n]
+  return now > 0 and rule1[n+1] or rule2[n+1]
 end
 
 local function wrap_padding(old, w, h)
   w, h = w or 15, h or 15
   -- side wrapping.
-  for x = 2, w-1 do 
-    old[h+1][x] = old[1][x]
-    old[ 0 ][x] = old[h][x]
+  for x = 3, w do 
+    old[h+2][x] = old[ 2 ][x]
+    old[ 1 ][x] = old[h+1][x]
   end
-  for y = 2, h-1 do 
-    old[y][w+1] = old[y][1]
-    old[y][ 0 ] = old[y][w]
+  for y = 3, h do 
+    old[y][w+2] = old[y][ 2 ]
+    old[y][ 1 ] = old[y][w+1]
   end
   -- .. and corner wrapping, obviously I am too stupid.
-  old[1][w+1], old[h+1][1], old[h+1][w+1] = old[1][1], old[1][1], old[1][1]
-  old[1][0],   old[h+1][0], old[h+1][w]   = old[1][w], old[1][w], old[1][w]
-  old[0][1],   old[0][w+1], old[h][w+1]   = old[h][1], old[h][1], old[h][1]
-  old[0][0],   old[0][w],   old[h][0]     = old[h][w], old[h][w], old[h][w]
+  local tl, tr, bl, br = old[2][2], old[2][w+1], old[h+1][2], old[h+1][w+1]
+  old[2][w+2], old[h+2][2], old[h+2][w+2] = tl, tl, tl
+  old[2][1],   old[h+2][1], old[h+2][w+1] = tr, tr, tr
+  old[1][2],   old[1][w+2], old[h+1][w+2] = bl, bl, bl
+  old[1][1],   old[1][w+1], old[h+1][1]   = br, br, br
 end
 
 local function grid_iteration(old_grid, new_grid, w, h)
   w, h = w or 15, h or 15
-  wrap_padding(old_grid, w, h)
-  for y = 1, h do
-    for x = 1, w do
+  wrap_padding(old_grid)
+  for y = 2, h+1 do
+    for x = 2, w+1 do
       new_grid[y][x] = ruleset( old_grid[y][x], neighbor_count(old_grid, y, x, h, w) )
     end
   end
-  ffi.copy(old_grid, new_grid, (w+2)*(h+2))
-  ffi.fill(new_grid, (w+2)*(h+2)) 
+  for y = 1, h+2 do 
+    for x = 1, w+2 do 
+      old_grid[y][x] = new_grid[y][x] -- grid data copy
+      new_grid[y][x] = 0              -- clean new grid data
+    end
+  end
 end
 ----------------
 
