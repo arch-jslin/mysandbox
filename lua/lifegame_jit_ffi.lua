@@ -1,7 +1,5 @@
 -- KISS conway's game of life impl ---------------------------
 -- added LuaJIT FFI usages -----------------------------------
-  -- The most annoying change would be zero-based / one-based scalar type differences.
-  -- The reference escape seemed come from function neighbor_count, so I am using
   -- auto-padding and copy the edge for wrap around.
 
 local ffi = require "ffi"
