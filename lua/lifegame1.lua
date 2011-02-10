@@ -102,7 +102,7 @@ randomseed(os.time())
 
 local function test_by_hand()
   for i=1, 80 do
-    now[random(15)+2][random(15)+2] = 1  -- random seeding
+    now[random(20)+2][random(20)+2] = 1  -- random seeding
   end
 
   while true do
@@ -114,7 +114,7 @@ end
 
 local function bench_test(n)
   for i=1, 80 do
-    now[random(15)+2][random(15)+2] = 1  -- random seeding
+    now[random(20)+2][random(20)+2] = 1  -- random seeding
   end
   local function performance_test(n, now, new)
     print("Memory usage before first run: "..collectgarbage("count").." KiB.")
