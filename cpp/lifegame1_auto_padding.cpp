@@ -55,7 +55,8 @@ void grid_iteration(T (&old_grid)[H][W], T (&new_grid)[H][W])
     wrap_padding(old_grid);
     for( size_t y = 1; y < H-1; ++y )
         for( size_t x = 1; x < W-1; ++x )
-            new_grid[y][x] = ruleset( old_grid[y][x], neighbor_count(old_grid, y, x) );
+            //new_grid[y][x] = ruleset( old_grid[y][x], neighbor_count(old_grid, y, x) );
+            new_grid[y][x] = ((old_grid[y][x] << 2 + 8) >> neighbor_count(old_grid, y, x)) & 1;
 
     for( size_t y = 0; y < H; ++y )
         for( size_t x = 0; x < W; ++x ) {

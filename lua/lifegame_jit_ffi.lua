@@ -81,18 +81,19 @@ local function wrap_padding(old, w, h)
   old[  0    +  0 ], old[   0     + w ], old[last2row +  0 ] = old[br], old[br], old[br]
 end
 
-local function grid_iteration(old_grid, new_grid, w, h)
+local function grid_iteration(old, new, w, h)
   w, h = w or 15, h or 15
   local real_h = h+2
   local len = (w+2)*real_h
-  wrap_padding(old_grid, w, h)
+  wrap_padding(old, w, h)
   for y = 1, h do
     for x = 1, w do
-      new_grid[y*real_h + x] = ruleset( old_grid[y*real_h + x], neighbor_count(old_grid, y, x, h, w) )
+      --new[y*real_h + x] = ruleset( old[y*real_h + x], neighbor_count(old, y, x, h, w) )
+      new[y*real_h + x] = bit.band(bit.rshift(bit.lshift(old[y*real_h + x],2)+8, neighbor_count(old, y, x, h, w)), 1)
     end
   end
-  ffi.copy(old_grid, new_grid, len)
-  ffi.fill(new_grid, len) 
+  ffi.copy(old, new, len)
+  ffi.fill(new, len) 
 end
 
 ---------
@@ -124,10 +125,10 @@ local function bench_test(n)
     end
     print("Memory usage after last run: "..collectgarbage("count").." KiB.")
   end
-  grid_print(now, 20, 20)
+  --grid_print(now, 20, 20)
   bench(string.format("Conway's Game of Life %d iterations: ", n),
         function() return performance_test(n, now, new) end)
-  grid_print(now, 20, 20)
+  --grid_print(now, 20, 20)
 end
 
 bench_test(100000)
