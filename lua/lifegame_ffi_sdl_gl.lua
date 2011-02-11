@@ -135,8 +135,7 @@ function game:init()
   end
 end
 
-function game:run()
-  local event = ffi.new("SDL_Event")
+function game:run(event)
   if SDL.SDL_PollEvent(event) == 1 then
     local etype = event.type
     if etype == SDL.SDL_QUIT then
@@ -186,7 +185,8 @@ end
 
 local function main()
   game:init()
-  while game:run() do
+  local event = ffi.new("SDL_Event")
+  while game:run(event) do
     game:update(os.clock())
     game:render()
   end
