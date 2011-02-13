@@ -4,7 +4,12 @@ ffi.cdef( io.open('c:\\libs\\cpp\\SDL\\ffi_SDL.h', 'r'):read('*a'))
 local SDL = ffi.load('c:\\libs\\cpp\\SDL\\SDL')
 package.path = "c:\\local_gitrepo\\luajit-opencl"..package.path
 local GL = require "gl"
-local GLU= require "glu"
+ffi.cdef[[
+typedef int (__attribute__((__stdcall__)) *PROC)();
+typedef const char *LPCCH,*PCSTR,*LPCSTR;
+typedef void (__attribute__((__stdcall__)) * PFNGLGENBUFFERSARBPROC) (GLsizei n, GLuint *buffers);
+PROC __attribute__((__stdcall__)) wglGetProcAddress(LPCSTR);
+]]
 ----------------
 local randomseed, rand, floor, abs = math.randomseed, math.random, math.floor, math.abs
 local random = function(n) 
@@ -69,16 +74,17 @@ local function wrap_padding(old, w, h)
   old[0][0],   old[0][w],   old[h][0]     = old[h][w], old[h][w], old[h][w]
 end
 
-local function grid_iteration(old_grid, new_grid, w, h)
+local function grid_iteration(old, new, w, h)
   w, h = w or 15, h or 15
-  wrap_padding(old_grid, w, h)
+  wrap_padding(old, w, h)
   for y = 1, h do
     for x = 1, w do
-      new_grid[y][x] = ruleset( old_grid[y][x], neighbor_count(old_grid, y, x, h, w) )
+      --new_grid[y][x] = ruleset( old_grid[y][x], neighbor_count(old_grid, y, x, h, w) )
+      new[y][x] = bit.band(bit.rshift(bit.lshift(old[y][x],2)+8, neighbor_count(old, y, x, h, w)), 1)
     end
   end
-  ffi.copy(old_grid, new_grid, (w+2)*(h+2))
-  ffi.fill(new_grid, (w+2)*(h+2)) 
+  ffi.copy(old, new, (w+2)*(h+2))
+  ffi.fill(new, (w+2)*(h+2)) 
 end
 ----------------
 
@@ -163,14 +169,15 @@ function game:render()
   GL.glLoadIdentity();
   local csizep = self.csize
   local csize  = csizep-1
+  GL.glPointSize(csize);
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
       if self.old[y+1][x+1] == 1 then
-        GL.glBegin(GL.GL_QUADS);
+        GL.glBegin(GL.GL_POINTS);
           GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep        , y*csizep        , 0);
-          GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep + csize, y*csizep        , 0);
-          GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep + csize, y*csizep + csize, 0);
-          GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep        , y*csizep + csize, 0);
+          --GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep + csize, y*csizep        , 0);
+          --GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep + csize, y*csizep + csize, 0);
+          --GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep        , y*csizep + csize, 0);
         GL.glEnd();
       end
     end
@@ -184,7 +191,14 @@ function game:destroy()
 end
 
 local function main()
+
   game:init()
+
+  local vboID = ffi.new("unsigned int[1]", {0})
+  local glGenBuffersARB = ffi.typeof("PFNGLGENBUFFERSARBPROC")
+  local fun = ffi.cast("int", GL.wglGetProcAddress("glGenBuffersARB"))
+  fun(1, vboID)
+
   local event = ffi.new("SDL_Event")
   while game:run(event) do
     game:update(os.clock())
