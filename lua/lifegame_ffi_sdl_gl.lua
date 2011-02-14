@@ -33,17 +33,7 @@ local function grid_print(grid, w, h)
   end
 end
 
---local dir = ffi.new("char[8][2]", {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}})
 local function neighbor_count(old, y, x, h, w)
-  --[[local count = 0
-  for i=0, 7 do
-    local ny, nx = y + dir[i][0], x + dir[i][1]
-    if ny < 1 then ny = h
-    elseif ny > h then ny = 1 end
-    if nx < 1 then nx = w
-    elseif nx > w then nx = 1 end
-    if old[ny][nx] > 0 then count = count + 1 end
-  end]]
   local count = (old[y-1][x-1] + old[y-1][x] + old[y-1][x+1]) +
                 (old[ y ][x-1] +               old[ y ][x+1]) +
                 (old[y+1][x-1] + old[y+1][x] + old[y+1][x+1])
@@ -52,8 +42,10 @@ end
 
 local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0});
 local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0}); 
-local function ruleset(now, n)
-  return now > 0 and rule1[n] or rule2[n]
+local function ruleset(now, count)
+  local band, rsh, lsh = bit.band, bit.rshift, bit.lshift
+  --return now > 0 and rule1[count] or rule2[count]
+  return band(rsh(lsh(now, 2) + 8, count), 1)
 end
 
 local function wrap_padding(old, w, h)
@@ -79,8 +71,8 @@ local function grid_iteration(old, new, w, h)
   wrap_padding(old, w, h)
   for y = 1, h do
     for x = 1, w do
-      --new_grid[y][x] = ruleset( old_grid[y][x], neighbor_count(old_grid, y, x, h, w) )
-      new[y][x] = bit.band(bit.rshift(bit.lshift(old[y][x],2)+8, neighbor_count(old, y, x, h, w)), 1)
+      local res = ruleset( old[y][x], neighbor_count(old, y, x, h, w) )
+      new[y][x] = res
     end
   end
   ffi.copy(old, new, (w+2)*(h+2))
@@ -157,7 +149,7 @@ function game:run(event)
 end
 
 function game:update(t)
-  --print(t - self.t)
+  print(t - self.t)
   --if t - self.t > 0.033 then
     grid_iteration(self.old, self.new, self.model_w, self.model_h)
     self.t = t
@@ -173,6 +165,7 @@ function game:render()
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
       if self.old[y+1][x+1] == 1 then
+        --GL.glBegin(GL.GL_QUADS);
         GL.glBegin(GL.GL_POINTS);
           GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep        , y*csizep        , 0);
           --GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep + csize, y*csizep        , 0);
@@ -196,7 +189,7 @@ local function main()
 
   local vboID = ffi.new("unsigned int[1]", {0})
   local glGenBuffersARB = ffi.typeof("PFNGLGENBUFFERSARBPROC")
-  local fun = ffi.cast("int", GL.wglGetProcAddress("glGenBuffersARB"))
+  local fun = ffi.cast(glGenBuffersARB, GL.wglGetProcAddress("glGenBuffersARB"))
   fun(1, vboID)
 
   local event = ffi.new("SDL_Event")

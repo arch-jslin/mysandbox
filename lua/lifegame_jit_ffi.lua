@@ -88,8 +88,8 @@ local function grid_iteration(old, new, w, h)
   wrap_padding(old, w, h)
   for y = 1, h do
     for x = 1, w do
-      --new[y*real_h + x] = ruleset( old[y*real_h + x], neighbor_count(old, y, x, h, w) )
-      new[y*real_h + x] = bit.band(bit.rshift(bit.lshift(old[y*real_h + x],2)+8, neighbor_count(old, y, x, h, w)), 1)
+      new[y*real_h + x] = ruleset( old[y*real_h + x], neighbor_count(old, y, x, h, w) )
+      --new[y*real_h + x] = bit.band(bit.rshift(bit.lshift(old[y*real_h + x],2)+8, neighbor_count(old, y, x, h, w)), 1)
     end
   end
   ffi.copy(old, new, len)

@@ -53,8 +53,10 @@ end
 
 local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0});
 local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0}); 
-local function ruleset(now, n)
-  return now > 0 and rule1[n] or rule2[n]
+local function ruleset(now, count)
+  local band, rsh, lsh = bit.band, bit.rshift, bit.lshift
+  --return now > 0 and rule1[count] or rule2[count]
+  return band(rsh(lsh(now, 2) + 8, count), 1)
 end
 
 local function wrap_padding(old, w, h)
@@ -80,8 +82,8 @@ local function grid_iteration(old, new, w, h)
   wrap_padding(old, w, h)
   for y = 1, h do
     for x = 1, w do
-      --new[y][x] = ruleset( old[y][x], neighbor_count(old, y, x, h, w) )
-      new[y][x] = bit.band(bit.rshift(bit.lshift(old[y][x],2)+8, neighbor_count(old, y, x, h, w)), 1)
+      local res = ruleset(old[y][x], neighbor_count(old, y, x, h, w))
+      new[y][x] = res -- currently you have to be careful about assignments to n-dimensional VLA
     end
   end
   ffi.copy(old, new, (w+2)*(h+2))
