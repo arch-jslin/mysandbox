@@ -1,14 +1,23 @@
-
 package.path = [[c:\local_gitrepo\luajit-opencl]]..package.path
+-- This sample make use of https://github.com/malkia/luajit-opencl package
+-- You'll need it to run the script. This script demonstrate how to use
+-- LuaJIT2 FFI to integrate some simple SDL & GL function out-of-the-box.
+-- (well, almost.)
 
--- Pretty ugly for now, since LuaJIT2 FFI doesn't have a C-preprocessor, yet.
--- I don't do setmetatable(_G, {__index = ffi.C}) since I am not comfortable
--- with global namespace pollution.
+-- DON'T RUN THIS WITH OLDER VERIONS OF LUAJIT OR PlAIN LUA INTERPRETER,
+-- THE FFI CODE SEGMENTS ARE ALREADY ALL OVER THE PLACE, IT'S HOPELESS.
+-- THIS IS SOLELY FOR THE PURPOSE OF BENCHMARKING.
+
+-- The FFI usages are pretty ugly for now, since LuaJIT2 FFI doesn't have a 
+-- C-preprocessor, yet. I don't do setmetatable(_G, {__index = ffi.C}) so
+-- you'll see SDL.SDL_xxx and GL.GL_xxx everywhere. It's just that global
+-- namespace pollution makes me feel worse than duplicated namespaces.
 
 local ffi = require "ffi"
 local SDL = ffi.load([[c:\libs\cpp\SDL\SDL]])
 local GL = require "gl"
 ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
+
 -- Important: You'll have to generate that ffi_SDL.h yourself, using gcc -E:
 -- echo '#include <SDL.h>" > stub.c    
 -- gcc -I/path/to/SDL -E stub.c | grep -v '^#' > ffi_SDL.h 
@@ -30,15 +39,7 @@ ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
 --   by it to run completely in the interpreter. As a last note, LuaJIT's interpreter 
 --   is already faster than original Lua interpreter by about 2x-4x.
 
--- DON'T RUN THIS WITH OLDER VERIONS OF LUAJIT OR PlAIN LUA INTERPRETER,
--- THE FFI CODE SEGMENTS ARE ALREADY ALL OVER THE PLACE, IT'S HOPELESS.
--- THIS IS SOLELY FOR THE PURPOSE OF BENCHMARKING.
-
--- This sample make use of https://github.com/malkia/luajit-opencl package
--- You'll need it to run the script. This script demonstrate how to use
--- LuaJIT2 FFI to integrate some simple SDL & GL function out-of-the-box.
--- (well, almost.)
-
+------------------------------
 ffi.cdef[[
 typedef struct {GLfloat x,y,z;} SVertex;
 typedef int (__attribute__((__stdcall__)) *PROC)();
