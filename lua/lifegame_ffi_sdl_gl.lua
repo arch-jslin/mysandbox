@@ -9,6 +9,9 @@ local ffi = require "ffi"
 local SDL = ffi.load([[c:\libs\cpp\SDL\SDL]])
 local GL = require "gl"
 ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
+-- Important: You'll have to generate that ffi_SDL.h yourself, using gcc -E:
+-- echo '#include <SDL.h>" > stub.c    
+-- gcc -I/path/to/SDL -E stub.c | grep -v '^#' > ffi_SDL.h 
 
 -- Script usage:
 -- luajit lifegame_ffi_sdl_gl.lua <render_method 1~4> <cell_size> <width> <height> [no_model_jit]
