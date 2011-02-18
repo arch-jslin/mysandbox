@@ -30,8 +30,8 @@ ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
 --   by it to run completely in the interpreter. As a last note, LuaJIT's interpreter 
 --   is already faster than original Lua interpreter by about 2x-4x.
 
--- DON't RUN THIS WITH OLDER VERIONS OF LUAJIT OR PlAIN LUA INTERPRETER,
--- THE FFI CODE SEGMENTS ARE ALREADY ALL OVER THE PLACE, IT HOPELESS.
+-- DON'T RUN THIS WITH OLDER VERIONS OF LUAJIT OR PlAIN LUA INTERPRETER,
+-- THE FFI CODE SEGMENTS ARE ALREADY ALL OVER THE PLACE, IT'S HOPELESS.
 -- THIS IS SOLELY FOR THE PURPOSE OF BENCHMARKING.
 
 -- This sample make use of https://github.com/malkia/luajit-opencl package
