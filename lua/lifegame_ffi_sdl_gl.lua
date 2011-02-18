@@ -248,15 +248,15 @@ function game:render(render_)
 end
 
 local function render1(self, csizep)
+  GL.glBegin(GL.GL_POINTS);
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
       if self.old[y+1][x+1] > 0 then
-        GL.glBegin(GL.GL_POINTS);
-          GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep, y*csizep, 0);
-        GL.glEnd();
+        GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep, y*csizep, 0);
       end
     end
   end
+  GL.glEnd();
 end
 
 local function render2(self, csizep)
@@ -359,10 +359,10 @@ local function main()
   local event = ffi.new("SDL_Event")
   while game:run(event) do
     game:update(os.clock())
-    --game:render(render1)
-    --game:render(render2)
-    --game:render(render3)
-    game:render(render4)
+    --game:render(render1) -- draw GL_POINTS
+    --game:render(render2) -- draw using Vertex Array
+    game:render(render3)   -- draw using VBO
+    --game:render(render4) -- draw using PBO
   end
   game:destroy()
 end
