@@ -165,9 +165,6 @@ function game:init()
   self.NO_MODEL_JIT = arg[5] == 'no_model_jit' and true or false  
   self.WIDTH        = self.model_w * self.csize
   self.HEIGHT       = self.model_h * self.csize
-  self.INIT_OPTION  = 0x0000FFFF -- SDL_INIT_EVERYTHING
-  self.VIDEO_OPTION = bit.bor(bit.bor(0x01, SDL.SDL_GL_DOUBLEBUFFER), 0x02)
-                      -- SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL
   self.t            = os.clock()
   self.iter         = 0
   
@@ -271,6 +268,9 @@ end
 ---- SDL & GL setup function, GL-heavy rendering functions (pretty ugly)
 
 function game:setupSDL()
+  self.INIT_OPTION  = 0x0000FFFF -- SDL_INIT_EVERYTHING
+  self.VIDEO_OPTION = bit.bor(bit.bor(0x01, SDL.SDL_GL_DOUBLEBUFFER), 0x02)
+                      -- SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL
   SDL.SDL_Init(self.INIT_OPTION)
   SDL.SDL_WM_SetCaption("SDL + OpenGL Game of Life", "SDL")
   SDL.SDL_GL_SetAttribute(SDL.SDL_GL_RED_SIZE,        8);
