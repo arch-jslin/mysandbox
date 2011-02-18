@@ -4,6 +4,7 @@ local ffi = require "ffi"
 local SDL = ffi.load([[c:\libs\cpp\SDL\SDL]])
 local GL = require "gl"
 ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
+--(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
 ffi.cdef[[
 typedef int (__attribute__((__stdcall__)) *PROC)();
 typedef const char *LPCCH,*PCSTR,*LPCSTR;
@@ -15,6 +16,7 @@ typedef void (__attribute__((__stdcall__)) * PFNGLDELETEBUFFERSARBPROC) (GLsizei
 typedef void (__attribute__((__stdcall__)) * PFNGLGETBUFFERPARAMETERIVARBPROC) (GLenum target, GLenum pname, GLint *params);
 typedef GLvoid* (__attribute__((__stdcall__)) * PFNGLMAPBUFFERARBPROC) (GLenum target, GLenum access);
 typedef GLboolean (__attribute__((__stdcall__)) * PFNGLUNMAPBUFFERARBPROC) (GLenum target);
+typedef void (__attribute__((__stdcall__)) * PFNWGLSWAPINTERVALEXTPROC) (int option);
 PROC __attribute__((__stdcall__)) wglGetProcAddress(LPCSTR);
 ]]
 local GLext = {}
@@ -28,6 +30,8 @@ local function setupVBOAPI()
   t.glGetBufferParameterivARB = ffi.cast("PFNGLGETBUFFERPARAMETERIVARBPROC", GL.wglGetProcAddress("glGetBufferParameterivARB")) -- return various parameters of VBO
   t.glMapBufferARB = ffi.cast("PFNGLMAPBUFFERARBPROC", GL.wglGetProcAddress("glMapBufferARB")) -- map VBO procedure
   t.glUnmapBufferARB = ffi.cast("PFNGLUNMAPBUFFERARBPROC", GL.wglGetProcAddress("glUnmapBufferARB")) -- unmap the VBO procedure
+  t.wglSwapIntervalEXT = ffi.cast("PFNWGLSWAPINTERVALEXTPROC", GL.wglGetProcAddress("wglSwapIntervalEXT")) -- for opengl vsync
+  t.wglSwapIntervalEXT(0)
   return t
 end
 ----------------
@@ -38,7 +42,19 @@ local random = function(n)
   return floor(rand()*abs(n)) 
 end
 
-local function new_grid(w, h) 
+local function new_grid(w, h) -- this will setup zero-based lua table for testing purposes.
+  local grid = {}             -- zero-based is ok with LuaJIT interpreter, but not plain Lua interpreter
+  assert(w ~= 0 and h ~= 0)
+  for y = 0, h+1 do
+    grid[y] = {}
+    for x = 0, w+1 do
+      grid[y][x] = 0
+    end
+  end
+  return grid
+end
+
+local function new_grid_ffi(w, h) 
   local grid = ffi.new("char[?]["..(w+2).."]", h+2) -- added automatic padding
   return grid
 end
@@ -61,10 +77,10 @@ local function neighbor_count(old, y, x, h, w)
   return count
 end
 
-local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0});
-local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0}); 
+--local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0});
+--local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0}); 
+--what if we need different rule sets? how to do that with bitwise trick??
 local function ruleset(now, count)
-  --return now > 0 and rule1[count] or rule2[count]
   return band(rsh(lsh(now, 2) + 8, count), 1)
 end
 
@@ -87,46 +103,43 @@ local function wrap_padding(old, w, h)
 end
 
 local function grid_iteration(old, new, w, h, iter)
+
+  if arg[5] == 'no_model_jit' then jit.off(true, true) end 
+
   w, h = w or 15, h or 15
   wrap_padding(old, w, h)
   for y = 1, h do
     for x = 1, w do
       local res = ruleset( old[y][x], neighbor_count(old, y, x) )
-      new[y][x] = res --it's either zero or iter
-      --io.write(string.format("%d ",res))
+      new[y][x] = res
     end
-    --io.write("\n")
   end
-  --ffi.copy(old, new, (w+2)*(h+2))
-  --ffi.fill(new, (w+2)*(h+2)) 
+  -- new and old can be used interchangably, no need to copy here
 end
 
 ----------------
 
 local game = {}
 
-game.WIDTH        = tonumber(arg[2]) or 1200
-game.HEIGHT       = tonumber(arg[3]) or 900
+game.WIDTH        = tonumber(arg[3]) or 1200
+game.HEIGHT       = tonumber(arg[4]) or 900
 game.INIT_OPTION  = 0x0000FFFF -- SDL_INIT_EVERYTHING
 game.VIDEO_OPTION = -- 0x01 + 0x40000000
                     bit.bor(bit.bor(0x01, SDL.SDL_GL_DOUBLEBUFFER), 0x02)
                     -- SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL
 game.t            = os.clock()
-game.csize        = tonumber(arg[1]) or 2
+game.csize        = tonumber(arg[2]) or 2
 game.model_w      = game.WIDTH / game.csize
 game.model_h      = game.HEIGHT/ game.csize
 game.iter         = 0
 
-ffi.cdef[[
-typedef struct {GLfloat x,y,z;} SVertex;
-typedef struct {GLfloat r,g,b;} SColor; 
-]]
+ffi.cdef[[ typedef struct {GLfloat x,y,z;} SVertex; ]]
 
 game.vboID1       = ffi.new("unsigned int[1]", 0)
 game.pboID1       = ffi.new("unsigned int[1]", 0)
 game.texID1       = ffi.new("unsigned int[1]", 0)
 game.vertices = ffi.new("SVertex[?]", game.model_w * game.model_h, {{0,0,0}} );
-game.bitmap   = ffi.new("unsigned char[?]", game.WIDTH * game.HEIGHT * 4, {0} );
+game.bitmap   = ffi.new("unsigned char[?]", game.model_w * game.model_h * 4, {0} );
 
 function game:init()
 
@@ -161,13 +174,18 @@ function game:init()
   GL.glEnable(GL.GL_TEXTURE_2D);
   GL.glLoadIdentity();
   
-  self.old = new_grid(self.model_w, self.model_h)
-  self.new = new_grid(self.model_w, self.model_h)
+  if arg[5] == 'no_model_jit' then
+    self.old = new_grid(self.model_w, self.model_h)
+    self.new = new_grid(self.model_w, self.model_h)
+  else 
+    self.old = new_grid_ffi(self.model_w, self.model_h)
+    self.new = new_grid_ffi(self.model_w, self.model_h)
+  end  
+  
   self.grids = {}
   self.grids[0], self.grids[1] = self.old, self.new
   
   for i = 1, self.model_w*self.model_h / 9 do 
-    --self.old[random(self.model_h)+1][random(self.model_w)+1] = 1 
     self.grids[0][random(self.model_h)+1][random(self.model_w)+1] = 1 
   end
   
@@ -198,12 +216,13 @@ function game:init()
   GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
   GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP);
   GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP);
-  GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.WIDTH, self.HEIGHT, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, self.bitmap);
+  GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.model_w, self.model_h, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, self.bitmap);
   GL.glBindTexture(GL.GL_TEXTURE_2D, 0) 
   GLext.glGenBuffersARB(1, self.pboID1)
   GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0]);
   GLext.glBufferDataARB(GL.GL_PIXEL_UNPACK_BUFFER, ffi.sizeof(self.bitmap), ffi.cast("void*", ffi.new("int", 0)), GL.GL_STREAM_DRAW);
-  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, 0);
+  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, 0); 
+  --]]
   print("...")
 end
 
@@ -224,10 +243,9 @@ end
 
 function game:update(t)
   print(t - self.t)
-  --if t - self.t > 0.100 then
+  --if t - self.t > 1.000 then
     --grid_iteration(self.old, self.new, self.model_w, self.model_h, self.iter)
-    self.iter = self.iter + 1
-    self.iter = self.iter % 256
+    self.iter = self.iter % 256 + 1
     local new_index = self.iter % 2
     local old_index = bit.bxor(new_index, 1)
     grid_iteration(self.grids[old_index], self.grids[new_index], self.model_w, self.model_h, self.iter)
@@ -248,10 +266,12 @@ function game:render(render_)
 end
 
 local function render1(self, csizep)
+  local new_index = self.iter%2
+  --local old_index = bit.bxor(new_index, 1)
   GL.glBegin(GL.GL_POINTS);
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
-      if self.old[y+1][x+1] > 0 then
+      if self.grids[ new_index ][y+1][x+1] > 0 then
         GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep, y*csizep, 0);
       end
     end
@@ -260,13 +280,14 @@ local function render1(self, csizep)
 end
 
 local function render2(self, csizep)
+  --jit.off(true, true)
   local length = 0
   local new_index = self.iter%2
-  local old_index = bit.bxor(new_index, 1)
+  --local old_index = bit.bxor(new_index, 1)
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
       --if self.old[y+1][x+1] > 0 then
-      if self.grids[ old_index ][y+1][x+1] > 0 then
+      if self.grids[ new_index ][y+1][x+1] > 0 then
         self.vertices[length].x = x*csizep -- don't cause massive GC here, no temporaries!!!
         self.vertices[length].y = y*csizep 
         self.vertices[length].z = 0
@@ -287,12 +308,10 @@ local function render3(self, csizep)
   local length = 0
   local dst = ffi.cast("SVertex*", GLext.glMapBufferARB(GL.GL_ARRAY_BUFFER, GL.GL_WRITE_ONLY))
   if tonumber(ffi.cast("int", dst)) ~= 0 then 
-    local new_index = self.iter%2
-    local old_index = bit.bxor(new_index, 1)
+    local new_index = self.iter % 2
     for y = 0, self.model_h-1 do
       for x = 0, self.model_w-1 do
-        --if self.old[y+1][x+1] > 0 then
-        if self.grids[ old_index ][y+1][x+1] > 0 then
+        if self.grids[ new_index ][y+1][x+1] > 0 then
           dst[length].x = x*csizep
           dst[length].y = y*csizep -- don't cause massive GC here, no temporaries!!!
           dst[length].z = 0
@@ -305,36 +324,36 @@ local function render3(self, csizep)
   GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
   GL.glVertexPointer(3, GL.GL_FLOAT, 0, ffi.cast("void*", ffi.new("int",0)))
   GL.glDrawArrays(GL.GL_POINTS, 0, length)
-  GL.glDisableClientState(GL.GL_VERTEX_ARRAY)
-  GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, 0)      -- release the VBO
+  GL.glDisableClientState(GL.GL_VERTEX_ARRAY)  -- don't have to draw vertices that are not assigned ( > length )
+  GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, 0) -- release the VBO
 end
 
 local function render4(self, csizep)
   -- copy texture image
   GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0])
   GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0])
-  GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, self.WIDTH, self.HEIGHT, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, ffi.cast("void*", ffi.new("int", 0)) )
+  GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, self.model_w, self.model_h, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, ffi.cast("void*", ffi.new("int", 0)) )
   -- update texture image
   GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0])
-  GLext.glBufferDataARB(GL.GL_PIXEL_UNPACK_BUFFER, ffi.sizeof(self.bitmap), ffi.cast("void*", ffi.new("int", 0)), GL.GL_STREAM_DRAW)
+  -- we don't need to use GLext.glBufferDataARB to flush data here. the colors from last iteration are still used.
   local dst = ffi.cast("unsigned int*", GLext.glMapBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, GL.GL_WRITE_ONLY) )
   
   if tonumber(ffi.cast("int", dst)) ~= 0 then 
-    local new_index = self.iter%2
+    local new_index = self.iter % 2
     local old_index = bit.bxor(new_index, 1)
-    ffi.fill(dst, ffi.sizeof(self.bitmap)) -- make it all black
     for y = 0, self.model_h-1 do
       for x = 0, self.model_w-1 do
-        --if self.old[y+1][x+1] > 0 then
-        if self.grids[ old_index ][y+1][x+1] > 0 then
-          --GL.glDrawPixels(self.WIDTH, self.HEIGHT, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, dst)
-          dst[(y*csizep)*self.WIDTH + x*csizep] = 0xffffffff --(white dot)
-        end
+        if self.grids[ new_index ][y+1][x+1] > 0 then
+          if self.grids[ old_index ][y+1][x+1] == 0 then
+            dst[y*self.model_w + x] = 0xff + lsh(x/self.model_w*256, 16) + lsh(y/self.model_h*256, 8) + (self.iter)
+          end
+        else dst[y*self.model_w + x] = 0 end
       end
     end
     GLext.glUnmapBufferARB(GL.GL_PIXEL_UNPACK_BUFFER)
   end  
   GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, 0)
+  
   -- draw a plane with texture
   GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0]);
   GL.glColor4f(1, 1, 1, 1);
@@ -356,13 +375,19 @@ end
 
 local function main()
   game:init()
+  local render_ = function() game:render(render2) end -- draw Vertex Array
+  if arg[1] == '1' then
+    render_ = function() game:render(render1) end -- draw GL_POINTS
+  elseif arg[1] == '3' then
+    render_ = function() game:render(render3) end -- draw using VBO
+  elseif arg[1] == '4' then
+    render_ = function() game:render(render4) end -- draw using PBO (have colors)
+  end
+    
   local event = ffi.new("SDL_Event")
   while game:run(event) do
     game:update(os.clock())
-    --game:render(render1) -- draw GL_POINTS
-    --game:render(render2) -- draw using Vertex Array
-    game:render(render3)   -- draw using VBO
-    --game:render(render4) -- draw using PBO
+    render_()
   end
   game:destroy()
 end
