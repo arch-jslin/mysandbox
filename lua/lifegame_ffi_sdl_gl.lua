@@ -1,11 +1,45 @@
+
+-- Script usage:
+-- luajit lifegame_ffi_sdl_gl.lua <render_method 1~4> <cell_size> <width> <height> [no_model_jit]
+-- e.g luajit lifegame_ffi_sdl_gl.lua 2 2 1024 1024 no_model_jit
+
+-- render methods are GL_POINTS, GL VERTEX_ARRAY, VBO, PBO, respectively
+-- cell_size, width and height will decide the actual model's logical size,  
+--   => model_width, model_height = width / cell_size, height / cell_size
+--   please be sure that your input will not cause model width or height become 
+--   floating point, as I was too lazy and too hasty so I didn't check and 
+--   round it for you. And you can't optionally skip preceding options because 
+--   I am too lazy to handle that too.
+
+-- no_model_jit: in order to verify if model (in the sense of model/view abstraction) 
+--   performance, under the dominant factor of rendering threshold, will actually 
+--   matter or not, you can manually add 'no_model_jit' as a last option. It will 
+--   prevent the function "grid_iteration" and all subsequent calls from being 
+--   JIT-compiled, recursively. That will cause this function and functions called 
+--   by it to run completely in the interpreter. As a last note, LuaJIT's interpreter 
+--   is already faster than original Lua interpreter by about 2x-4x.
+
+-- DON't RUN THIS WITH OLDER VERIONS OF LUAJIT OR PlAIN LUA INTERPRETER,
+-- THE FFI CODE SEGMENTS ARE ALREADY ALL OVER THE PLACE, IT HOPELESS.
+-- THIS IS SOLELY FOR THE PURPOSE OF BENCHMARKING.
+
+-- This sample make use of https://github.com/malkia/luajit-opencl package
+-- You'll need it to run the script. This script demonstrate how to use
+-- LuaJIT2 FFI to integrate some simple SDL & GL function out-of-the-box.
+-- (well, almost.)
+
 package.path = [[c:\local_gitrepo\luajit-opencl]]..package.path
-----------------
+
+-- Pretty ugly for now, since LuaJIT2 FFI doesn't have a C-preprocessor, yet.
+-- I don't do setmetatable(_G, {__index = ffi.C}) since I am not comfortable
+-- with global namespace pollution.
+
 local ffi = require "ffi"
 local SDL = ffi.load([[c:\libs\cpp\SDL\SDL]])
 local GL = require "gl"
 ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
---(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
 ffi.cdef[[
+typedef struct {GLfloat x,y,z;} SVertex;
 typedef int (__attribute__((__stdcall__)) *PROC)();
 typedef const char *LPCCH,*PCSTR,*LPCSTR;
 typedef void (__attribute__((__stdcall__)) * PFNGLGENBUFFERSARBPROC) (GLsizei n, GLuint *buffers);
@@ -20,7 +54,7 @@ typedef void (__attribute__((__stdcall__)) * PFNWGLSWAPINTERVALEXTPROC) (int opt
 PROC __attribute__((__stdcall__)) wglGetProcAddress(LPCSTR);
 ]]
 local GLext = {}
-local function setupVBOAPI()
+local function setupARBAPI()
   local t = {}
   t.glGenBuffersARB = ffi.cast("PFNGLGENBUFFERSARBPROC", GL.wglGetProcAddress("glGenBuffersARB")) -- VBO Name Generation Procedure
   t.glBindBufferARB = ffi.cast("PFNGLBINDBUFFERARBPROC", GL.wglGetProcAddress("glBindBufferARB")) -- VBO Bind Procedure
@@ -34,7 +68,9 @@ local function setupVBOAPI()
   t.wglSwapIntervalEXT(0)
   return t
 end
-----------------
+
+---- Lua helper functions ------------
+
 local randomseed, rand, floor, abs = math.randomseed, math.random, math.floor, math.abs
 local band, rsh, lsh = bit.band, bit.rshift, bit.lshift
 local random = function(n) 
@@ -69,6 +105,8 @@ local function grid_print(grid, w, h)
     print()
   end
 end
+
+---- Game of Life abstract model --------------------
 
 local function neighbor_count(old, y, x, h, w)
   local count = ( old[y-1][x-1] + old[y-1][x] + old[y-1][x+1] ) +
@@ -117,62 +155,31 @@ local function grid_iteration(old, new, w, h, iter)
   -- new and old can be used interchangably, no need to copy here
 end
 
-----------------
+---- The game object ---------------------------------
 
 local game = {}
 
-game.WIDTH        = tonumber(arg[3]) or 1200
-game.HEIGHT       = tonumber(arg[4]) or 900
-game.INIT_OPTION  = 0x0000FFFF -- SDL_INIT_EVERYTHING
-game.VIDEO_OPTION = -- 0x01 + 0x40000000
-                    bit.bor(bit.bor(0x01, SDL.SDL_GL_DOUBLEBUFFER), 0x02)
-                    -- SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL
-game.t            = os.clock()
-game.csize        = tonumber(arg[2]) or 2
-game.model_w      = game.WIDTH / game.csize
-game.model_h      = game.HEIGHT/ game.csize
-game.iter         = 0
-
-ffi.cdef[[ typedef struct {GLfloat x,y,z;} SVertex; ]]
-
-game.vboID1       = ffi.new("unsigned int[1]", 0)
-game.pboID1       = ffi.new("unsigned int[1]", 0)
-game.texID1       = ffi.new("unsigned int[1]", 0)
-game.vertices = ffi.new("SVertex[?]", game.model_w * game.model_h, {{0,0,0}} );
-game.bitmap   = ffi.new("unsigned char[?]", game.model_w * game.model_h * 4, {0} );
-
 function game:init()
-
-  randomseed(os.time())
-
-  SDL.SDL_Init(self.INIT_OPTION)
-  SDL.SDL_WM_SetCaption("SDL + OpenGL Game of Life", "SDL")
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_RED_SIZE,        8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_GREEN_SIZE,      8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_BLUE_SIZE,       8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ALPHA_SIZE,      8);
-
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_DEPTH_SIZE,      16);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_BUFFER_SIZE,     32);
-
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_RED_SIZE,  8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_GREEN_SIZE,8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_BLUE_SIZE, 8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_ALPHA_SIZE,8);
-
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_MULTISAMPLEBUFFERS,  1);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_MULTISAMPLESAMPLES,  2);  
+  randomseed(os.time()) -- randomize at game initialization
+  self.WIDTH        = tonumber(arg[3]) or 1200
+  self.HEIGHT       = tonumber(arg[4]) or 900
+  self.INIT_OPTION  = 0x0000FFFF -- SDL_INIT_EVERYTHING
+  self.VIDEO_OPTION = bit.bor(bit.bor(0x01, SDL.SDL_GL_DOUBLEBUFFER), 0x02)
+                      -- SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL
+  self.t            = os.clock()
+  self.csize        = tonumber(arg[2]) or 2
+  self.model_w      = self.WIDTH / self.csize
+  self.model_h      = self.HEIGHT/ self.csize
+  self.iter         = 0
   
-  self.screen = SDL.SDL_SetVideoMode(self.WIDTH, self.HEIGHT, 32, self.VIDEO_OPTION)
+  self.vboID1       = ffi.new("unsigned int[1]", 0)
+  self.pboID1       = ffi.new("unsigned int[1]", 0)
+  self.texID1       = ffi.new("unsigned int[1]", 0)
+  self.vertices     = ffi.new("SVertex[?]", self.model_w * self.model_h, {{0,0,0}} );
+  self.bitmap       = ffi.new("unsigned char[?]", self.model_w * self.model_h * 4, {0} );  
   
-  GL.glClearColor(0, 0, 0, 0);
-  GL.glViewport(0, 0, self.WIDTH, self.HEIGHT);
-  GL.glMatrixMode(GL.GL_PROJECTION);
-  GL.glLoadIdentity();
-  GL.glOrtho(0, self.WIDTH, self.HEIGHT, 0, 1, -1);
-  GL.glMatrixMode(GL.GL_MODELVIEW);
-  GL.glEnable(GL.GL_TEXTURE_2D);
-  GL.glLoadIdentity();
+  self:setupSDL();
+  self:setupGL();
   
   if arg[5] == 'no_model_jit' then
     self.old = new_grid(self.model_w, self.model_h)
@@ -190,40 +197,10 @@ function game:init()
   end
   
   --setup OpenGL VBO API, need a query from wglGetProcAddress
-  GLext = setupVBOAPI()
-  
-  --create VBO
-  GLext.glGenBuffersARB(1, self.vboID1)
-  GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, self.vboID1[0])
-  GLext.glBufferDataARB(GL.GL_ARRAY_BUFFER, ffi.sizeof(self.vertices), self.vertices, GL.GL_STATIC_DRAW)
-  local buffersize = ffi.new("int[1]", 0)
-  GLext.glGetBufferParameterivARB(GL.GL_ARRAY_BUFFER, GL.GL_BUFFER_SIZE, buffersize)
-  assert( buffersize[0] == ffi.sizeof(self.vertices) )
-  GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, 0)
-  
-  --create Texture and PBO
-  GL.glShadeModel(GL.GL_FLAT);
-  GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);      -- 1-byte pixel alignment
-  GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);        -- 1-byte pixel alignment
-  GL.glEnable(GL.GL_TEXTURE_2D);
-  GL.glDisable(GL.GL_LIGHTING);
-  GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE);
-  GL.glEnable(GL.GL_COLOR_MATERIAL);
-  
-  GL.glGenTextures(1, self.texID1);
-  GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0]);
-  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP);
-  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP);
-  GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.model_w, self.model_h, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, self.bitmap);
-  GL.glBindTexture(GL.GL_TEXTURE_2D, 0) 
-  GLext.glGenBuffersARB(1, self.pboID1)
-  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0]);
-  GLext.glBufferDataARB(GL.GL_PIXEL_UNPACK_BUFFER, ffi.sizeof(self.bitmap), ffi.cast("void*", ffi.new("int", 0)), GL.GL_STREAM_DRAW);
-  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, 0); 
-  --]]
-  print("...")
+  GLext = setupARBAPI()
+  self:createVBO()      --create VBO ONLY AFTER you correctly setup ARB API
+  self:createTexture()  --create Texture for render4 usage (search for render4)
+  self:createPBO()      --create PBO
 end
 
 function game:run(event)
@@ -242,7 +219,7 @@ function game:run(event)
 end
 
 function game:update(t)
-  print(t - self.t)
+  print("Secs between updates: "..(t - self.t))
   --if t - self.t > 1.000 then
     --grid_iteration(self.old, self.new, self.model_w, self.model_h, self.iter)
     self.iter = self.iter % 256 + 1
@@ -265,9 +242,106 @@ function game:render(render_)
   SDL.SDL_GL_SwapBuffers();
 end
 
-local function render1(self, csizep)
+function game:destroy()
+  SDL.SDL_FreeSurface(self.screen)
+  SDL.SDL_Quit()
+  GLext.glDeleteBuffersARB(1, vboID1)
+end
+
+local render1, render2, render3, render4 -- pre-declare. to hide ugly code below
+local function main()                    -- main is called at the end of script
+  game:init()
+  local render_ = function() game:render(render2) end -- draw Vertex Array
+  if arg[1] == '1' then
+    render_ = function() game:render(render1) end -- draw GL_POINTS
+  elseif arg[1] == '3' then
+    render_ = function() game:render(render3) end -- draw using VBO
+  elseif arg[1] == '4' then
+    render_ = function() game:render(render4) end -- draw using PBO (have colors)
+  end
+    
+  local event = ffi.new("SDL_Event")
+  while game:run(event) do
+    game:update(os.clock())
+    render_()
+  end
+  game:destroy()
+end
+
+---- YOU HAVE BEEN WARNED: 
+---- SDL & GL setup function, GL-heavy rendering functions (pretty ugly)
+
+function game:setupSDL()
+  SDL.SDL_Init(self.INIT_OPTION)
+  SDL.SDL_WM_SetCaption("SDL + OpenGL Game of Life", "SDL")
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_RED_SIZE,        8);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_GREEN_SIZE,      8);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_BLUE_SIZE,       8);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ALPHA_SIZE,      8);
+
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_DEPTH_SIZE,      16);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_BUFFER_SIZE,     32);
+
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_RED_SIZE,  8);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_GREEN_SIZE,8);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_BLUE_SIZE, 8);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_ALPHA_SIZE,8);
+
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_MULTISAMPLEBUFFERS,  1);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_MULTISAMPLESAMPLES,  2);  
+  
+  self.screen = SDL.SDL_SetVideoMode(self.WIDTH, self.HEIGHT, 32, self.VIDEO_OPTION)
+end
+
+function game:setupGL()
+  GL.glClearColor(0, 0, 0, 0);
+  GL.glViewport(0, 0, self.WIDTH, self.HEIGHT);
+  GL.glMatrixMode(GL.GL_PROJECTION);
+  GL.glLoadIdentity();
+  GL.glOrtho(0, self.WIDTH, self.HEIGHT, 0, 1, -1);
+  GL.glMatrixMode(GL.GL_MODELVIEW);
+  GL.glEnable(GL.GL_TEXTURE_2D);
+  GL.glLoadIdentity();
+end
+
+function game:createVBO()
+  GLext.glGenBuffersARB(1, self.vboID1)
+  GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, self.vboID1[0])
+  GLext.glBufferDataARB(GL.GL_ARRAY_BUFFER, ffi.sizeof(self.vertices), self.vertices, GL.GL_STATIC_DRAW)
+  local buffersize = ffi.new("int[1]", 0)
+  GLext.glGetBufferParameterivARB(GL.GL_ARRAY_BUFFER, GL.GL_BUFFER_SIZE, buffersize)
+  assert( buffersize[0] == ffi.sizeof(self.vertices) )
+  GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, 0)
+end
+
+function game:createTexture()
+  GL.glShadeModel(GL.GL_FLAT);
+  GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);      -- 1-byte pixel alignment
+  GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);        -- 1-byte pixel alignment
+  GL.glEnable(GL.GL_TEXTURE_2D);
+  GL.glDisable(GL.GL_LIGHTING);
+  GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE);
+  GL.glEnable(GL.GL_COLOR_MATERIAL);
+  
+  GL.glGenTextures(1, self.texID1);
+  GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0]);
+  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
+  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
+  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP);
+  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP);
+  GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.model_w, self.model_h, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, self.bitmap);
+  GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+end
+
+function game:createPBO()
+  GLext.glGenBuffersARB(1, self.pboID1)
+  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0]);
+  GLext.glBufferDataARB(GL.GL_PIXEL_UNPACK_BUFFER, ffi.sizeof(self.bitmap), ffi.cast("void*", ffi.new("int", 0)), GL.GL_STREAM_DRAW);
+  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, 0); 
+end
+
+render1 = function (self, csizep)
   local new_index = self.iter%2
-  --local old_index = bit.bxor(new_index, 1)
   GL.glBegin(GL.GL_POINTS);
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
@@ -279,11 +353,9 @@ local function render1(self, csizep)
   GL.glEnd();
 end
 
-local function render2(self, csizep)
-  --jit.off(true, true)
+render2 = function (self, csizep)
   local length = 0
   local new_index = self.iter%2
-  --local old_index = bit.bxor(new_index, 1)
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
       --if self.old[y+1][x+1] > 0 then
@@ -303,7 +375,7 @@ local function render2(self, csizep)
   GL.glDisableClientState(GL.GL_VERTEX_ARRAY)
 end
 
-local function render3(self, csizep)
+render3 = function (self, csizep)
   GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, self.vboID1[0])  -- bind the VBO
   local length = 0
   local dst = ffi.cast("SVertex*", GLext.glMapBufferARB(GL.GL_ARRAY_BUFFER, GL.GL_WRITE_ONLY))
@@ -328,7 +400,7 @@ local function render3(self, csizep)
   GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, 0) -- release the VBO
 end
 
-local function render4(self, csizep)
+render4 = function (self, csizep)
   -- copy texture image
   GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0])
   GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0])
@@ -367,29 +439,10 @@ local function render4(self, csizep)
   GL.glBindTexture(GL.GL_TEXTURE_2D, 0);
 end
 
-function game:destroy()
-  SDL.SDL_FreeSurface(self.screen)
-  SDL.SDL_Quit()
-  GLext.glDeleteBuffersARB(1, vboID1)
-end
+---- END OF SUPER UGLY PART
+---- CALL MAIN
 
-local function main()
-  game:init()
-  local render_ = function() game:render(render2) end -- draw Vertex Array
-  if arg[1] == '1' then
-    render_ = function() game:render(render1) end -- draw GL_POINTS
-  elseif arg[1] == '3' then
-    render_ = function() game:render(render3) end -- draw using VBO
-  elseif arg[1] == '4' then
-    render_ = function() game:render(render4) end -- draw using PBO (have colors)
-  end
-    
-  local event = ffi.new("SDL_Event")
-  while game:run(event) do
-    game:update(os.clock())
-    render_()
-  end
-  game:destroy()
-end
+main() 
 
-main()
+
+
