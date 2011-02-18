@@ -1,4 +1,15 @@
 
+package.path = [[c:\local_gitrepo\luajit-opencl]]..package.path
+
+-- Pretty ugly for now, since LuaJIT2 FFI doesn't have a C-preprocessor, yet.
+-- I don't do setmetatable(_G, {__index = ffi.C}) since I am not comfortable
+-- with global namespace pollution.
+
+local ffi = require "ffi"
+local SDL = ffi.load([[c:\libs\cpp\SDL\SDL]])
+local GL = require "gl"
+ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
+
 -- Script usage:
 -- luajit lifegame_ffi_sdl_gl.lua <render_method 1~4> <cell_size> <width> <height> [no_model_jit]
 -- e.g luajit lifegame_ffi_sdl_gl.lua 2 2 1024 1024 no_model_jit
@@ -25,16 +36,6 @@
 -- LuaJIT2 FFI to integrate some simple SDL & GL function out-of-the-box.
 -- (well, almost.)
 
-package.path = [[c:\local_gitrepo\luajit-opencl]]..package.path
-
--- Pretty ugly for now, since LuaJIT2 FFI doesn't have a C-preprocessor, yet.
--- I don't do setmetatable(_G, {__index = ffi.C}) since I am not comfortable
--- with global namespace pollution.
-
-local ffi = require "ffi"
-local SDL = ffi.load([[c:\libs\cpp\SDL\SDL]])
-local GL = require "gl"
-ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
 ffi.cdef[[
 typedef struct {GLfloat x,y,z;} SVertex;
 typedef int (__attribute__((__stdcall__)) *PROC)();
