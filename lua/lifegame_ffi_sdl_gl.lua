@@ -4,12 +4,9 @@
 -- e.g luajit lifegame_ffi_sdl_gl.lua 2 2 1024 1024 no_model_jit
 
 -- render methods are GL_POINTS, GL VERTEX_ARRAY, VBO, PBO, respectively
--- cell_size, width and height will decide the actual model's logical size,  
---   => model_width, model_height = width / cell_size, height / cell_size
---   please be sure that your input will not cause model width or height become 
---   floating point, as I was too lazy and too hasty so I didn't check and 
---   round it for you. And you can't optionally skip preceding options because 
---   I am too lazy to handle that too.
+-- cell_size, width and height will decide the actual screen_size.
+--   => screen_size = logical_size * cell_size
+--   You can't optionally skip preceding options because I am too lazy to handle that.
 
 -- no_model_jit: in order to verify if model (in the sense of model/view abstraction) 
 --   performance, under the dominant factor of rendering threshold, will actually 
@@ -140,9 +137,9 @@ local function wrap_padding(old, w, h)
   old[0][0],   old[0][w],   old[h][0]     = old[h][w], old[h][w], old[h][w]
 end
 
-local function grid_iteration(old, new, w, h, iter)
+local function grid_iteration(old, new, w, h, opt)
 
-  if arg[5] == 'no_model_jit' then jit.off(true, true) end 
+  if opt then jit.off(true, true) end 
 
   w, h = w or 15, h or 15
   wrap_padding(old, w, h)
@@ -161,15 +158,17 @@ local game = {}
 
 function game:init()
   randomseed(os.time()) -- randomize at game initialization
-  self.WIDTH        = tonumber(arg[3]) or 1200
-  self.HEIGHT       = tonumber(arg[4]) or 900
+  self.RENDER_OPT   = tonumber(arg[1]) or 2 -- use Vertex Array as default
+  self.csize        = tonumber(arg[2]) or 2
+  self.model_w      = tonumber(arg[3]) or 120 
+  self.model_h      = tonumber(arg[4]) or 90 
+  self.NO_MODEL_JIT = arg[5] == 'no_model_jit' and true or false  
+  self.WIDTH        = self.model_w * self.csize
+  self.HEIGHT       = self.model_h * self.csize
   self.INIT_OPTION  = 0x0000FFFF -- SDL_INIT_EVERYTHING
   self.VIDEO_OPTION = bit.bor(bit.bor(0x01, SDL.SDL_GL_DOUBLEBUFFER), 0x02)
                       -- SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL
   self.t            = os.clock()
-  self.csize        = tonumber(arg[2]) or 2
-  self.model_w      = self.WIDTH / self.csize
-  self.model_h      = self.HEIGHT/ self.csize
   self.iter         = 0
   
   self.vboID1       = ffi.new("unsigned int[1]", 0)
@@ -181,7 +180,7 @@ function game:init()
   self:setupSDL();
   self:setupGL();
   
-  if arg[5] == 'no_model_jit' then
+  if self.NO_MODEL_JIT then
     self.old = new_grid(self.model_w, self.model_h)
     self.new = new_grid(self.model_w, self.model_h)
   else 
@@ -225,7 +224,7 @@ function game:update(t)
     self.iter = self.iter % 256 + 1
     local new_index = self.iter % 2
     local old_index = bit.bxor(new_index, 1)
-    grid_iteration(self.grids[old_index], self.grids[new_index], self.model_w, self.model_h, self.iter)
+    grid_iteration(self.grids[old_index], self.grids[new_index], self.model_w, self.model_h, self.NO_MODEL_JIT)
     self.t = t
   --end
 end
@@ -252,11 +251,11 @@ local render1, render2, render3, render4 -- pre-declare. to hide ugly code below
 local function main()                    -- main is called at the end of script
   game:init()
   local render_ = function() game:render(render2) end -- draw Vertex Array
-  if arg[1] == '1' then
+  if game.RENDER_OPT == 1 then
     render_ = function() game:render(render1) end -- draw GL_POINTS
-  elseif arg[1] == '3' then
+  elseif game.RENDER_OPT == 3 then
     render_ = function() game:render(render3) end -- draw using VBO
-  elseif arg[1] == '4' then
+  elseif game.RENDER_OPT == 4 then
     render_ = function() game:render(render4) end -- draw using PBO (have colors)
   end
     
