@@ -256,7 +256,13 @@ end
 function game:destroy()
   SDL.SDL_FreeSurface(self.screen)
   SDL.SDL_Quit()
-  GLext.glDeleteBuffersARB(1, vboID1)
+  if self.RENDER_OPT == 2 or self.RENDER_OPT == 3 then
+    GLext.glDeleteBuffersARB(1, self.vboID1)
+  end
+  if self.RENDER_OPT == 4 then
+    GL.glDeleteTextures(1, self.texID1)
+    GLext.glDeleteBuffersARB(1, self.pboID1)
+  end
 end
 
 local render1, render2, render3, render4 -- pre-declare. to hide ugly code below

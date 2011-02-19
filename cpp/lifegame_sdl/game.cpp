@@ -90,17 +90,21 @@ Game::~Game()
 {
     SDL_FreeSurface(screen);
     SDL_Quit();
-    glDeleteBuffersARB(1, &vboID1);
     for( size_t y = 0; y < model_h + 2; ++y ) {
         delete [] grids[0][y];
         delete [] grids[1][y];
     }
     delete [] grids[0];
     delete [] grids[1];
-    if( RENDER_OPT == 2 || RENDER_OPT == 3 )
+    if( RENDER_OPT == 2 || RENDER_OPT == 3 ) {
+        glDeleteBuffersARB(1, &vboID1);
         delete [] vertices;
-    if( RENDER_OPT == 4)
+    }
+    if( RENDER_OPT == 4) {
+        glDeleteTextures(1, &texID1);
+        glDeleteBuffersARB(1, &pboID1);
         delete [] bitmap;
+    }
 }
 
 bool Game::run()
