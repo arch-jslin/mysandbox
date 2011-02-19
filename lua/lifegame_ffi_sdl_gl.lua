@@ -231,7 +231,7 @@ function game:run(event)
 end
 
 function game:update(t)
-  print("Secs between updates: "..(t - self.t))
+  print("Secs between updates: "..(t - self.t)..", mem-usage: "..collectgarbage("count"))
   --if t - self.t > 1.000 then
     self.t = t
     self.iter = self.iter % 256 + 1
