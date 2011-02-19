@@ -48,7 +48,7 @@ void setupARBAPI()
 Game::Game(int const& argc, char* argv[])
   :RENDER_OPT( argc > 1 ? atoi(argv[1]) : 2 ),
    csize(2), model_w(120), model_h(90), WIDTH(csize * model_w), HEIGHT(csize * model_h),
-   t(clock()), iter(0), vboID1(0), pboID1(0), texID1(0), vertices(0), bitmap(0), screen(0)
+   t(clock()), iter(1), vboID1(0), pboID1(0), texID1(0), vertices(0), bitmap(0), screen(0)
 {
     srand(time(0)); // randomize at game initialization
     if ( argc > 2 ) csize = static_cast<size_t>(atoi(argv[2]));
@@ -57,6 +57,16 @@ Game::Game(int const& argc, char* argv[])
 
     WIDTH = model_w * csize;
     HEIGHT= model_h * csize;
+
+    if( RENDER_OPT > 4 || RENDER_OPT < 1 ) {
+        printf("This rendering method is not supported. Please choose from 1~4.\n");
+        exit(0);
+    }
+    if( WIDTH > 4096 || HEIGHT > 4096 || WIDTH < 1 || HEIGHT < 1 ) {
+        printf("Dimensions too big, which will probably fail to initalize.\n");
+        printf("Try lower the csize(cell_size) or the width/height settings.\n");
+        exit(0);
+    }
 
     if( RENDER_OPT == 2 || RENDER_OPT == 3 )
         vertices = new SVertex[ model_w * model_h ];
@@ -130,9 +140,9 @@ void Game::update(time_t const& time)
     printf("Millisecs between updates: %ld\n", (time - t));
     //if (time - t > 1000) {
         t = time;
-        iter = iter % 256 + 1;
+        iter = (iter+1) % 256;
         int index = iter % 2;
-        grid_iteration(grids[index^1], grids[index], model_w, model_h);
+        grid_iteration(grids[index], grids[index^1], model_w, model_h);
     //}
 }
 
@@ -214,7 +224,7 @@ void Game::createTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, model_w, model_h, 0, GL_BGRA, GL_UNSIGNED_BYTE, bitmap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, model_w, model_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -228,7 +238,7 @@ void Game::createPBO()
 
 void Game::render1()  //using GL_POINTS
 {
-    int new_index = iter % 2;
+    int new_index = (iter % 2)^1;
     glBegin(GL_POINTS);
 
     for ( size_t y = 0; y < model_h; ++y )
@@ -244,7 +254,7 @@ void Game::render1()  //using GL_POINTS
 void Game::render2()  //using GL's VERTEX ARRAY
 {
     size_t length = 0;
-    int new_index = iter % 2;
+    int new_index = (iter % 2)^1;
     for ( size_t y = 0; y < model_h; ++y )
         for ( size_t x = 0; x < model_w; ++x )
             if ( grids[ new_index ][y+1][x+1] > 0 ) {
@@ -267,7 +277,7 @@ void Game::render3()  //using VBO
     size_t length = 0;
     Game::SVertex* dst = static_cast<Game::SVertex*>(glMapBufferARB(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
     if ( dst ) {
-        int index = iter % 2;
+        int index = (iter % 2)^1;
         for ( size_t y = 0; y < model_h; ++y )
             for ( size_t x = 0; x < model_w; ++x )
                 if ( grids[ index ][y+1][x+1] > 0 ) {
@@ -290,7 +300,7 @@ void Game::render4()
     // copy texture image
     glBindTexture(GL_TEXTURE_2D, texID1);
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pboID1);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, model_w, model_h, GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)0);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, model_w, model_h, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)0);
     // update texture image
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pboID1);
     // we don't need to use glBufferDataARB to flush data here. the colors from last iteration are still used.
@@ -300,9 +310,9 @@ void Game::render4()
         int index = iter % 2;
         for ( size_t y = 0; y < model_h; ++y ) {
             for ( size_t x = 0; x < model_w; ++x ) {
-                if( grids[ index ][y+1][x+1] > 0 ) {
-                    if( grids[ index^1 ][y+1][x+1] == 0 )
-                        *dst = 0xff + ((x*256/model_w) << 16) + ((y*256/model_h) << 8) + (iter);
+                if( grids[ index^1 ][y+1][x+1] > 0 ) {
+                    if( grids[ index ][y+1][x+1] == 0 )
+                        *dst = 0xff000000 + ((x*256/model_w) << 16) + ((y*256/model_h) << 8) + (iter/2+128);
                 }
                 else *dst = 0;
                 ++dst;

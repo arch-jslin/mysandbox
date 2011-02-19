@@ -14,8 +14,8 @@ int main ( int argc, char* argv[] )
         render_ = std::tr1::bind(&Game::render4, &game); // draw using PBO
 
     while( game.run() ) {
-        game.update(clock());
         game.render(render_);
+        game.update(clock());
     }
     return 0;
 }

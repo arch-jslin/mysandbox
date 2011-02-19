@@ -172,7 +172,17 @@ function game:init()
   self.WIDTH        = self.model_w * self.csize
   self.HEIGHT       = self.model_h * self.csize
   self.t            = os.clock()
-  self.iter         = 0
+  self.iter         = 1
+  
+  if self.RENDER_OPT > 4 or self.RENDER_OPT < 1 then 
+    print("This rendering method is not supported. Please choose from 1~4.")
+    os.exit(0)
+  end
+  if self.WIDTH > 4096 or self.HEIGHT > 4096 or self.WIDTH < 1 or self.HEIGHT < 1 then
+    print("Dimensions too big, which will probably fail to initalize.")
+    print("Try lower the csize(cell_size) or the width/height settings.")
+    os.exit(0)
+  end
   
   self.vboID1       = ffi.new("unsigned int[1]", 0)
   self.pboID1       = ffi.new("unsigned int[1]", 0)
@@ -202,7 +212,6 @@ function game:init()
   for i = 1, self.model_w*self.model_h / 9 do 
     self.grids[0][random(self.model_h)+1][random(self.model_w)+1] = 1 
   end
-  
   --setup OpenGL VBO API, need a query from wglGetProcAddress
   GLext = setupARBAPI()
   
@@ -232,11 +241,11 @@ end
 
 function game:update(t)
   print("Secs between updates: "..(t - self.t)..", mem-usage: "..collectgarbage("count"))
-  --if t - self.t > 1.000 then
+  --if t - self.t > 0.1 then
     self.t = t
-    self.iter = self.iter % 256 + 1
-    local new_index = self.iter % 2
-    local old_index = bit.bxor(new_index, 1)
+    self.iter = (self.iter+1) % 256
+    local old_index = self.iter % 2
+    local new_index = bit.bxor(old_index, 1)
     grid_iteration(self.grids[old_index], self.grids[new_index], self.model_w, self.model_h, self.NO_MODEL_JIT)
   --end
 end
@@ -279,8 +288,8 @@ local function main()                    -- main is called at the end of script
     
   local event = ffi.new("SDL_Event")
   while game:run(event) do
-    game:update(os.clock())
     render_()
+    game:update(os.clock())
   end
   game:destroy()
 end
@@ -349,7 +358,7 @@ function game:createTexture()
   GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
   GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP)
   GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP)
-  GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.model_w, self.model_h, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, self.bitmap)
+  GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.model_w, self.model_h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, self.bitmap)
   GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 end
 
@@ -361,7 +370,8 @@ function game:createPBO()
 end
 
 render1 = function (self, csizep)
-  local new_index = self.iter%2
+  local old_index = self.iter % 2
+  local new_index = bit.bxor(old_index, 1)
   GL.glBegin(GL.GL_POINTS)
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
@@ -375,10 +385,10 @@ end
 
 render2 = function (self, csizep)
   local length = 0
-  local new_index = self.iter%2
+  local old_index = self.iter % 2
+  local new_index = bit.bxor(old_index, 1)
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
-      --if self.old[y+1][x+1] > 0 then
       if self.grids[ new_index ][y+1][x+1] > 0 then
         self.vertices[length].x = x*csizep -- don't cause massive GC here, no temporaries!!!
         self.vertices[length].y = y*csizep 
@@ -400,7 +410,8 @@ render3 = function (self, csizep)
   local length = 0
   local dst = ffi.cast("SVertex*", GLext.glMapBufferARB(GL.GL_ARRAY_BUFFER, GL.GL_WRITE_ONLY))
   if tonumber(ffi.cast("int", dst)) ~= 0 then 
-    local new_index = self.iter % 2
+    local old_index = self.iter % 2
+    local new_index = bit.bxor(old_index, 1)
     for y = 0, self.model_h-1 do
       for x = 0, self.model_w-1 do
         if self.grids[ new_index ][y+1][x+1] > 0 then
@@ -424,20 +435,20 @@ render4 = function (self, csizep)
   -- copy texture image
   GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0])
   GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0])
-  GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, self.model_w, self.model_h, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, ffi.cast("void*", ffi.new("int", 0)) )
+  GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, self.model_w, self.model_h, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, ffi.cast("void*", ffi.new("int", 0)) )
   -- update texture image
   GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0])
   -- we don't need to use GLext.glBufferDataARB to flush data here. the colors from last iteration are still used.
   local dst = ffi.cast("unsigned int*", GLext.glMapBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, GL.GL_WRITE_ONLY) )
   
   if tonumber(ffi.cast("int", dst)) ~= 0 then 
-    local new_index = self.iter % 2
-    local old_index = bit.bxor(new_index, 1)
+    local old_index = self.iter % 2
+    local new_index = bit.bxor(old_index, 1)
     for y = 0, self.model_h-1 do
       for x = 0, self.model_w-1 do
         if self.grids[ new_index ][y+1][x+1] > 0 then
           if self.grids[ old_index ][y+1][x+1] == 0 then
-            dst[y*self.model_w + x] = 0xff + lsh(x*256/self.model_w, 16) + lsh(y*256/self.model_h, 8) + (self.iter)
+            dst[y*self.model_w + x] = 0xff000000 + lsh(x*256/self.model_w, 16) + lsh(y*256/self.model_h, 8) + (self.iter/2 + 127)
           end
         else dst[y*self.model_w + x] = 0 end
       end
