@@ -5,6 +5,7 @@
 local ffi = require "ffi"
 
 local randomseed, rand, floor, abs = math.randomseed, math.random, math.floor, math.abs
+local band, rsh, lsh = bit.band, bit.rshift, bit.lshift
 local random = function(n) 
   n = n or 1; 
   return floor(rand()*abs(n)) 
@@ -34,28 +35,18 @@ local function grid_print(grid, w, h)
   end
 end
 
---local dir = ffi.new("char[8][2]", {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}})
+
 local function neighbor_count(old, y, x, h, w)
-  --[[local count = 0
-  for i=0, 7 do
-    local ny, nx = y + dir[i][0], x + dir[i][1]
-    if ny < 0 then ny = h-1
-    elseif ny >= h then ny = 0 end
-    if nx < 0 then nx = w-1
-    elseif nx >= w then nx = 0 end
-    if old[ny][nx] > 0 then count = count + 1 end
-  end]]
-  local count = (old[y-1][x-1] + old[y-1][x] + old[y-1][x+1]) +
-                (old[y][x-1]   +               old[y][x+1])   +
-                (old[y+1][x-1] + old[y+1][x] + old[y+1][x+1])
+  local count = ( old[y-1][x-1] + old[y-1][x] + old[y-1][x+1] ) +
+                ( old[ y ][x-1] +               old[ y ][x+1] ) +
+                ( old[y+1][x-1] + old[y+1][x] + old[y+1][x+1] )
   return count
 end
 
-local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0});
-local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0}); 
+--local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0})
+--local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0})
+--what if we need different rule sets? how to do that with bitwise trick??
 local function ruleset(now, count)
-  local band, rsh, lsh = bit.band, bit.rshift, bit.lshift
-  --return now > 0 and rule1[count] or rule2[count]
   return band(rsh(lsh(now, 2) + 8, count), 1)
 end
 
@@ -77,17 +68,18 @@ local function wrap_padding(old, w, h)
   old[0][0],   old[0][w],   old[h][0]     = old[h][w], old[h][w], old[h][w]
 end
 
-local function grid_iteration(old, new, w, h)
+local function grid_iteration(old, new, w, h, opt)
+
+  if opt then jit.off(true, true) end 
+
   w, h = w or 15, h or 15
   wrap_padding(old, w, h)
   for y = 1, h do
     for x = 1, w do
-      local res = ruleset(old[y][x], neighbor_count(old, y, x, h, w))
-      new[y][x] = res -- currently you have to be careful about assignments to n-dimensional VLA
+      new[y][x] = ruleset( old[y][x], neighbor_count(old, y, x) )
     end
   end
-  ffi.copy(old, new, (w+2)*(h+2))
-  ffi.fill(new, (w+2)*(h+2)) 
+  -- new and old can be used interchangably, no need to copy here
 end
 
 ---------
@@ -100,11 +92,15 @@ local function test_by_hand()
   for i=1, 80 do
     now[random(20)+1][random(20)+1] = 1  -- random seeding 45 cells
   end
-
+  local i, index = 0, 0
+  local grids = {}
+  grids[0], grids[1] = now, new
   while true do
-    grid_iteration(now, new, 20, 20)
-    grid_print(now, 20, 20)
+    index = i % 2
+    grid_iteration( grids[index], grids[bit.bxor(index, 1)], 20, 20 )
+    grid_print( grids[bit.bxor(index, 1)], 20, 20)
     io.read()
+    i = i + 1
   end
 end
 
@@ -114,15 +110,19 @@ local function bench_test(n)
   end
   local function performance_test(n, now, new)
     print("Memory usage before first run: "..collectgarbage("count").." KiB.")
-    for i = 1, n do
-      grid_iteration(now, new, 20, 20)
+    local index = 0
+    local grids = {}
+    grids[0], grids[1] = now, new
+    for i = 0, n-1 do
+      index = i % 2
+      grid_iteration(grids[index], grids[bit.bxor(index, 1)], 20, 20)
     end
     print("Memory usage after last run: "..collectgarbage("count").." KiB.")
   end
-  --grid_print(now, 20, 20)
+  grid_print(now, 20, 20)
   bench(string.format("Conway's Game of Life %d iterations: ", n),
         function() return performance_test(n, now, new) end)
-  --grid_print(now, 20, 20)
+  grid_print(now, 20, 20)
 end
 
 bench_test(100000)
