@@ -2,7 +2,8 @@ package.path = [[c:\local_gitrepo\luajit-opencl]]..package.path
 -- This sample make use of https://github.com/malkia/luajit-opencl package
 -- You'll need it to run the script. This script demonstrate how to use
 -- LuaJIT2 FFI to integrate some simple SDL & GL function out-of-the-box.
--- (well, almost.)
+-- (well, almost.) Make sure your computer supports OpenGL VBO & PBO, this 
+-- code is for demonstration purpose only, didn't do any check on this.
 
 -- DON'T RUN THIS WITH OLDER VERIONS OF LUAJIT OR PlAIN LUA INTERPRETER,
 -- THE FFI CODE SEGMENTS ARE ALREADY ALL OVER THE PLACE, IT'S HOPELESS.
@@ -76,7 +77,7 @@ end
 local randomseed, rand, floor, abs = math.randomseed, math.random, math.floor, math.abs
 local band, rsh, lsh = bit.band, bit.rshift, bit.lshift
 local random = function(n) 
-  n = n or 1; 
+  n = n or 1
   return floor(rand()*abs(n)) 
 end
 
@@ -117,8 +118,8 @@ local function neighbor_count(old, y, x, h, w)
   return count
 end
 
---local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0});
---local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0}); 
+--local rule1 = ffi.new("char[9]", {0, 0, 1, 1, 0, 0, 0, 0, 0})
+--local rule2 = ffi.new("char[9]", {0, 0, 0, 1, 0, 0, 0, 0, 0})
 --what if we need different rule sets? how to do that with bitwise trick??
 local function ruleset(now, count)
   return band(rsh(lsh(now, 2) + 8, count), 1)
@@ -176,11 +177,16 @@ function game:init()
   self.vboID1       = ffi.new("unsigned int[1]", 0)
   self.pboID1       = ffi.new("unsigned int[1]", 0)
   self.texID1       = ffi.new("unsigned int[1]", 0)
-  self.vertices     = ffi.new("SVertex[?]", self.model_w * self.model_h, {{0,0,0}} );
-  self.bitmap       = ffi.new("unsigned char[?]", self.model_w * self.model_h * 4, {0} );  
   
-  self:setupSDL();
-  self:setupGL();
+  if self.RENDER_OPT == 2 or self.RENDER_OPT == 3 then
+    self.vertices   = ffi.new("SVertex[?]", self.model_w * self.model_h, {{0,0,0}} )
+  end
+  if self.RENDER_OPT == 4 then
+    self.bitmap     = ffi.new("unsigned char[?]", self.model_w * self.model_h * 4, {0} )
+  end
+ 
+  self:setupSDL()
+  self:setupGL()
   
   if self.NO_MODEL_JIT then
     self.old = new_grid(self.model_w, self.model_h)
@@ -199,9 +205,14 @@ function game:init()
   
   --setup OpenGL VBO API, need a query from wglGetProcAddress
   GLext = setupARBAPI()
-  self:createVBO()      --create VBO ONLY AFTER you correctly setup ARB API
-  self:createTexture()  --create Texture for render4 usage (search for render4)
-  self:createPBO()      --create PBO
+  
+  if self.RENDER_OPT == 3 then 
+    self:createVBO()      --create VBO ONLY AFTER you correctly setup ARB API
+  end
+  if self.RENDER_OPT == 4 then
+    self:createTexture()  --create Texture for render4 usage (search for render4)
+    self:createPBO()      --create PBO
+  end
 end
 
 function game:run(event)
@@ -222,25 +233,24 @@ end
 function game:update(t)
   print("Secs between updates: "..(t - self.t))
   --if t - self.t > 1.000 then
-    --grid_iteration(self.old, self.new, self.model_w, self.model_h, self.iter)
+    self.t = t
     self.iter = self.iter % 256 + 1
     local new_index = self.iter % 2
     local old_index = bit.bxor(new_index, 1)
     grid_iteration(self.grids[old_index], self.grids[new_index], self.model_w, self.model_h, self.NO_MODEL_JIT)
-    self.t = t
   --end
 end
 
 function game:render(render_)
-  GL.glClear( bit.bor(GL.GL_COLOR_BUFFER_BIT, GL.GL_DEPTH_BUFFER_BIT) );
-  GL.glLoadIdentity();
+  GL.glClear( bit.bor(GL.GL_COLOR_BUFFER_BIT, GL.GL_DEPTH_BUFFER_BIT) )
+  GL.glLoadIdentity()
   local csizep = self.csize
   local csize  = csizep-1
-  GL.glPointSize(csize);
+  GL.glPointSize(csize)
 
   render_(self, csizep)
 
-  SDL.SDL_GL_SwapBuffers();
+  SDL.SDL_GL_SwapBuffers()
 end
 
 function game:destroy()
@@ -278,34 +288,34 @@ function game:setupSDL()
                       -- SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL
   SDL.SDL_Init(self.INIT_OPTION)
   SDL.SDL_WM_SetCaption("SDL + OpenGL Game of Life", "SDL")
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_RED_SIZE,        8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_GREEN_SIZE,      8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_BLUE_SIZE,       8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ALPHA_SIZE,      8);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_RED_SIZE,        8)
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_GREEN_SIZE,      8)
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_BLUE_SIZE,       8)
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ALPHA_SIZE,      8)
 
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_DEPTH_SIZE,      16);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_BUFFER_SIZE,     32);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_DEPTH_SIZE,      16)
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_BUFFER_SIZE,     32)
 
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_RED_SIZE,  8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_GREEN_SIZE,8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_BLUE_SIZE, 8);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_ALPHA_SIZE,8);
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_RED_SIZE,  8)
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_GREEN_SIZE,8)
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_BLUE_SIZE, 8)
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_ACCUM_ALPHA_SIZE,8)
 
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_MULTISAMPLEBUFFERS,  1);
-  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_MULTISAMPLESAMPLES,  2);  
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_MULTISAMPLEBUFFERS,  1)
+  SDL.SDL_GL_SetAttribute(SDL.SDL_GL_MULTISAMPLESAMPLES,  2) 
   
   self.screen = SDL.SDL_SetVideoMode(self.WIDTH, self.HEIGHT, 32, self.VIDEO_OPTION)
 end
 
 function game:setupGL()
-  GL.glClearColor(0, 0, 0, 0);
-  GL.glViewport(0, 0, self.WIDTH, self.HEIGHT);
-  GL.glMatrixMode(GL.GL_PROJECTION);
-  GL.glLoadIdentity();
-  GL.glOrtho(0, self.WIDTH, self.HEIGHT, 0, 1, -1);
-  GL.glMatrixMode(GL.GL_MODELVIEW);
-  GL.glEnable(GL.GL_TEXTURE_2D);
-  GL.glLoadIdentity();
+  GL.glClearColor(0, 0, 0, 0)
+  GL.glViewport(0, 0, self.WIDTH, self.HEIGHT)
+  GL.glMatrixMode(GL.GL_PROJECTION)
+  GL.glLoadIdentity()
+  GL.glOrtho(0, self.WIDTH, self.HEIGHT, 0, 1, -1)
+  GL.glMatrixMode(GL.GL_MODELVIEW)
+  GL.glEnable(GL.GL_TEXTURE_2D)
+  GL.glLoadIdentity()
 end
 
 function game:createVBO()
@@ -319,42 +329,42 @@ function game:createVBO()
 end
 
 function game:createTexture()
-  GL.glShadeModel(GL.GL_FLAT);
-  GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1);      -- 1-byte pixel alignment
-  GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);        -- 1-byte pixel alignment
-  GL.glEnable(GL.GL_TEXTURE_2D);
-  GL.glDisable(GL.GL_LIGHTING);
-  GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE);
-  GL.glEnable(GL.GL_COLOR_MATERIAL);
+  GL.glShadeModel(GL.GL_FLAT)
+  GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT, 1)      -- 1-byte pixel alignment
+  GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1)        -- 1-byte pixel alignment
+  GL.glEnable(GL.GL_TEXTURE_2D)
+  GL.glDisable(GL.GL_LIGHTING)
+  GL.glColorMaterial(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT_AND_DIFFUSE)
+  GL.glEnable(GL.GL_COLOR_MATERIAL)
   
-  GL.glGenTextures(1, self.texID1);
-  GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0]);
-  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST);
-  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST);
-  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP);
-  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP);
-  GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.model_w, self.model_h, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, self.bitmap);
+  GL.glGenTextures(1, self.texID1)
+  GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0])
+  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
+  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
+  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP)
+  GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP)
+  GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.model_w, self.model_h, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, self.bitmap)
   GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 end
 
 function game:createPBO()
   GLext.glGenBuffersARB(1, self.pboID1)
-  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0]);
-  GLext.glBufferDataARB(GL.GL_PIXEL_UNPACK_BUFFER, ffi.sizeof(self.bitmap), ffi.cast("void*", ffi.new("int", 0)), GL.GL_STREAM_DRAW);
-  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, 0); 
+  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, self.pboID1[0])
+  GLext.glBufferDataARB(GL.GL_PIXEL_UNPACK_BUFFER, ffi.sizeof(self.bitmap), ffi.cast("void*", ffi.new("int", 0)), GL.GL_STREAM_DRAW)
+  GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, 0)
 end
 
 render1 = function (self, csizep)
   local new_index = self.iter%2
-  GL.glBegin(GL.GL_POINTS);
+  GL.glBegin(GL.GL_POINTS)
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
       if self.grids[ new_index ][y+1][x+1] > 0 then
-        GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep, y*csizep, 0);
+        GL.glColor3f(1, 1, 1); GL.glVertex3f(x*csizep, y*csizep, 0)
       end
     end
   end
-  GL.glEnd();
+  GL.glEnd()
 end
 
 render2 = function (self, csizep)
@@ -421,7 +431,7 @@ render4 = function (self, csizep)
       for x = 0, self.model_w-1 do
         if self.grids[ new_index ][y+1][x+1] > 0 then
           if self.grids[ old_index ][y+1][x+1] == 0 then
-            dst[y*self.model_w + x] = 0xff + lsh(x/self.model_w*256, 16) + lsh(y/self.model_h*256, 8) + (self.iter)
+            dst[y*self.model_w + x] = 0xff + lsh(x*256/self.model_w, 16) + lsh(y*256/self.model_h, 8) + (self.iter)
           end
         else dst[y*self.model_w + x] = 0 end
       end
@@ -431,16 +441,16 @@ render4 = function (self, csizep)
   GLext.glBindBufferARB(GL.GL_PIXEL_UNPACK_BUFFER, 0)
   
   -- draw a plane with texture
-  GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0]);
-  GL.glColor4f(1, 1, 1, 1);
-  GL.glBegin(GL.GL_QUADS);
-    GL.glNormal3f(0, 0, 1);
-    GL.glTexCoord2f(0, 0);   GL.glVertex3f(0, 0, 0);
-    GL.glTexCoord2f(1, 0);   GL.glVertex3f(self.WIDTH, 0, 0);
-    GL.glTexCoord2f(1, 1);   GL.glVertex3f(self.WIDTH, self.HEIGHT, 0);
-    GL.glTexCoord2f(0, 1);   GL.glVertex3f(0, self.HEIGHT, 0);
-  GL.glEnd();
-  GL.glBindTexture(GL.GL_TEXTURE_2D, 0);
+  GL.glBindTexture(GL.GL_TEXTURE_2D, self.texID1[0])
+  GL.glColor4f(1, 1, 1, 1)
+  GL.glBegin(GL.GL_QUADS)
+    GL.glNormal3f(0, 0, 1)
+    GL.glTexCoord2f(0, 0);   GL.glVertex3f(0, 0, 0)
+    GL.glTexCoord2f(1, 0);   GL.glVertex3f(self.WIDTH, 0, 0)
+    GL.glTexCoord2f(1, 1);   GL.glVertex3f(self.WIDTH, self.HEIGHT, 0)
+    GL.glTexCoord2f(0, 1);   GL.glVertex3f(0, self.HEIGHT, 0)
+  GL.glEnd()
+  GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 end
 
 ---- END OF SUPER UGLY PART
