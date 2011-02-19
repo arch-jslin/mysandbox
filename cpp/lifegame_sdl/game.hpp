@@ -32,11 +32,11 @@ struct Game {
     unsigned char* bitmap;  //these will be allocated, have to free them in d'tor
 
     SDL_Surface* screen;
-};
 
-void render1(Game& self);  //using GL_POINTS
-void render2(Game& self);  //using GL's VERTEX ARRAY
-void render3(Game& self);  //using VBO
-void render4(Game& self);  //using PBO
+    void render1();  //using GL_POINTS
+    void render2();  //using GL's VERTEX ARRAY
+    void render3();  //using VBO
+    void render4();  //using PBO
+};
 
 #endif //_LIFEGAME_GAME_

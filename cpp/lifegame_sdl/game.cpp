@@ -222,30 +222,28 @@ void Game::createPBO()
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 }
 
-void render1(Game& self)  //using GL_POINTS
+void Game::render1()  //using GL_POINTS
 {
-    int new_index = self.iter % 2;
+    int new_index = iter % 2;
     glBegin(GL_POINTS);
 
-    for ( size_t y = 0; y < self.model_h; ++y )
-        for ( size_t x = 0; x < self.model_w; ++x )
-            if ( self.grids[ new_index ][y+1][x+1] > 0 ) {
+    for ( size_t y = 0; y < model_h; ++y )
+        for ( size_t x = 0; x < model_w; ++x )
+            if ( grids[ new_index ][y+1][x+1] > 0 ) {
                 glColor3f(1, 1, 1);
-                glVertex3f(x*self.csize, y*self.csize, 0);
+                glVertex3f(x*csize, y*csize, 0);
             }
 
     glEnd();
 }
 
-void render2(Game& self)  //using GL's VERTEX ARRAY
+void Game::render2()  //using GL's VERTEX ARRAY
 {
     size_t length = 0;
-    Game::SVertex* vertices = self.vertices;
-    size_t csize = self.csize;
-    int new_index = self.iter % 2;
-    for ( size_t y = 0; y < self.model_h; ++y )
-        for ( size_t x = 0; x < self.model_w; ++x )
-            if ( self.grids[ new_index ][y+1][x+1] > 0 ) {
+    int new_index = iter % 2;
+    for ( size_t y = 0; y < model_h; ++y )
+        for ( size_t x = 0; x < model_w; ++x )
+            if ( grids[ new_index ][y+1][x+1] > 0 ) {
                 vertices[length].x = x*csize;
                 vertices[length].y = y*csize;
                 vertices[length].z = 0;
@@ -259,20 +257,20 @@ void render2(Game& self)  //using GL's VERTEX ARRAY
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void render3(Game& self)  //using VBO
+void Game::render3()  //using VBO
 {
-    glBindBufferARB(GL_ARRAY_BUFFER, self.vboID1); // bind the VBO
+    glBindBufferARB(GL_ARRAY_BUFFER, vboID1); // bind the VBO
     size_t length = 0;
     Game::SVertex* dst = static_cast<Game::SVertex*>(glMapBufferARB(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
     if ( dst ) {
-        int index = self.iter % 2;
-        for ( size_t y = 0; y < self.model_h; ++y )
-            for ( size_t x = 0; x < self.model_w; ++x )
-                if ( self.grids[ index ][y+1][x+1] > 0 ) {
-                    dst[length].x = x*self.csize;
-                    dst[length].y = y*self.csize;
-                    dst[length].z = 0;
-                    ++length;
+        int index = iter % 2;
+        for ( size_t y = 0; y < model_h; ++y )
+            for ( size_t x = 0; x < model_w; ++x )
+                if ( grids[ index ][y+1][x+1] > 0 ) {
+                    dst->x = x*csize;
+                    dst->y = y*csize;
+                    dst->z = 0;
+                    ++dst, ++length;
                 }
         glUnmapBufferARB(GL_ARRAY_BUFFER);
     }
@@ -283,24 +281,24 @@ void render3(Game& self)  //using VBO
     glBindBufferARB(GL_ARRAY_BUFFER, 0);   // release the VBO
 }
 
-void render4(Game& self)
+void Game::render4()
 {
     // copy texture image
-    glBindTexture(GL_TEXTURE_2D, self.texID1);
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, self.pboID1);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, self.model_w, self.model_h, GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)0);
+    glBindTexture(GL_TEXTURE_2D, texID1);
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pboID1);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, model_w, model_h, GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)0);
     // update texture image
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, self.pboID1);
+    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pboID1);
     // we don't need to use glBufferDataARB to flush data here. the colors from last iteration are still used.
     unsigned int* dst = static_cast<unsigned int*>(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY));
 
     if( dst ) {
-        int index = self.iter % 2;
-        for ( size_t y = 0; y < self.model_h; ++y ) {
-            for ( size_t x = 0; x < self.model_w; ++x ) {
-                if( self.grids[ index ][y+1][x+1] > 0 ) {
-                    if( self.grids[ index^1 ][y+1][x+1] == 0 )
-                        *dst = 0xff + ((x*256/self.model_w) << 16) + ((y*256/self.model_h) << 8) + (self.iter);
+        int index = iter % 2;
+        for ( size_t y = 0; y < model_h; ++y ) {
+            for ( size_t x = 0; x < model_w; ++x ) {
+                if( grids[ index ][y+1][x+1] > 0 ) {
+                    if( grids[ index^1 ][y+1][x+1] == 0 )
+                        *dst = 0xff + ((x*256/model_w) << 16) + ((y*256/model_h) << 8) + (iter);
                 }
                 else *dst = 0;
                 ++dst;
@@ -310,14 +308,14 @@ void render4(Game& self)
     }
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
     // draw a plane with texture
-    glBindTexture(GL_TEXTURE_2D, self.texID1);
+    glBindTexture(GL_TEXTURE_2D, texID1);
     glColor4f(1, 1, 1, 1);
     glBegin(GL_QUADS);
         glNormal3f(0, 0, 1);
         glTexCoord2f(0, 0);   glVertex3f(0, 0, 0);
-        glTexCoord2f(1, 0);   glVertex3f(self.WIDTH, 0, 0);
-        glTexCoord2f(1, 1);   glVertex3f(self.WIDTH, self.HEIGHT, 0);
-        glTexCoord2f(0, 1);   glVertex3f(0, self.HEIGHT, 0);
+        glTexCoord2f(1, 0);   glVertex3f(WIDTH, 0, 0);
+        glTexCoord2f(1, 1);   glVertex3f(WIDTH, HEIGHT, 0);
+        glTexCoord2f(0, 1);   glVertex3f(0, HEIGHT, 0);
     glEnd();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
