@@ -392,7 +392,7 @@ render2 = function (self, csizep)
     for x = 0, self.model_w-1 do
       if self.grids[ new_index ][y+1][x+1] > 0 then
         px, py = x, y
-        self.vertices[length].x = px*csizep -- don't cause massive GC here, no temporaries!!!
+        self.vertices[length].x = px*csizep 
         self.vertices[length].y = py*csizep 
         self.vertices[length].z = 0
         length = length + 1
@@ -420,7 +420,7 @@ render3 = function (self, csizep)
         if self.grids[ new_index ][y+1][x+1] > 0 then
           px, py = x, y
           dst[length].x = px*csizep
-          dst[length].y = py*csizep -- don't cause massive GC here, no temporaries!!!
+          dst[length].y = py*csizep 
           dst[length].z = 0
           length = length + 1
         end
@@ -430,8 +430,8 @@ render3 = function (self, csizep)
   end  
   GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
   GL.glVertexPointer(3, GL.GL_FLOAT, 0, ffi.cast("void*", ffi.new("int",0)))
-  GL.glDrawArrays(GL.GL_POINTS, 0, length)
-  GL.glDisableClientState(GL.GL_VERTEX_ARRAY)  -- don't have to draw vertices that are not assigned ( > length )
+  GL.glDrawArrays(GL.GL_POINTS, 0, length)     -- don't have to draw vertices that are not assigned ( > length )
+  GL.glDisableClientState(GL.GL_VERTEX_ARRAY)  
   GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, 0) -- release the VBO
 end
 
