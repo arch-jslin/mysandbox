@@ -75,4 +75,4 @@ addbenchmark("Direct Access", "ob.data = ob.data + 1", makeob1())
 addbenchmark("Local Variable", "ob = ob + 1", 0)
 
 
-runbenchmarks(select(1,...) or 100000000)
+runbenchmarks(select(1,...) or 10000000)
