@@ -387,11 +387,13 @@ render2 = function (self, csizep)
   local length = 0
   local old_index = self.iter % 2
   local new_index = bit.bxor(old_index, 1)
+  local px, py = 0, 0
   for y = 0, self.model_h-1 do
     for x = 0, self.model_w-1 do
       if self.grids[ new_index ][y+1][x+1] > 0 then
-        self.vertices[length].x = x*csizep -- don't cause massive GC here, no temporaries!!!
-        self.vertices[length].y = y*csizep 
+        px, py = x, y
+        self.vertices[length].x = px*csizep -- don't cause massive GC here, no temporaries!!!
+        self.vertices[length].y = py*csizep 
         self.vertices[length].z = 0
         length = length + 1
       end
@@ -409,14 +411,16 @@ render3 = function (self, csizep)
   GLext.glBindBufferARB(GL.GL_ARRAY_BUFFER, self.vboID1[0])  -- bind the VBO
   local length = 0
   local dst = ffi.cast("SVertex*", GLext.glMapBufferARB(GL.GL_ARRAY_BUFFER, GL.GL_WRITE_ONLY))
+  local px, py = 0, 0
   if tonumber(ffi.cast("int", dst)) ~= 0 then 
     local old_index = self.iter % 2
     local new_index = bit.bxor(old_index, 1)
     for y = 0, self.model_h-1 do
       for x = 0, self.model_w-1 do
         if self.grids[ new_index ][y+1][x+1] > 0 then
-          dst[length].x = x*csizep
-          dst[length].y = y*csizep -- don't cause massive GC here, no temporaries!!!
+          px, py = x, y
+          dst[length].x = px*csizep
+          dst[length].y = py*csizep -- don't cause massive GC here, no temporaries!!!
           dst[length].z = 0
           length = length + 1
         end
