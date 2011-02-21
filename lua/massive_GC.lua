@@ -30,8 +30,8 @@ local function test(csize)
   local px = 0
   for y = 1, 999 do
     for x = 1, 999 do
-      --array2d[y][x] = x*csize 
-      array2d[length] = x*csize
+      array2d[y][x] = x*csize 
+      --array2d[length] = x*csize
       length = length + 1
     end
   end
