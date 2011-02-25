@@ -15,8 +15,8 @@ package.path = [[c:\local_gitrepo\luajit-opencl]]..package.path
 -- namespace pollution makes me feel worse than duplicated namespaces.
 
 local ffi = require "ffi"
---local SDL = ffi.load([[c:\libs\cpp\SDL\SDL]])
-local SDL = ffi.load([[c:\libs\cpp\SDLw64\SDL]]) 
+local SDL = ffi.load([[c:\libs\cpp\SDL\SDL]])
+--local SDL = ffi.load([[c:\libs\cpp\SDLw64\SDL]]) 
 local GL = require "gl"
 ffi.cdef( io.open([[c:\libs\cpp\SDL\ffi_SDL.h]], 'r'):read('*a'))
 
