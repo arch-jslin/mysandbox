@@ -50,4 +50,4 @@ Test.asserteq(testmap, ansmap1)
 Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
 Test.asserteq(testmap, ansmap2)
 
-MapUtils.display( MapUtils.genmap_from_exprs({height = 8, width = 5, 30111, 03211, 30312}) )
+MapUtils.display( MapUtils.genmap_from_exprs({height = 8, width = 5, 30011, 03011, 30012}) )
