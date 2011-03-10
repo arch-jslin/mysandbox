@@ -40,14 +40,31 @@ local ansmap2 =
  {0,0,0,0,0}}
 ansmap2.height = 8
 ansmap2.width  = 5
- 
+
+local ansmap3 = 
+{{0,0,0,0,0},
+ {0,0,0,0,0},
+ {0,0,0,0,0},
+ {1,0,0,0,0},
+ {2,0,0,0,0},
+ {2,0,0,0,0},
+ {3,3,3,0,0},
+ {2,1,1,0,0}}
+ansmap3.height = 8
+ansmap3.width  = 5
+
 testmap = List.reverse(testmap)
 ansmap1 = List.reverse(ansmap1)
 ansmap2 = List.reverse(ansmap2)
+ansmap3 = List.reverse(ansmap3)
  
 Test.asserteq(MapUtils.pushup_horizontally(testmap, 2, 1, 3), true)
 Test.asserteq(testmap, ansmap1)
 Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
 Test.asserteq(testmap, ansmap2)
+Test.asserteq(MapUtils.gen_map_from_exprs({height = 8, width = 5, 30011, 03011, 30012}), ansmap3)
 
-MapUtils.display( MapUtils.gen_map_from_exprs({height = 8, width = 5, 30011, 03011, 30012}) )
+MapUtils.create_intersect_sheet(6, 10)
+
+
+
