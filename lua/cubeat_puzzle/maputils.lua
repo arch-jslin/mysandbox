@@ -41,7 +41,7 @@ function MapUtils.pushup_vertically(map, x, y, len, chain)
   return true
 end
 
-function MapUtils.genmap_from_exprs(exprs)
+function MapUtils.gen_map_from_exprs(exprs)
   local map = MapUtils.create_map(exprs.width, exprs.height)
   for chain,v in ipairs(exprs) do
     add_chain_to_map(map, v, chain)
@@ -67,5 +67,7 @@ function MapUtils.display(map)
     print()
   end
 end
+
+function MapUtils.create_
 
 return MapUtils
