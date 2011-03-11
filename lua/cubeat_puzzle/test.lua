@@ -4,6 +4,7 @@ require 'luarocks.loader'
 local MapUtils = dofile 'maputils.lua'
 local List = require 'pl.List'
 local Test = require 'pl.test'
+local tablex = require 'pl.tablex'
 
 local testmap =
 {{0,0,0,0,0},
@@ -53,6 +54,8 @@ local ansmap3 =
 ansmap3.height = 8
 ansmap3.width  = 5
 
+
+
 testmap = List.reverse(testmap)
 ansmap1 = List.reverse(ansmap1)
 ansmap2 = List.reverse(ansmap2)
@@ -63,8 +66,6 @@ Test.asserteq(testmap, ansmap1)
 Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
 Test.asserteq(testmap, ansmap2)
 Test.asserteq(MapUtils.gen_map_from_exprs({height = 8, width = 5, 30011, 03011, 30012}), ansmap3)
-
-MapUtils.create_intersect_sheet(6, 10)
-
-
+Test.asserteq(select(2, MapUtils.create_intersect_sheet(6, 10)), 189) -- it's actually only 6*9
+Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3), true)
 
