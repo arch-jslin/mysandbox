@@ -72,19 +72,22 @@ end
 
 local function gen_combinations(w, h)
   local c = {}
+  local starters = {} -- combinations that can be the "last-invoked" chain.
   for len = 3, 5 do -- for these different chain length
     for y = 1, h do
       for x = 1, w - len + 1 do
-        c[#c+1] = 10000*len + x*10 + y -- horizontal
+        table.insert(c, 10000*len + x*10 + y) -- horizontal
+        if y == 1 then table.insert(starters, c[#c]) end
       end
     end
     for y = 1, h - len + 1 do
       for x = 1, w do
-        c[#c+1] = 1000*len + x*10 + y  -- vertical
+        table.insert(c, 1000*len + x*10 + y)  -- vertical
+        if y == 1 then table.insert(starters, c[#c]) end
       end
     end
   end
-  return c
+  return c, starters
 end
 -- Warning: UGLY CODE
 local function list_of_intersect(key, combinations) -- combinations should be immutable
@@ -124,14 +127,14 @@ end
 function MapUtils.create_intersect_sheet(w, h)
   w = (w > 9 and 9 or w) or 6 -- we don't want w be more than 9 here.
   h = (h > 9 and 9 or h) or 9 -- we don't want h be more than 9 here.
-  local c = gen_combinations(w, h)
+  local c, starters = gen_combinations(w, h)
   local intersects_of = {}
   local counter = 0
   for _, v in ipairs(c) do
     intersects_of[v] = list_of_intersect(v, c)
     counter = counter + 1
   end
-  return intersects_of, counter
+  return intersects_of, starters, counter
 end
 
 local function do_check_chain_h(row, x)

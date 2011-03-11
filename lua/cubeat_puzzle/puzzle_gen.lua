@@ -4,8 +4,8 @@ require 'luarocks.loader'
 local MapUtils = dofile 'maputils.lua'
 local List = require 'pl.List'
 local Test = require 'pl.test'
-local tablex = require 'pl.tablex'
-
+local tablex = require 'tablex2'
+local random = require 'helpers'.random
 
 -- 實際在檢查上，具現化前還要看 intersects 下去會不會造成 column 高度爆炸，
 -- 或是 row 浮空了
@@ -34,4 +34,17 @@ local tablex = require 'pl.tablex'
 -- 　　將謎題表示式具現化成盤面
 -- 　　return 盤面
 -- 　end 
+
+math.randomseed(os.time())
+
+local PuzzleGen = {}
+
+function PuzzleGen.generate(chain_limit)
+  local stack = {}
+  local intersects_of, starter = MapUtils.create_intersect_sheet(6, 10)
+  table.insert(stack, starter[random(#starter)+1])
+  print(stack[1])  
+end
+
+PuzzleGen.generate(7)
 

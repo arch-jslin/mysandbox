@@ -1,10 +1,12 @@
 
 package.path = [[c:\local_gitrepo\Penlight\lua\?.lua;]]..package.path
 require 'luarocks.loader'
-local MapUtils = dofile 'maputils.lua'
+local MapUtils = require 'maputils'
 local List = require 'pl.List'
 local Test = require 'pl.test'
-local tablex = require 'pl.tablex'
+local tablex = require 'tablex2'
+
+math.randomseed(os.time())
 
 local testmap =
 {{0,0,0,0,0},
@@ -66,7 +68,7 @@ local chain15 =
  {4,1,4,4,2,3},
  {1,1,3,4,1,1}}
 chain15.height = 10
-chain15.width  = 6
+chain15.width  = 6 
 
 testmap = List.reverse(testmap)
 ansmap1 = List.reverse(ansmap1)
@@ -79,6 +81,16 @@ Test.asserteq(testmap, ansmap1)
 Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
 Test.asserteq(testmap, ansmap2)
 Test.asserteq(MapUtils.gen_map_from_exprs({height = 8, width = 5, 30011, 03011, 30012}), ansmap3)
-Test.asserteq(select(2, MapUtils.create_intersect_sheet(6, 10)), 189) -- it's actually only 6*9
 Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3), true)
 Test.asserteq(MapUtils.check_puzzle_correctness(chain15), true)
+
+local intersects_of, starters, counter = MapUtils.create_intersect_sheet(6, 10) -- it's actually only 6*9
+
+Test.asserteq(counter, 189)
+Test.asserteq(#starters, 27)
+
+local a = {1,2,3,4,5}
+tablex.rotate(a,2)
+
+Test.asserteq(a, {4,5,1,2,3})
+
