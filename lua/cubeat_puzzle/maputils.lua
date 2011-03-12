@@ -83,12 +83,13 @@ local function gen_combinations(w, h)
     for y = 1, h - len + 1 do
       for x = 1, w do
         table.insert(c, 1000*len + x*10 + y)  -- vertical
-        if y == 1 then table.insert(starters, c[#c]) end
+        -- don't use vertical combinations as starters.
       end
     end
   end
   return c, starters
 end
+
 -- Warning: UGLY CODE
 local function list_of_intersect(key, combinations) -- combinations should be immutable
   local intersects = {}
