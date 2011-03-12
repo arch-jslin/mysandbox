@@ -5,6 +5,8 @@ local MapUtils = require 'maputils'
 local List = require 'pl.List'
 local Test = require 'pl.test'
 local tablex = require 'tablex2'
+local Helper = require 'helpers'
+local random, Stack = Helper.random, Helper.stack
 
 math.randomseed(os.time())
 
@@ -93,4 +95,11 @@ local a = {1,2,3,4,5}
 tablex.rotate(a,2)
 
 Test.asserteq(a, {4,5,1,2,3})
+
+local s = Stack()
+s:push(1) s:push(2) s:push(3)
+Test.asserteq(s.top, 3)
+s:pop() s:pop()
+Test.asserteq(s.top, 1)
+ 
 

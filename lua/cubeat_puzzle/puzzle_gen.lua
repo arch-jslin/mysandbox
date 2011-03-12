@@ -1,11 +1,12 @@
 
 package.path = [[c:\local_gitrepo\Penlight\lua\?.lua;]]..package.path
 require 'luarocks.loader'
-local MapUtils = dofile 'maputils.lua'
+local MapUtils = require 'maputils'
 local List = require 'pl.List'
 local Test = require 'pl.test'
 local tablex = require 'tablex2'
-local random = require 'helpers'.random
+local Helper = require 'helpers'
+local random, Stack = Helper.random, Helper.stack
 
 -- 實際在檢查上，具現化前還要看 intersects 下去會不會造成 column 高度爆炸，
 -- 或是 row 浮空了
@@ -40,10 +41,10 @@ math.randomseed(os.time())
 local PuzzleGen = {}
 
 function PuzzleGen.generate(chain_limit)
-  local stack = {}
+  local stack = Stack()
   local intersects_of, starter = MapUtils.create_intersect_sheet(6, 10)
-  table.insert(stack, starter[random(#starter)+1])
-  print(stack[1])  
+  stack:push(starter[random(#starter)+1])
+  
 end
 
 PuzzleGen.generate(7)
