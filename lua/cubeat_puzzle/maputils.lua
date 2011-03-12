@@ -4,7 +4,7 @@ local tablex = require 'pl.tablex'
 local MapUtils = {}
 local floor = math.floor
 
-local function analyze(expr)
+function MapUtils.analyze(expr)
   return floor(expr / 10000),        -- length if horizontal
          floor(expr % 10000 / 1000), -- length if vertical
          floor(expr % 1000 / 100),   -- reserved
@@ -13,7 +13,7 @@ local function analyze(expr)
 end
 
 local function add_chain_to_map(map, expr, chain)
-  local lenH, lenV, _, x, y = analyze(expr)
+  local lenH, lenV, _, x, y = MapUtils.analyze(expr)
   if lenH > 0 then
     MapUtils.pushup_horizontally(map, x, y, lenH, chain)
   elseif lenV > 0 then
@@ -70,6 +70,10 @@ function MapUtils.display(map)
   end
 end
 
+-- MEMO: actually the combinations should be an object with specialized 
+--       methods for ( len 3 / 4 / 5 ) * ( horizontal / vertical ) respectively
+--       it will be far better to write small loops all over the place.
+-- *** REFACTOR THIS ***
 local function gen_combinations(w, h)
   local c = {}
   local starters = {} -- combinations that can be the "last-invoked" chain.
@@ -93,10 +97,10 @@ end
 -- Warning: UGLY CODE
 local function list_of_intersect(key, combinations) -- combinations should be immutable
   local intersects = {}
-  local lenH0, lenV0, _, x0, y0 = analyze(key)
+  local lenH0, lenV0, _, x0, y0 = MapUtils.analyze(key)
   
   for _, v in ipairs(combinations) do
-    local lenH1, lenV1, _, x1, y1 = analyze(v)
+    local lenH1, lenV1, _, x1, y1 = MapUtils.analyze(v)
     -- tricky things to do here... 
     if     lenV1 > 0 and lenH0 > 0 then               -- vertical intercept horizontal
       if x1 >= x0 + (lenH0-3) and x1 < x0 + 3 and y1 <= y0 then

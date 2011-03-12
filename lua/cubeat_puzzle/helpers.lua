@@ -1,15 +1,17 @@
 
 local Helper = {}
 
-function push(self, v) table.insert(self, v); self.top = self.top + 1 end
-function pop (self)    local r = self[self.top]; self.top = self.top - 1; return r end
-function display(self) for i = 1, self.top do print(i, self[i]) end end
+local function push(self, v) table.insert(self, v); self.size = self.size + 1 end
+local function pop (self)    local r = self[self.size]; self.size = self.size - 1; return r end
+local function rear(self)    return self[self.size] end
+local function display(self) for i = 1, self.size do print(i, self[i]) end end
 
 function Helper.stack() 
   local stack = {}
-  stack.top = 0
+  stack.size = 0
   stack.push    = push
   stack.pop     = pop
+  stack.top     = rear
   stack.display = display
   return stack  
 end

@@ -40,12 +40,48 @@ math.randomseed(os.time())
 
 local PuzzleGen = {}
 
-function PuzzleGen.generate(chain_limit)
-  local stack = Stack()
-  local intersects_of, starter = MapUtils.create_intersect_sheet(6, 10)
-  stack:push(starter[random(#starter)+1])
-  
+function PuzzleGen:init(w, h)
+  self.row_ranges = {}
+  self.heights = {}
+  self.chains = Stack()
+  self.colors = Stack()
+  self.intersects_of, self.starter = MapUtils.create_intersect_sheet(w, h)
+  for i = 1, h do
+    self.row_ranges[i] = {s = 0, e = 0}
+  end
+  for i = 1, w do 
+    self.heights[i] = 0
+  end
+  for k,v in pairs(self.intersects_of) do
+    tablex.shuffle(v) -- randomize
+  end
+  self.inited = true
 end
 
-PuzzleGen.generate(7)
+function PuzzleGen:update_ranges_heights()
+  local lenH, lenV, _, x, y = MapUtils.analyze( self.chains:top() )
+  if lenH > 0 then
+    for i = x, x + lenH - 1 do
+      -- starts from here
+    end
+  elseif lenV > 0 then
+  end
+end
+
+function PuzzleGen:generate(chain_limit, w, h)
+  w, h = w or 6, h or 10
+  if not self.inited then self:init(w, h) end
+ 
+  self.chains:push(self.starter[random(#self.starter)+1])
+  self.colors:push(1)
+  
+  local intersects = self.intersects_of[ self.chains:top() ]
+  local i = 1
+  while intersects[i] do
+    break
+    --self.chains:push(intersects[i]) 
+  end
+end
+
+PuzzleGen:generate(7, 6, 10)
 

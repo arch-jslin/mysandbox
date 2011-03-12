@@ -98,8 +98,7 @@ Test.asserteq(a, {4,5,1,2,3})
 
 local s = Stack()
 s:push(1) s:push(2) s:push(3)
-Test.asserteq(s.top, 3)
+Test.asserteq(s.size, 3)
 s:pop() s:pop()
-Test.asserteq(s.top, 1)
+Test.asserteq(s.size, 1)
  
-
