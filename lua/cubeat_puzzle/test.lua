@@ -82,7 +82,7 @@ Test.asserteq(MapUtils.pushup_horizontally(testmap, 2, 1, 3), true)
 Test.asserteq(testmap, ansmap1)
 Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
 Test.asserteq(testmap, ansmap2)
-Test.asserteq(MapUtils.gen_map_from_exprs({height = 8, width = 5, 30011, 03011, 30012}), ansmap3)
+Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {30011, 03011, 30012}), ansmap3)
 Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3), true)
 Test.asserteq(MapUtils.check_puzzle_correctness(chain15), true)
 

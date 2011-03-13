@@ -2,7 +2,7 @@
 local Helper = {}
 
 local function push(self, v) table.insert(self, v); self.size = self.size + 1 end
-local function pop (self)    local r = self[self.size]; self.size = self.size - 1; return r end
+local function pop (self)    local r = self[self.size]; self[self.size] = nil; self.size = self.size - 1; return r end
 local function rear(self)    return self[self.size] end
 local function display(self) for i = 1, self.size do print(i, self[i]) end end
 

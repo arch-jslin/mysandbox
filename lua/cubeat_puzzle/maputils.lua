@@ -1,5 +1,6 @@
 
 local tablex = require 'pl.tablex'
+local random = require 'helpers'.random
 
 local MapUtils = {}
 local floor = math.floor
@@ -15,9 +16,9 @@ end
 local function add_chain_to_map(map, expr, chain)
   local lenH, lenV, _, x, y = MapUtils.analyze(expr)
   if lenH > 0 then
-    MapUtils.pushup_horizontally(map, x, y, lenH, chain)
+    return MapUtils.pushup_horizontally(map, x, y, lenH, chain)
   elseif lenV > 0 then
-    MapUtils.pushup_vertically(map, x, y, lenV, chain)
+    return MapUtils.pushup_vertically(map, x, y, lenV, chain)
   end
 end
 
@@ -43,8 +44,8 @@ function MapUtils.pushup_vertically(map, x, y, len, chain)
   return true
 end
 
-function MapUtils.gen_map_from_exprs(exprs)
-  local map = MapUtils.create_map(exprs.width, exprs.height)
+function MapUtils.gen_map_from_exprs(w, h, exprs)
+  local map = MapUtils.create_map(w, h)
   for chain,v in ipairs(exprs) do
     add_chain_to_map(map, v, chain)
   end
@@ -64,7 +65,7 @@ end
 function MapUtils.display(map)
   for y = map.height, 1, -1 do
     for x = 1, map.width do
-      io.write(string.format("%2d", map[y][x]))
+      io.write(string.format("%3d", map[y][x]))
     end
     print()
   end
