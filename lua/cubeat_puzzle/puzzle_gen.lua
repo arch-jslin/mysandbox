@@ -47,7 +47,7 @@ function PuzzleGen:init(w, h)
   self.colors = Stack()
   self.intersects_of, self.starter = MapUtils.create_intersect_sheet(w, h)
   for i = 1, h do
-    self.row_ranges[i] = {s = 0, e = 0}
+    self.row_ranges[i] = {s = w, e = 0}
   end
   for i = 1, w do 
     self.heights[i] = 0
@@ -62,9 +62,13 @@ function PuzzleGen:update_ranges_heights()
   local lenH, lenV, _, x, y = MapUtils.analyze( self.chains:top() )
   if lenH > 0 then
     for i = x, x + lenH - 1 do
-      -- starts from here
+      self.heights[i] = self.heights[i] + 1
     end
+    if self.row_ranges[y].s > x            then self.row_ranges[y].s = x end
+    if self.row_ranges[y].e < x + lenH - 1 then self.row_ranges[y].e = x + lenH - 1 end
   elseif lenV > 0 then
+    self.heights[x] = self.heights[x] + lenV
+    -- it's impossible for vertical combinations to expand row ranges
   end
 end
 
@@ -74,6 +78,7 @@ function PuzzleGen:generate(chain_limit, w, h)
  
   self.chains:push(self.starter[random(#self.starter)+1])
   self.colors:push(1)
+  self:update_ranges_heights()
   
   local intersects = self.intersects_of[ self.chains:top() ]
   local i = 1
@@ -81,6 +86,8 @@ function PuzzleGen:generate(chain_limit, w, h)
     break
     --self.chains:push(intersects[i]) 
   end
+  for _,v in ipairs(self.heights) do print(_,v) end
+  for k,v in ipairs(self.row_ranges) do print(k, v.s, v.e) end
 end
 
 PuzzleGen:generate(7, 6, 10)
