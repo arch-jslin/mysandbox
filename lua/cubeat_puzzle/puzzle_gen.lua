@@ -162,6 +162,6 @@ function PuzzleGen:generate(chain_limit, w, h)
   return res
 end
 
-Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate(19, 6, 10) ) end)
+Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate(18, 6, 10) ) end)
 
 
