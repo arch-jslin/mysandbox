@@ -124,21 +124,15 @@ function PuzzleGen:next_chain()
       self.chains:push(intersects[i])
       self.colors:push(self.colors.size + 1)
       local old_ranges, old_heights = self:update_ranges_heights()
-      
-      local ans = self:add_answer()            -- temp
-      self.colors:push(self.colors.size + 1)   -- temp
       local new_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
-      if ans and not MapUtils.destroy_chain(new_map) then
-        if self.chains.size > self.chain_limit then return end
-        self.chains:pop() -- pop only the answer  
-        self.colors:pop() 
-        -- we have to update the row ranges and heights here too... shit 
+      if MapUtils.destroy_chain(new_map) then
+        if self.chains.size >= self.chain_limit then return end 
         self:next_chain()
-        if self.chains.size > self.chain_limit then return end
+        if self.chains.size >= self.chain_limit then return end
         self.row_ranges, self.heights = old_ranges, old_heights
       else
-        self.chains:pop() if ans then self.chains:pop() end -- temp
-        self.colors:pop() self.colors:pop()                 -- temp
+        self.chains:pop()
+        self.colors:pop()
         self.row_ranges, self.heights = old_ranges, old_heights
       end
     end
