@@ -63,6 +63,7 @@ end
 
 function PuzzleGen:update_ranges_heights()
   --print("stack: "..self.chains.size )
+  local old_ranges, old_heights = tablex.deepcopy(self.row_ranges), tablex.deepcopy(self.heights)
   local lenH, lenV, _, x, y = MapUtils.analyze( self.chains:top() )
   if lenH > 0 then
     for i = x, x + lenH - 1 do
@@ -74,36 +75,31 @@ function PuzzleGen:update_ranges_heights()
     self.heights[x] = self.heights[x] + lenV
     -- it's impossible for vertical combinations to expand row ranges
   end
+  return old_ranges, old_heights
 end
 
-function PuzzleGen:check_float(c)
+function PuzzleGen:not_float(c)
   local lenH, lenV, _, x, y = MapUtils.analyze(c)
-  if y > 1 then
-    if x < self.row_ranges[y-1].s or x + lenH - 1 > self.row_ranges[y-1].e then
-      return true
-    end
-  end
-  return false
+  local res = false
+  res = y == 1 or (x >= self.row_ranges[y-1].s) and (x + lenH - 1 <= self.row_ranges[y-1].e)
+  return res
 end
 
-function PuzzleGen:check_too_high(c)
+function PuzzleGen:not_too_high(c)
   local lenH, lenV, _, x, y = MapUtils.analyze(c)
   if lenH > 0 then
     for i = x, x + lenH - 1 do
-      if self.heights[i] + 1 > self.h then return true end
+      if self.heights[i] + 1 > self.h then return false end
     end
   elseif lenV > 0 then
-    if self.heights[x] + lenV > self.h then return true end
+    if self.heights[x] + lenV > self.h then return false end
   end
-  return false
+  return true
 end
 
 function PuzzleGen:add_answer()
   local lenH, lenV, color, x, y = MapUtils.analyze(self.chains:top())
   local x1, y1
-  --print("trying to add answer for: ")  
-  --MapUtils.display( MapUtils.gen_map_from_exprs(self.w, self.h, self.chains) )
-  --print()
   if lenH > 0 then
     x1 = random(lenH) + x
     y1 = random(y) + 1
@@ -111,9 +107,12 @@ function PuzzleGen:add_answer()
     x1 = x
     y1 = random(lenV) + y
   end
-  if self:check_too_high(10000 + x1*10 + y1) then return false end
-  self.chains:push(10000 + x1*10 + y1)
-  return true
+  if self:not_too_high(10000 + x1*10 + y1) then
+    self.chains:push(10000 + x1*10 + y1)
+    return true
+  else 
+    return false
+  end
 end
 
 function PuzzleGen:next_chain()
@@ -121,11 +120,11 @@ function PuzzleGen:next_chain()
   local i = 1
   while intersects[i] do
     local c = intersects[i]
-    if not self:check_float(c) and not self:check_too_high(c) then
+    if self:not_float(c) and self:not_too_high(c) then
       self.chains:push(intersects[i])
-      local old_ranges1 = tablex.deepcopy(self.row_ranges)      
-      local old_heights1= tablex.deepcopy(self.heights)
-      self:update_ranges_heights()
+      self.colors:push(self.colors.size + 1)
+      local old_ranges, old_heights = self:update_ranges_heights()
+      
       local ans = self:add_answer()            -- temp
       self.colors:push(self.colors.size + 1)   -- temp
       local new_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
@@ -136,13 +135,11 @@ function PuzzleGen:next_chain()
         -- we have to update the row ranges and heights here too... shit 
         self:next_chain()
         if self.chains.size > self.chain_limit then return end
-        self.heights = old_heights1
-        self.row_ranges = old_ranges1
+        self.row_ranges, self.heights = old_ranges, old_heights
       else
-        self.chains:pop() if ans then self.chains:pop() end -- pop answer and the last chain ????
-        self.colors:pop()
-        self.heights = old_heights1
-        self.row_ranges = old_ranges1
+        self.chains:pop() if ans then self.chains:pop() end -- temp
+        self.colors:pop() self.colors:pop()                 -- temp
+        self.row_ranges, self.heights = old_ranges, old_heights
       end
     end
     i = i + 1
@@ -165,5 +162,6 @@ function PuzzleGen:generate(chain_limit, w, h)
   return res
 end
 
-MapUtils.display( PuzzleGen:generate(16, 6, 10) )
+Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate(19, 6, 10) ) end)
+
 
