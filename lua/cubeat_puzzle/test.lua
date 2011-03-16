@@ -103,12 +103,3 @@ Test.asserteq(s.size, 3)
 s:pop() s:pop()
 Test.asserteq(s.size, 1)
  
-Test.timer("", 10, function() 
-  local counter = 0
-  for v in Helper.perm_all2{1,2,3,4,5,6,7,8,9} do
-    counter = counter + 1
-    --for _,v2 in ipairs(v) do io.write(string.format("%3d",v2)) end
-    --print()
-  end
-  print(counter)
-end)

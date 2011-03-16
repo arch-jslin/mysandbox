@@ -45,16 +45,15 @@ local function permgen(a, n)
   end
 end
 
-function Helper.perm_all(a)
-  return coroutine.wrap(function() permgen(a, #a) end)
-end
-
-function Helper.perm_all2(a)
-  local co = coroutine.create(function () permgen(a, #a) end)
-  return function ()   -- iterator
-    local code, res = coroutine.resume(co)
-    return res
-  end
+function Helper.shufflex(a)
+  return coroutine.wrap(function() 
+    for i = 1, math.floor(#a/2) do
+      local pos1 = math.floor(math.random()*#a) + 1
+      local pos2 = math.floor(math.random()*#a) + 1
+      a[pos1], a[pos2] = a[pos1], a[pos2]
+      coroutine.yield(a)
+    end
+  end)
 end
 
 function Helper.random(n) 

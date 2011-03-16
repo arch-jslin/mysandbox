@@ -131,11 +131,21 @@ local function color_chain(chains, colors)
   return chains_dup
 end
 
+-- 失敗。permutation 方法耗費太多時間在無用 permutation；
+-- shuffle 法因為使用 coroutine 結果其實效果不彰。
+-- 還可能挑戰的方式：不要 shuffle，只隨機換兩三個，然後不要用 iterator 法 (所以不用 coroutine)
+
+-- 其他要馬上加強的點：
+-- next_chain 要拆掉，越細越好，確立 operation semantic 而不是一堆 statement
+-- 把所有可以先寫死的地方寫死：
+--   e.g. 要 if lenV elseif lenH 的地方，要 for i to lenV or lenH 的地方 -- 非常重要
+--   有時間再改寫成 meta programming (loadstring) 版本
+
 function PuzzleGen:next_chain()
   --print(self.chains:top())
   local intersects = self.intersects_of[ self.chains:top() ]
   local i = 1
-  while os.time() - self.start_time < 2 and intersects[i] do
+  while os.time() - self.start_time < 1 and intersects[i] do
     local c = intersects[i]
     if self:not_float(c) and self:not_too_high(c) then
       self.chains:push(intersects[i])
