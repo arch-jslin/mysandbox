@@ -14,32 +14,33 @@ function MapUtils.analyze(expr)
 end
 
 local function add_chain_to_map(map, expr, chain)
-  local lenH, lenV, _, x, y = MapUtils.analyze(expr)
+  local lenH, lenV, color, x, y = MapUtils.analyze(expr)
+  color = color == 0 and chain or color
   if lenH > 0 then
-    return MapUtils.pushup_horizontally(map, x, y, lenH, chain)
+    return MapUtils.pushup_horizontally(map, x, y, lenH, color)
   elseif lenV > 0 then
-    return MapUtils.pushup_vertically(map, x, y, lenV, chain)
+    return MapUtils.pushup_vertically(map, x, y, lenV, color)
   end
 end
 
-function MapUtils.pushup_horizontally(map, x, y, len, chain)
+function MapUtils.pushup_horizontally(map, x, y, len, color)
   if y + 1 > map.height then return false end 
   for i = x, x + len - 1 do
     for j = map.height - 1, y, -1 do
       map[j+1][i] = map[j][i]
     end
-    map[y][i] = chain or 0
+    map[y][i] = color or 0
   end
   return true
 end
 
-function MapUtils.pushup_vertically(map, x, y, len, chain)
+function MapUtils.pushup_vertically(map, x, y, len, color)
   if y + len > map.height then return false end
   for j = map.height - len, y, -1 do
     map[j+len][x] = map[j][x]
   end
   for j = y, y + len - 1 do
-    map[j][x] = chain or 0
+    map[j][x] = color or 0
   end
   return true
 end
