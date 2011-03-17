@@ -127,6 +127,7 @@ end
 
 local function color_chain(chains, colors)
   local chains_dup = Stack()
+  print(chains.size, colors.size)
   for i,v in ipairs(chains) do chains_dup:push(v + colors[i]*100) end
   return chains_dup
 end
@@ -176,17 +177,18 @@ function PuzzleGen:next_chain()
               return true
             end
             local last_ans = self.chains:pop()
-            local last_color = colors_dup:pop()
+            local last_color = colors_dup:pop() -- last chain's color
             self.colors = colors_dup
-            --print("level up to "..self.chains.size+1)
+            print("level up to "..self.chains.size+1)
             self:next_chain()
             if self.chains.size > self.chain_limit then return true end
-            --print("level back to "..self.chains.size)
+            print("level back to "..self.chains.size)
             colors_dup:push(last_color)
             self.chains:push(last_ans)
           end          
           tablex.rotate(colors_dup)
         end 
+        colors_dup:pop() colors_dup:pop()
       end
       self.chains:pop() if ans then self.chains:pop() end
       self.row_ranges, self.heights = old_ranges, old_heights
