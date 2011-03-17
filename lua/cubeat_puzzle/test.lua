@@ -102,4 +102,4 @@ s:push(1) s:push(2) s:push(3)
 Test.asserteq(s.size, 3)
 s:pop() s:pop()
 Test.asserteq(s.size, 1)
- 
+
