@@ -127,7 +127,6 @@ end
 
 local function color_chain(chains, colors)
   local chains_dup = Stack()
-  print(chains.size, colors.size)
   for i,v in ipairs(chains) do chains_dup:push(v + colors[i]*100) end
   return chains_dup
 end
@@ -143,7 +142,6 @@ end
 --   有時間再改寫成 meta programming (loadstring) 版本
 
 function PuzzleGen:next_chain()
-  --print(self.chains:top())
   local intersects = self.intersects_of[ self.chains:top() ]
   local i = 1
   while os.time() - self.start_time < 1 and intersects[i] do
@@ -158,18 +156,13 @@ function PuzzleGen:next_chain()
         colors_dup:push((colors_dup:top() % 4) + 1) 
         colors_dup:push((colors_dup:top() % 4) + 1) 
         local n = colors_dup.size
-        --print("A part", self.chains.size, colors_dup.size)
         for j = 1, n do
-          --print("B part", self.chains.size, colors_dup.size)
           local chains_dup = color_chain(self.chains, colors_dup)
           local state = MapUtils.destroy_chain( MapUtils.gen_map_from_exprs(self.w, self.h, chains_dup ) )
           chains_dup:pop() -- pop answer
           state = not state and MapUtils.check_puzzle_correctness( MapUtils.gen_map_from_exprs(self.w, self.h, chains_dup) ) 
           if state then
-            --MapUtils.display( MapUtils.gen_map_from_exprs(self.w, self.h, chains_dup) )
-            --print()
             if self.chains.size > self.chain_limit then
-              --print("A")
               self.chains:display()
               colors_dup:display()
               self.chains = color_chain(self.chains, colors_dup)
@@ -179,10 +172,8 @@ function PuzzleGen:next_chain()
             local last_ans = self.chains:pop()
             local last_color = colors_dup:pop() -- last chain's color
             self.colors = colors_dup
-            print("level up to "..self.chains.size+1)
             self:next_chain()
             if self.chains.size > self.chain_limit then return true end
-            print("level back to "..self.chains.size)
             colors_dup:push(last_color)
             self.chains:push(last_ans)
           end          
