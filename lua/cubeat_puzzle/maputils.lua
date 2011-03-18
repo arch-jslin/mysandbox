@@ -8,7 +8,7 @@ local floor = math.floor
 function MapUtils.analyze(expr)
   return floor(expr / 10000),        -- length if horizontal
          floor(expr % 10000 / 1000), -- length if vertical
-         floor(expr % 1000 / 100),   -- reserved
+         floor(expr % 1000 / 100),   -- color
          floor(expr % 100 / 10),     -- pos x
          floor(expr % 10)            -- pos y
 end
@@ -80,16 +80,18 @@ local function gen_combinations(w, h)
   local c = {}
   local starters = {} -- combinations that can be the "last-invoked" chain.
   for len = 3, 5 do -- for these different chain length
-    for y = 1, h do
-      for x = 1, w - len + 1 do
-        table.insert(c, 10000*len + x*10 + y) -- horizontal
-        if y == 1 then table.insert(starters, c[#c]) end
+    for color = 1, 4 do -- for these different colors
+      for y = 1, h do
+        for x = 1, w - len + 1 do
+          table.insert(c, 10000*len + color*100 + x*10 + y) -- horizontal
+          if y == 1 then table.insert(starters, c[#c]) end
+        end
       end
-    end
-    for y = 1, h - len + 1 do
-      for x = 1, w do
-        table.insert(c, 1000*len + x*10 + y)  -- vertical
-        -- don't use vertical combinations as starters.
+      for y = 1, h - len + 1 do
+        for x = 1, w do
+          table.insert(c, 1000*len + color*100 + x*10 + y)  -- vertical
+          -- don't use vertical combinations as starters.
+        end
       end
     end
   end
@@ -99,30 +101,35 @@ end
 -- Warning: UGLY CODE
 local function list_of_intersect(key, combinations) -- combinations should be immutable
   local intersects = {}
-  local lenH0, lenV0, _, x0, y0 = MapUtils.analyze(key)
+  local lenH0, lenV0, c0, x0, y0 = MapUtils.analyze(key)
   
   for _, v in ipairs(combinations) do
-    local lenH1, lenV1, _, x1, y1 = MapUtils.analyze(v)
+    local lenH1, lenV1, c1, x1, y1 = MapUtils.analyze(v)
     -- tricky things to do here... 
     if     lenV1 > 0 and lenH0 > 0 then               -- vertical intercept horizontal
       if x1 >= x0 + (lenH0-3) and x1 < x0 + 3 and y1 <= y0 then
-        table.insert(intersects, v) 
+        if y0 >= y1 + lenV1 or c1 ~= c0 then
+          table.insert(intersects, v) 
+        end
       end
     elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 then -- vertical intercept vertical
-      if x1 == x0 and y1 > y0 and y1 < y0 + 3 then
+      if x1 == x0 and y1 > y0 and y1 < y0 + 3 and c0 ~= c1 then
         table.insert(intersects, v)
       end
     elseif lenH1 > 0 and lenV0 > 0 then               -- horizontal intercept vertical
       if x1 + lenH1 > x0 and x1 <= x0 and
-         y1 > y0         and y1 < y0 + lenV0
+         y1 > y0         and y1 < y0 + lenV0 and 
+         c0 ~= c1
       then
         table.insert(intersects, v)
       end
     elseif lenH1 > 0 and lenH0 > 0 and lenH0 < 5 then -- horizontal intercept horizontal
-      if (x1 < x0 and x1 + lenH1 > x0 and (x0 + lenH0) - (x1 + lenH1) < 3) or -- if x1 is left of x0
-         (x1 > x0 and x1 < x0 + 3)                                            -- if x1 is right of x0
+      if (x1 < x0 and x1 + lenH1 - x0 < 3 and (x0 + lenH0) - (x1 + lenH1) < 3) or -- if x1 is left of x0
+         (x1 > x0 and x1 < x0 + 3 and (x0 + lenH0) - x1 < 3)                  -- if x1 is right of x0
       then                                       
-        if y1 <= y0 then
+        if y1 == y0 and c1 ~= c0 then
+          table.insert(intersects, v)
+        elseif y1 < y0 then
           table.insert(intersects, v)
         end        
       end
@@ -217,7 +224,7 @@ end
 
 function MapUtils.check_puzzle_correctness(map, level)
   local clone = tablex.deepcopy(map)
-  local chained, chain_count, destroy_count = true, 0, 3
+  local chained, chain_count, destroy_count = true, -1, 3
   while chained and destroy_count >= 3 and destroy_count <= 5 do
     chained, destroy_count = MapUtils.destroy_chain(clone)
     MapUtils.drop_blocks(clone)

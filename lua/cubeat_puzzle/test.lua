@@ -84,13 +84,21 @@ Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
 Test.asserteq(testmap, ansmap2)
 Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {30111, 03211, 30312}), ansmap3)
 Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {30011, 03011, 30012}), ansmap3)
-Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3), true)
-Test.asserteq(MapUtils.check_puzzle_correctness(chain15), true)
+Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3, 3), true)
+Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
 
 local intersects_of, starters, counter = MapUtils.create_intersect_sheet(6, 10) -- it's actually only 6*9
 
-Test.asserteq(counter, 189)
-Test.asserteq(#starters, 9) -- don't use vertical combinations as starters
+local count = 0
+for _,v in ipairs(intersects_of[40334]) do
+  io.write(string.format("%d, ",v))
+  count = count + 1
+  if count % 8 == 0 then print() end
+end
+print(count)
+
+Test.asserteq(counter, 756)
+Test.asserteq(#starters, 36) -- don't use vertical combinations as starters
 
 local a = {1,2,3,4,5}
 tablex.rotate(a,2)
