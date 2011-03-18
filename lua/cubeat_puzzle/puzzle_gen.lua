@@ -123,34 +123,33 @@ function PuzzleGen:next_chain()
       local ans = self:add_answer_to(self.chains)
       if ans and not MapUtils.destroy_chain(MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)) 
       then
-        local colors_dup = tablex.deepcopy(self.colors)
-        colors_dup:push((colors_dup:top() % 4) + 1) 
-        colors_dup:push((colors_dup:top() % 4) + 1) 
-        local n = colors_dup.size
-        for j = 1, n do
-          local chains_dup = color_chain(self.chains, colors_dup)
-          local state = MapUtils.destroy_chain( MapUtils.gen_map_from_exprs(self.w, self.h, chains_dup ) )
-          chains_dup:pop() -- pop answer
-          state = not state and MapUtils.check_puzzle_correctness( MapUtils.gen_map_from_exprs(self.w, self.h, chains_dup) ) 
-          if state then
-            if self.chains.size > self.chain_limit then
-              self.chains:display()
-              colors_dup:display()
-              self.chains = color_chain(self.chains, colors_dup)
-              self.colors = colors_dup
-              return true
+        for j = 0, 3 do
+          self.colors:push(((self.colors:top() + j) % 4) + 1) 
+          for k = 0, 3 do 
+            self.colors:push(((self.colors:top() + k) % 4) + 1)
+            if self.colors:top() ~= self.colors[self.colors.size - 1] then            
+              local colored_chains = color_chain(self.chains, self.colors)
+              local state = not MapUtils.destroy_chain( MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains) )
+              colored_chains:pop() -- pop answer
+              state = state and MapUtils.check_puzzle_correctness( MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains) ) 
+              if state then
+                if self.chains.size > self.chain_limit then
+                  self.chains = color_chain(self.chains, self.colors)
+                  self.chains:display()
+                  return true
+                end
+                local ans = self.chains:pop()
+                local ans_color = self.colors:pop()
+                self:next_chain()
+                if self.chains.size > self.chain_limit then return true end
+                self.colors:push(ans_color)
+                self.chains:push(ans)
+              end
             end
-            local last_ans = self.chains:pop()
-            local last_color = colors_dup:pop() -- last chain's color
-            self.colors = colors_dup
-            self:next_chain()
-            if self.chains.size > self.chain_limit then return true end
-            colors_dup:push(last_color)
-            self.chains:push(last_ans)
-          end          
-          tablex.rotate(colors_dup)
+            self.colors:pop()
+          end 
+          self.colors:pop()          
         end 
-        colors_dup:pop() colors_dup:pop()
       end
       self.chains:pop() if ans then self.chains:pop() end
       self.row_ranges, self.heights = old_ranges, old_heights
