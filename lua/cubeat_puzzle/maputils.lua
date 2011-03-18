@@ -172,7 +172,7 @@ end
 
 function MapUtils.destroy_chain(map)
   local delete_mark = MapUtils.create_map(map.width, map.height)
-  local chained = false
+  local chained, count = false, 0
   for y = 1, map.height do
     for x = 1, map.width do
       if map[y][x] > 0 then
@@ -193,10 +193,11 @@ function MapUtils.destroy_chain(map)
     for x = 1, map.width do
       if delete_mark[y][x] > 0 then
         map[y][x] = 0
+        count = count + 1
       end
     end
   end
-  return chained
+  return chained, count
 end
 
 function MapUtils.drop_blocks(map)
@@ -214,12 +215,13 @@ function MapUtils.drop_blocks(map)
   end
 end
 
-function MapUtils.check_puzzle_correctness(map)
+function MapUtils.check_puzzle_correctness(map, level)
   local clone = tablex.deepcopy(map)
-  local chained = true
-  while chained do
-    chained = MapUtils.destroy_chain(clone)
+  local chained, chain_count, destroy_count = true, 0, 3
+  while chained and destroy_count >= 3 and destroy_count <= 5 do
+    chained, destroy_count = MapUtils.destroy_chain(clone)
     MapUtils.drop_blocks(clone)
+    chain_count = chain_count + 1
   end
   for y = 1, clone.height do
     for x = 1, clone.width do
@@ -228,7 +230,7 @@ function MapUtils.check_puzzle_correctness(map)
       end
     end
   end
-  return true
+  return true and chain_count == level
 end
 
 return MapUtils
