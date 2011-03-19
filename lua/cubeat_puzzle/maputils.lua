@@ -70,6 +70,7 @@ function MapUtils.display(map)
     end
     print()
   end
+  print()
 end
 
 -- MEMO: actually the combinations should be an object with specialized 
@@ -86,6 +87,8 @@ local function gen_combinations(w, h)
         if y == 1 then table.insert(starters, c[#c]) end
       end
     end
+  end
+  for len = 3, 4 do -- VERTICAL 5's WILL NEVER BE USABLE!!!!!
     for y = 1, h - len + 1 do
       for x = 1, w do
         table.insert(c, 1000*len + x*10 + y)  -- vertical
@@ -110,17 +113,23 @@ local function list_of_intersect(key, combinations, height_limit) -- combination
       if x1 >= x0 + (lenH0-3) and x1 < x0 + 3 and y1 <= y0 then
         table.insert(intersects, v) 
       end
-    elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 and lenV0 + lenV1 + y0 - 1 <= height_limit then 
+    elseif lenV1 > 0 and lenV0 > 0 and lenV0 + lenV1 + y0 - 1 <= height_limit then 
       -- vertical intercept vertical
-      if x1 == x0 and y1 > y0 and y1 < y0 + 3 then
-        table.insert(intersects, v)
+      if x1 == x0 then
+        if lenV0 == 3 and (y1 == y0 + 1 or y1 == y0 + 2) then
+          table.insert(intersects, v)
+        elseif lenV0 == 4 and y1 == y0 + 2 then
+          table.insert(intersects, v)
+        end
       end
     elseif lenH1 > 0 and lenV0 > 0 then               
       -- horizontal intercept vertical
-      if x1 + lenH1 > x0 and x1 <= x0 and
-         y1 > y0         and y1 < y0 + lenV0
-      then
-        table.insert(intersects, v)
+      if x1 + lenH1 > x0 and x1 <= x0 then
+        if lenV0 == 3 and (y1 == y0 + 1 or y1 == y0 + 2) then
+          table.insert(intersects, v)
+        elseif lenV0 == 4 and y1 == y0 + 2 then
+          table.insert(intersects, v)
+        end
       end
     elseif lenH1 > 0 and lenH0 > 0 and lenH0 < 5 then 
       -- horizontal intercept horizontal
@@ -180,7 +189,8 @@ function MapUtils.find_chain(map)
     for x = 1, map.width do
       if map[y][x] > 0 then
         local res = do_check_chain_v(map, x, y)
-        return res or do_check_chain_h(map[y], x)
+        res = res or do_check_chain_h(map[y], x)
+        if res then return true end
       end
     end
   end
