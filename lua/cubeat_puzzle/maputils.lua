@@ -108,9 +108,7 @@ local function list_of_intersect(key, combinations, height_limit) -- combination
     if lenV1 > 0 and lenH0 > 0 and lenV1 + y0 <= height_limit then                   
       -- vertical intercept horizontal
       if x1 >= x0 + (lenH0-3) and x1 < x0 + 3 and y1 <= y0 then
-        if y0 >= y1 + lenV1 then
-          table.insert(intersects, v) 
-        end
+        table.insert(intersects, v) 
       end
     elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 and lenV0 + lenV1 + y0 - 1 <= height_limit then 
       -- vertical intercept vertical

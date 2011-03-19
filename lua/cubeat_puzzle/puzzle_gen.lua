@@ -148,7 +148,7 @@ function PuzzleGen:next_chain( level )
             self.colors = colors_dup
             self:next_chain( level + 1 )
             if self.chains.size > self.chain_limit then return true 
-            elseif level < self.chain_limit - 4 then return false end -- no turning back line
+            elseif level < self.chain_limit - 5 then return false end -- no turning back line
             colors_dup:push(last_color)
             self.chains:push(last_ans)
           end          
