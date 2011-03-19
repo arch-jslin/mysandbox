@@ -129,7 +129,16 @@ function PuzzleGen:next_chain(level)
         local cloned_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains))
         local chained, count = MapUtils.destroy_chain( cloned_map ) 
         if chained and count == len then
-          
+          if self.chains.size >= self.chain_limit then
+            if self:add_answer_to(self.chains, last_color) then
+              self.chains:display()
+              return true
+            end
+          else
+            self:next_chain( level + 1 )
+          end
+          if self.chains.size > self.chain_limit then return true 
+          elseif level < self.chain_limit - 4 then return false end
         end
         self.colors:pop()
       end
