@@ -115,7 +115,7 @@ end
 function PuzzleGen:next_chain(level)
   local intersects = self.intersects_of[ self.chains:top() ]
   local i = 1
-  while os.time() - self.start_time < 100 and intersects[i] do
+  while os.time() - self.start_time < 2 and intersects[i] do
     local c = intersects[i]
     if self:not_float(c) and self:not_too_high(c) then
       self.chains:push(intersects[i])
@@ -150,7 +150,7 @@ function PuzzleGen:next_chain(level)
                 self:next_chain( level + 1 )
                 if self.chains.size > self.chain_limit then 
                   return true
-                elseif level < self.chain_limit - 3 then
+                elseif level < self.chain_limit - 4 then
                   return false -- never backtrack
                 end
                 self.colors:push(ans_color)
