@@ -217,7 +217,7 @@ end
 
 function MapUtils.check_puzzle_correctness(map, level)
   local clone = tablex.deepcopy(map)
-  local chained, chain_count, destroy_count = true, 0, 3
+  local chained, chain_count, destroy_count = true, -1, 3
   while chained and destroy_count >= 3 and destroy_count <= 5 do
     chained, destroy_count = MapUtils.destroy_chain(clone)
     MapUtils.drop_blocks(clone)
