@@ -97,30 +97,35 @@ local function gen_combinations(w, h)
 end
 
 -- Warning: UGLY CODE
-local function list_of_intersect(key, combinations) -- combinations should be immutable
+local function list_of_intersect(key, combinations, height_limit) -- combinations should be immutable
   local intersects = {}
   local lenH0, lenV0, _, x0, y0 = MapUtils.analyze(key)
-  
-  for _, v in ipairs(combinations) do
-    local lenH1, lenV1, _, x1, y1 = MapUtils.analyze(v)
+  local i = 1
+  while i < #combinations do
+    local v = combinations[i]; i = i + 1
+    local lenH1, lenV1, c1, x1, y1 = MapUtils.analyze(v)
     -- tricky things to do here... 
-    if     lenV1 > 0 and lenH0 > 0 then               -- vertical intercept horizontal
+    if lenV1 > 0 and lenH0 > 0 and lenV1 + y0 <= height_limit then                   
+      -- vertical intercept horizontal
       if x1 >= x0 + (lenH0-3) and x1 < x0 + 3 and y1 <= y0 then
         table.insert(intersects, v) 
       end
-    elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 then -- vertical intercept vertical
+    elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 and lenV0 + lenV1 + y0 - 1 <= height_limit then 
+      -- vertical intercept vertical
       if x1 == x0 and y1 > y0 and y1 < y0 + 3 then
         table.insert(intersects, v)
       end
-    elseif lenH1 > 0 and lenV0 > 0 then               -- horizontal intercept vertical
+    elseif lenH1 > 0 and lenV0 > 0 then               
+      -- horizontal intercept vertical
       if x1 + lenH1 > x0 and x1 <= x0 and
          y1 > y0         and y1 < y0 + lenV0
       then
         table.insert(intersects, v)
       end
-    elseif lenH1 > 0 and lenH0 > 0 and lenH0 < 5 then -- horizontal intercept horizontal
-      if (x1 < x0 and x1 + lenH1 > x0 and (x0 + lenH0) - (x1 + lenH1) < 3) or -- if x1 is left of x0
-         (x1 > x0 and x1 < x0 + 3)                                            -- if x1 is right of x0
+    elseif lenH1 > 0 and lenH0 > 0 and lenH0 < 5 then 
+      -- horizontal intercept horizontal
+      if (x1 < x0 and x1 + lenH1 - x0 < 3 and (x0 + lenH0) - (x1 + lenH1) < 3) or -- if x1 is left of x0
+         (x1 > x0 and x1 < x0 + 3 and (x0 + lenH0) - x1 < 3)                  -- if x1 is right of x0
       then                                       
         if y1 <= y0 then
           table.insert(intersects, v)
@@ -132,13 +137,13 @@ local function list_of_intersect(key, combinations) -- combinations should be im
 end
 
 function MapUtils.create_intersect_sheet(w, h)
-  w = (w > 9 and 9 or w) or 6 -- we don't want w be more than 9 here.
-  h = (h > 9 and 9 or h) or 9 -- we don't want h be more than 9 here.
-  local c, starters = gen_combinations(w, h)
+  w = (w > 9  and 9  or w) or 6 
+  h = (h > 10 and 10 or h) or 10
+  local c, starters = gen_combinations(w, h-1)
   local intersects_of = {}
   local counter = 0
   for _, v in ipairs(c) do
-    intersects_of[v] = list_of_intersect(v, c)
+    intersects_of[v] = list_of_intersect(v, c, h)
     counter = counter + 1
   end
   return intersects_of, starters, counter
