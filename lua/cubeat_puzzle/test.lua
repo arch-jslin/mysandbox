@@ -89,14 +89,6 @@ Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
 
 local intersects_of, starters, counter = MapUtils.create_intersect_sheet(6, 10) -- it's actually only 6*9
 
-local count = 0
-for _,v in ipairs(intersects_of[40334]) do
-  io.write(string.format("%d, ",v))
-  count = count + 1
-  if count % 8 == 0 then print() end
-end
-print(count)
-
 Test.asserteq(counter, 756)
 Test.asserteq(#starters, 36) -- don't use vertical combinations as starters
 

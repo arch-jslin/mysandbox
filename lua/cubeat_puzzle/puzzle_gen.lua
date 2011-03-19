@@ -28,7 +28,6 @@ function PuzzleGen:reinit()
   self.row_ranges = {}
   self.heights = {}
   self.chains = Stack()
-  self.colors = Stack()
 
   for i = 1, self.h do
     self.row_ranges[i] = {s = self.w, e = 0}
@@ -36,12 +35,11 @@ function PuzzleGen:reinit()
   for i = 1, self.w do 
     self.heights[i] = 0
   end
-  for k,v in pairs(self.intersects_of) do
+  for _,v in pairs(self.intersects_of) do
     tablex.shuffle(v) -- randomize
   end
 
   self.chains:push(self.starter[random(#self.starter)+1])
-  self.colors:push(1)
   self:update_ranges_heights()
 end
 
@@ -79,28 +77,51 @@ function PuzzleGen:not_too_high(c)
   return true
 end
 
-function PuzzleGen:add_answer_to(chains)
+function PuzzleGen:add_answer_to(chains, last_color)
   local lenH, lenV, color, x, y = MapUtils.analyze(chains:top())
-  local x1, y1
-  if lenH > 0 then
-    x1 = random(lenH) + x
-    y1 = random(y) + 1
-  elseif lenV > 0 then
-    x1 = x
-    y1 = random(lenV) + y
+  local answers = Stack()
+  for color = 1, 4 do
+    local not_same_color = color ~= last_color
+    local tempy = not_same_color and y or y-1
+    if lenH == 3 then
+      for y1 = 1, tempy do 
+        answers:push(10000 + color*100 + x*10 + y1)
+        answers:push(10000 + color*100 + (x+1)*10 + y1)
+        answers:push(10000 + color*100 + (x+2)*10 + y1)
+      end
+    elseif lenH == 4 then
+      for y1 = 1, tempy do 
+        answers:push(10000 + color*100 + (x+1)*10 + y1)
+        answers:push(10000 + color*100 + (x+2)*10 + y1)
+      end
+    elseif lenH == 5 then
+      for y1 = 1, tempy do 
+        answers:push(10000 + color*100 + (x+2)*10 + y1)
+      end
+    elseif not_same_color and (lenV == 3 or lenV == 4) then
+      answers:push(10000 + color*100 + x*10 + y+1)
+      answers:push(10000 + color*100 + x*10 + y+2)
+    elseif not_same_color and lenV == 5 then
+      answers:push(10000 + color*100 + x*10 + y+2)
+    end
   end
-  if self:not_too_high(10000 + x1*10 + y1) then
-    chains:push(10000 + x1*10 + y1)
-    return x1, y1
-  else 
-    return nil
+  
+  tablex.shuffle(answers)
+  local cloned_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
+  for _, ans in ipairs(answers) do
+    if self:not_too_high(ans) then
+      MapUtils.add_chain_to_map(cloned_map, ans)
+      if not MapUtils.find_chain(cloned_map) then
+        self.chains:push(ans)
+        return true -- answer found. chain construction complete.
+      end      
+      local _, _, _, ansx, ansy = MapUtils.analyze(ans)
+      for yp = ansy + 1, self.h do -- remove false answer and pull down
+        cloned_map[yp-1][ansx] = cloned_map[yp][ansx]
+      end
+    end
   end
-end
-
-local function color_chain(chains, colors)
-  local chains_dup = Stack()
-  for i,v in ipairs(chains) do chains_dup:push(v + colors[i]*100) end
-  return chains_dup
+  return false
 end
 
 -- 'fix' PuzzleGen:
@@ -118,51 +139,25 @@ function PuzzleGen:next_chain(level)
   while os.time() - self.start_time < 100 and intersects[i] do
     local c = intersects[i]
     if self:not_float(c) and self:not_too_high(c) then
-      self.chains:push(intersects[i])
-      local lenH, lenV = MapUtils.analyze(self.chains:top())
+      self.chains:push(c)
+      local lenH, lenV, last_color = MapUtils.analyze(self.chains:top())
       local len = lenH + lenV -- anyway get its length
       local old_ranges, old_heights = self:update_ranges_heights()
-      local ansx, ansy = self:add_answer_to(self.chains)
-      if ansx and not MapUtils.destroy_chain(MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)) 
-      then
-        for j = 0, 3 do
-          self.colors:push(((self.colors:top() + j) % 4) + 1) 
-          for k = 0, 3 do 
-            self.colors:push(((self.colors:top() + k) % 4) + 1)
-            if self.colors:top() ~= self.colors[self.colors.size - 1] then            
-              local colored_chains = color_chain(self.chains, self.colors)
-              local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains)
-              local state = not MapUtils.destroy_chain( colored_map )
-              colored_map[ansy][ansx] = 0 -- clear answer block
-              for y = ansy + 1, self.h do  -- pull down things above the answer
-                colored_map[y-1][ansx] = colored_map[y][ansx]
-              end
-              local chained, destroy_count = MapUtils.destroy_chain( colored_map )
-              state = state and destroy_count == len
-              if state then
-                if self.chains.size > self.chain_limit then
-                  self.chains = color_chain(self.chains, self.colors)
-                  self.chains:display()
-                  return true
-                end
-                local ans = self.chains:pop()
-                local ans_color = self.colors:pop()
-                self:next_chain( level + 1 )
-                if self.chains.size > self.chain_limit then 
-                  return true
-                elseif level < self.chain_limit - 3 then
-                  return false -- never backtrack
-                end
-                self.colors:push(ans_color)
-                self.chains:push(ans)
-              end
-            end
-            self.colors:pop()
-          end 
-          self.colors:pop()          
-        end 
+      local cloned_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)          
+      local state, count = MapUtils.destroy_chain( cloned_map )
+      if state and count == len then
+        if self.chains.size >= self.chain_limit then
+          if self:add_answer_to(self.chains, last_color) then
+            self.chains:display()
+            return true
+          end
+        else
+          self:next_chain( level + 1 )
+        end
+        if self.chains.size > self.chain_limit then return true 
+        elseif level < self.chain_limit - 4 then return false end
       end
-      self.chains:pop() if ansx then self.chains:pop() end
+      self.chains:pop() 
       self.row_ranges, self.heights = old_ranges, old_heights
     end
     i = i + 1

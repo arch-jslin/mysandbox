@@ -13,7 +13,7 @@ function MapUtils.analyze(expr)
          floor(expr % 10)            -- pos y
 end
 
-local function add_chain_to_map(map, expr, chain)
+function MapUtils.add_chain_to_map(map, expr, chain)
   local lenH, lenV, color, x, y = MapUtils.analyze(expr)
   color = color == 0 and chain or color
   if lenH > 0 then
@@ -48,7 +48,7 @@ end
 function MapUtils.gen_map_from_exprs(w, h, exprs)
   local map = MapUtils.create_map(w, h)
   for chain,v in ipairs(exprs) do
-    add_chain_to_map(map, v, chain)
+    MapUtils.add_chain_to_map(map, v, chain)
   end
   return map
 end
@@ -99,31 +99,36 @@ local function gen_combinations(w, h)
 end
 
 -- Warning: UGLY CODE
-local function list_of_intersect(key, combinations) -- combinations should be immutable
+local function list_of_intersect(key, combinations, height_limit) -- combinations should be immutable
   local intersects = {}
   local lenH0, lenV0, c0, x0, y0 = MapUtils.analyze(key)
-  
-  for _, v in ipairs(combinations) do
+  local i = 1
+  while i < #combinations do
+    local v = combinations[i]; i = i + 1
     local lenH1, lenV1, c1, x1, y1 = MapUtils.analyze(v)
     -- tricky things to do here... 
-    if     lenV1 > 0 and lenH0 > 0 then               -- vertical intercept horizontal
+    if lenV1 > 0 and lenH0 > 0 and lenV1 + y0 <= height_limit then                   
+      -- vertical intercept horizontal
       if x1 >= x0 + (lenH0-3) and x1 < x0 + 3 and y1 <= y0 then
         if y0 >= y1 + lenV1 or c1 ~= c0 then
           table.insert(intersects, v) 
         end
       end
-    elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 then -- vertical intercept vertical
+    elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 and lenV0 + lenV1 + y0 - 1 <= height_limit then 
+      -- vertical intercept vertical
       if x1 == x0 and y1 > y0 and y1 < y0 + 3 and c0 ~= c1 then
         table.insert(intersects, v)
       end
-    elseif lenH1 > 0 and lenV0 > 0 then               -- horizontal intercept vertical
+    elseif lenH1 > 0 and lenV0 > 0 then               
+      -- horizontal intercept vertical
       if x1 + lenH1 > x0 and x1 <= x0 and
          y1 > y0         and y1 < y0 + lenV0 and 
          c0 ~= c1
       then
         table.insert(intersects, v)
       end
-    elseif lenH1 > 0 and lenH0 > 0 and lenH0 < 5 then -- horizontal intercept horizontal
+    elseif lenH1 > 0 and lenH0 > 0 and lenH0 < 5 then 
+      -- horizontal intercept horizontal
       if (x1 < x0 and x1 + lenH1 - x0 < 3 and (x0 + lenH0) - (x1 + lenH1) < 3) or -- if x1 is left of x0
          (x1 > x0 and x1 < x0 + 3 and (x0 + lenH0) - x1 < 3)                  -- if x1 is right of x0
       then                                       
@@ -139,13 +144,13 @@ local function list_of_intersect(key, combinations) -- combinations should be im
 end
 
 function MapUtils.create_intersect_sheet(w, h)
-  w = (w > 9 and 9 or w) or 6 -- we don't want w be more than 9 here.
-  h = (h > 9 and 9 or h) or 9 -- we don't want h be more than 9 here.
-  local c, starters = gen_combinations(w, h)
+  w = (w > 9  and 9  or w) or 6 
+  h = (h > 10 and 10 or h) or 10
+  local c, starters = gen_combinations(w, h-1)
   local intersects_of = {}
   local counter = 0
   for _, v in ipairs(c) do
-    intersects_of[v] = list_of_intersect(v, c)
+    intersects_of[v] = list_of_intersect(v, c, h)
     counter = counter + 1
   end
   return intersects_of, starters, counter
@@ -175,6 +180,19 @@ local function mark_for_delete_v(delete_mark, x, y, len)
   for i = 1, len do
     delete_mark[y+i-1][x] = 1
   end
+end
+
+function MapUtils.find_chain(map)
+  for y = 1, map.height do
+    for x = 1, map.width do
+      if map[y][x] > 0 then
+        local res = do_check_chain_v(map, x, y)
+        res = res or do_check_chain_h(map[y], x)
+        if res then return true end
+      end
+    end
+  end
+  return false
 end
 
 function MapUtils.destroy_chain(map)
