@@ -124,7 +124,8 @@ function PuzzleGen:chains_add_answer()
     if self:not_too_high(ans) then
       MapUtils.add_chain_to_map(cloned_map, ans)
       if not MapUtils.find_chain(cloned_map) then
-        self.chains:push(ans)
+        colored_chain:push(ans)
+        self.chains = colored_chain
         return true -- answer found. chain construction complete.
       end      
       local _, _, _, ansx, ansy = MapUtils.analyze(ans)
@@ -160,7 +161,7 @@ function PuzzleGen:next_chain(level)
       for color = 1, 4 do
         self.colors:push(color)
         local colored_chain = color_chain(self.chains, self.colors)
-        local cloned_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chain))
+        local cloned_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chain)
         local chained, count = MapUtils.destroy_chain( cloned_map ) 
         if chained and count == len then
           if self.chains.size >= self.chain_limit then
