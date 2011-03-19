@@ -72,11 +72,26 @@ local chain15 =
 chain15.height = 10
 chain15.width  = 6 
 
+local destroy5 =
+{{2,0,0,0,0,0},
+ {4,0,2,0,0,0},
+ {3,4,2,0,0,0},
+ {3,1,4,0,0,0},
+ {1,1,2,0,4,4},
+ {1,2,2,0,2,1},
+ {2,2,3,4,4,2},
+ {1,3,2,1,4,1},
+ {3,1,4,1,1,1},
+ {3,1,1,2,4,1}}
+destroy5.height = 10
+destroy5.width = 6
+
 testmap = List.reverse(testmap)
 ansmap1 = List.reverse(ansmap1)
 ansmap2 = List.reverse(ansmap2)
 ansmap3 = List.reverse(ansmap3)
 chain15 = List.reverse(chain15)
+destroy5= List.reverse(destroy5)
  
 Test.asserteq(MapUtils.pushup_horizontally(testmap, 2, 1, 3), true)
 Test.asserteq(testmap, ansmap1)
@@ -84,8 +99,9 @@ Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
 Test.asserteq(testmap, ansmap2)
 Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {30111, 03211, 30312}), ansmap3)
 Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {30011, 03011, 30012}), ansmap3)
-Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3), true)
-Test.asserteq(MapUtils.check_puzzle_correctness(chain15), true)
+Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3, 3), true)
+Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
+Test.asserteq(({MapUtils.destroy_chain(destroy5)})[2], 5)
 
 local intersects_of, starters, counter = MapUtils.create_intersect_sheet(6, 10) -- it's actually only 6*9
 

@@ -87,11 +87,11 @@ function PuzzleGen:add_answer_to(chains)
     y1 = random(y) + 1
   elseif lenV > 0 then
     x1 = x
-    y1 = random(lenV) + y
+    y1 = random(2) + 1 + y
   end
   if self:not_too_high(10000 + x1*10 + y1) then
     chains:push(10000 + x1*10 + y1)
-    return {x1, y1}
+    return x1, y1
   else 
     return nil
   end
@@ -112,16 +112,18 @@ end
 -- => this optimization is very very important for luajit. Always write less branchy code,
 -- => meta programming (loadstring) when I have time or when the need arises.
 
-function PuzzleGen:next_chain()
+function PuzzleGen:next_chain( level )
   local intersects = self.intersects_of[ self.chains:top() ]
   local i = 1
   while os.time() - self.start_time < 1 and intersects[i] do
     local c = intersects[i]
     if self:not_float(c) and self:not_too_high(c) then
       self.chains:push(intersects[i])
+      local lenH, lenV = MapUtils.analyze( self.chains:top() )
+      local len = lenH + lenV
       local old_ranges, old_heights = self:update_ranges_heights()
-      local ans = self:add_answer_to(self.chains)
-      if ans and not MapUtils.destroy_chain(MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)) 
+      local ansx, ansy = self:add_answer_to(self.chains)
+      if ansx and not MapUtils.destroy_chain(MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)) 
       then
         local colors_dup = tablex.deepcopy(self.colors)
         colors_dup:push((colors_dup:top() % 4) + 1) 
@@ -129,22 +131,24 @@ function PuzzleGen:next_chain()
         local n = colors_dup.size
         for j = 1, n do
           local chains_dup = color_chain(self.chains, colors_dup)
-          local state = MapUtils.destroy_chain( MapUtils.gen_map_from_exprs(self.w, self.h, chains_dup ) )
-          chains_dup:pop() -- pop answer
-          state = not state and MapUtils.check_puzzle_correctness( MapUtils.gen_map_from_exprs(self.w, self.h, chains_dup) ) 
+          local cloned_map = MapUtils.gen_map_from_exprs(self.w, self.h, chains_dup)
+          local state = not MapUtils.destroy_chain( cloned_map )
+          for yp = ansy + 1, self.h do -- remove answer from the cloned map
+            cloned_map[yp-1][ansx] = cloned_map[yp][ansx]
+          end
+          state = state and MapUtils.check_puzzle_correctness( cloned_map, level )
           if state then
             if self.chains.size > self.chain_limit then
-              self.chains:display()
-              colors_dup:display()
               self.chains = color_chain(self.chains, colors_dup)
-              self.colors = colors_dup
+              self.chains:display()
               return true
             end
-            local last_ans = self.chains:pop()
-            local last_color = colors_dup:pop() -- last chain's color
+            local ans = self.chains:pop()
+            local ans_color = colors_dup:pop() -- last chain's color
             self.colors = colors_dup
-            self:next_chain()
-            if self.chains.size > self.chain_limit then return true end
+            self:next_chain( level + 1 )
+            if self.chains.size > self.chain_limit then return true 
+            elseif level < self.chain_limit - 4 then return false end -- no turning back line
             colors_dup:push(last_color)
             self.chains:push(last_ans)
           end          
@@ -152,7 +156,7 @@ function PuzzleGen:next_chain()
         end 
         colors_dup:pop() colors_dup:pop()
       end
-      self.chains:pop() if ans then self.chains:pop() end
+      self.chains:pop() if ansx then self.chains:pop() end
       self.row_ranges, self.heights = old_ranges, old_heights
     end
     i = i + 1
@@ -165,8 +169,8 @@ function PuzzleGen:generate(chain_limit, w, h)
   if not self.inited then self:init(chain_limit, w, h) end
   repeat
     self:reinit()
-    print("Generating..")
-  until self:next_chain()
+    --print("Generating..")
+  until self:next_chain(2)
   print("Ans: ", self.chains:top())
   local res = MapUtils.gen_map_from_exprs(w, h, self.chains)
   return res
