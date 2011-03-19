@@ -77,8 +77,8 @@ function PuzzleGen:not_too_high(c)
   return true
 end
 
-function PuzzleGen:add_answer_to(chains, last_color)
-  local lenH, lenV, color, x, y = MapUtils.analyze(chains:top())
+function PuzzleGen:chains_add_answer()
+  local lenH, lenV, last_color, x, y = MapUtils.analyze(self.chains:top())
   local answers = Stack()
   for color = 1, 4 do
     local not_same_color = color ~= last_color
@@ -140,14 +140,14 @@ function PuzzleGen:next_chain(level)
     local c = intersects[i]
     if self:not_float(c) and self:not_too_high(c) then
       self.chains:push(c)
-      local lenH, lenV, last_color = MapUtils.analyze(self.chains:top())
+      local lenH, lenV = MapUtils.analyze(self.chains:top())
       local len = lenH + lenV -- anyway get its length
       local old_ranges, old_heights = self:update_ranges_heights()
       local cloned_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)          
       local state, count = MapUtils.destroy_chain( cloned_map )
       if state and count == len then
         if self.chains.size >= self.chain_limit then
-          if self:add_answer_to(self.chains, last_color) then
+          if self:chains_add_answer() then
             self.chains:display()
             return true
           end
