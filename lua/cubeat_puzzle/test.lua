@@ -88,6 +88,7 @@ Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3, 3), true)
 Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
 
 local intersects_of, starters, counter = MapUtils.create_intersect_sheet(6, 10) -- it's actually only 6*9
+local answers_of, counter = MapUtils.create_answers_sheet(intersects_of, 6, 10) 
 
 for _,v in ipairs(intersects_of[40024]) do
   io.write(string.format("%8d", v))
@@ -96,9 +97,17 @@ print() print()
 for _,v in ipairs(intersects_of[4033]) do
   io.write(string.format("%8d", v))
 end
+print() print()
+for _,v in ipairs(answers_of[40024]) do
+  io.write(string.format("%8d", v))
+end
+print() print()
+for _,v in ipairs(answers_of[4033]) do
+  io.write(string.format("%8d", v))
+end
 print()
 
-Test.asserteq(counter, 159)
+Test.asserteq(counter, 147)
 Test.asserteq(#starters, 9)  -- don't use vertical combinations as starters
 
 local a = {1,2,3,4,5}

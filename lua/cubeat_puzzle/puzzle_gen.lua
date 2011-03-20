@@ -17,6 +17,7 @@ function PuzzleGen:init(chain_limit, w, h)
   self.w = w
   self.h = h
   self.intersects_of, self.starter = MapUtils.create_intersect_sheet(w, h)
+  self.answers_of = MapUtils.create_answers_sheet(self.intersects_of, w, h)
   
   self:reinit()
   
@@ -38,6 +39,7 @@ function PuzzleGen:reinit()
   end
   for k,v in pairs(self.intersects_of) do
     tablex.shuffle(v) -- randomize
+    tablex.shuffle(self.answers_of[k])
   end
 
   self.chains:push(self.starter[random(#self.starter)+1])
@@ -79,22 +81,29 @@ function PuzzleGen:not_too_high(c)
   return true
 end
 
-function PuzzleGen:add_answer_to(chains)
-  local lenH, lenV, color, x, y = MapUtils.analyze(chains:top())
-  local x1, y1
-  if lenH > 0 then
-    x1 = random(lenH) + x
-    y1 = random(y) + 1
-  elseif lenV > 0 then
-    x1 = x
-    y1 = random(lenV) + y
+function PuzzleGen:chains_add_answer()  
+  local answers = self.answers_of[ self.chains:top() ]
+  local i = 1
+  while answers[i] do
+    local ans = answers[i]
+    if self:not_too_high(ans) then
+      local _, _, _, ansx, ansy = MapUtils.analyze(ans)
+      self.chains:push(ans)
+      return ansx, ansy
+      -- MapUtils.add_chain_to_map(cloned_map, ans)
+      -- if not MapUtils.find_chain(cloned_map) then
+        -- colored_chain:push(ans)
+        -- self.chains = colored_chain
+        -- return true -- answer found. chain construction complete.
+      -- end      
+      -- local _, _, _, ansx, ansy = MapUtils.analyze(ans)
+      -- for yp = ansy + 1, self.h do -- remove false answer and pull down
+        -- cloned_map[yp-1][ansx] = cloned_map[yp][ansx]
+      -- end
+    end
+    i = i + 1
   end
-  if self:not_too_high(10000 + x1*10 + y1) then
-    chains:push(10000 + x1*10 + y1)
-    return x1, y1
-  else 
-    return nil
-  end
+  return nil
 end
 
 local function color_chain(chains, colors)
@@ -122,7 +131,7 @@ function PuzzleGen:next_chain(level)
       local lenH, lenV = MapUtils.analyze(self.chains:top())
       local len = lenH + lenV -- anyway get its length
       local old_ranges, old_heights = self:update_ranges_heights()
-      local ansx, ansy = self:add_answer_to(self.chains)
+      local ansx, ansy = self:chains_add_answer()
       if ansx and not MapUtils.destroy_chain(MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)) 
       then
         for j = 0, 3 do
