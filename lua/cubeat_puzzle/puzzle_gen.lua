@@ -98,17 +98,21 @@ function PuzzleGen:chains_add_answer()
       for y1 = 1, tempy do 
         answers:push(10000 + color*100 + (x+2)*10 + y1)
       end
-    elseif not_same_color and (lenV == 3 or lenV == 4) then
-      answers:push(10000 + color*100 + x*10 + y+1)
-      answers:push(10000 + color*100 + x*10 + y+2)
-    elseif not_same_color and lenV == 5 then
-      answers:push(10000 + color*100 + x*10 + y+2)
+    elseif not_same_color then
+      if lenV == 3 then
+        answers:push(10000 + color*100 + x*10 + y+1)
+        answers:push(10000 + color*100 + x*10 + y+2)
+      elseif lenV == 4 then
+        answers:push(10000 + color*100 + x*10 + y+2)
+      end
     end
   end
   
   tablex.shuffle(answers)
   local cloned_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
-  for _, ans in ipairs(answers) do
+  local i = 1
+  while answers[i] do
+    local ans = answers[i]
     if self:not_too_high(ans) then
       MapUtils.add_chain_to_map(cloned_map, ans)
       if not MapUtils.find_chain(cloned_map) then
@@ -120,6 +124,7 @@ function PuzzleGen:chains_add_answer()
         cloned_map[yp-1][ansx] = cloned_map[yp][ansx]
       end
     end
+    i = i + 1
   end
   return false
 end
@@ -136,7 +141,7 @@ end
 function PuzzleGen:next_chain(level)
   local intersects = self.intersects_of[ self.chains:top() ]
   local i = 1
-  while os.time() - self.start_time < 100 and intersects[i] do
+  while os.time() - self.start_time < 2 and intersects[i] do
     local c = intersects[i]
     if self:not_float(c) and self:not_too_high(c) then
       self.chains:push(c)
@@ -155,9 +160,9 @@ function PuzzleGen:next_chain(level)
           self:next_chain( level + 1 )
         end
         if self.chains.size > self.chain_limit then return true 
-        elseif level < self.chain_limit - 4 then return false end
+        elseif level < self.chain_limit - 5 then return false end
       end
-      self.chains:pop() 
+      self.chains:pop()
       self.row_ranges, self.heights = old_ranges, old_heights
     end
     i = i + 1

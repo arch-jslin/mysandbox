@@ -70,6 +70,7 @@ function MapUtils.display(map)
     end
     print()
   end
+  print()
 end
 
 -- MEMO: actually the combinations should be an object with specialized 
@@ -79,14 +80,16 @@ end
 local function gen_combinations(w, h)
   local c = {}
   local starters = {} -- combinations that can be the "last-invoked" chain.
-  for len = 3, 5 do -- for these different chain length
-    for color = 1, 4 do -- for these different colors
+  for color = 1, 4 do -- for these different colors
+    for len = 3, 5 do -- for these different chain length
       for y = 1, h do
         for x = 1, w - len + 1 do
           table.insert(c, 10000*len + color*100 + x*10 + y) -- horizontal
           if y == 1 then table.insert(starters, c[#c]) end
         end
       end
+    end
+    for len = 3, 4 do -- VERTICAL 5's WILL NEVER BE USABLE!!!!!
       for y = 1, h - len + 1 do
         for x = 1, w do
           table.insert(c, 1000*len + color*100 + x*10 + y)  -- vertical
@@ -114,18 +117,23 @@ local function list_of_intersect(key, combinations, height_limit) -- combination
           table.insert(intersects, v) 
         end
       end
-    elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 and lenV0 + lenV1 + y0 - 1 <= height_limit then 
+    elseif lenV1 > 0 and lenV0 > 0 and lenV0 + lenV1 + y0 - 1 <= height_limit then 
       -- vertical intercept vertical
-      if x1 == x0 and y1 > y0 and y1 < y0 + 3 and c0 ~= c1 then
-        table.insert(intersects, v)
+      if x1 == x0 and c0 ~= c1 then
+        if lenV0 == 3 and (y1 == y0 + 1 or y1 == y0 + 2) then
+          table.insert(intersects, v)
+        elseif lenV0 == 4 and y1 == y0 + 2 then
+          table.insert(intersects, v)
+        end
       end
     elseif lenH1 > 0 and lenV0 > 0 then               
       -- horizontal intercept vertical
-      if x1 + lenH1 > x0 and x1 <= x0 and
-         y1 > y0         and y1 < y0 + lenV0 and 
-         c0 ~= c1
-      then
-        table.insert(intersects, v)
+      if x1 + lenH1 > x0 and x1 <= x0 and c0 ~= c1 then
+        if lenV0 == 3 and (y1 == y0 + 1 or y1 == y0 + 2) then
+          table.insert(intersects, v)
+        elseif lenV0 == 4 and y1 == y0 + 2 then
+          table.insert(intersects, v)
+        end
       end
     elseif lenH1 > 0 and lenH0 > 0 and lenH0 < 5 then 
       -- horizontal intercept horizontal
