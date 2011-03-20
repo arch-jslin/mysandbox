@@ -86,6 +86,8 @@ local function gen_combinations(w, h)
         if y == 1 then table.insert(starters, c[#c]) end
       end
     end
+  end
+  for len = 3, 4 do -- VERTICAL 5's WILL NEVER BE USABLE!!!!!
     for y = 1, h - len + 1 do
       for x = 1, w do
         table.insert(c, 1000*len + x*10 + y)  -- vertical
