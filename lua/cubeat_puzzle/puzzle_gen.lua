@@ -83,6 +83,7 @@ end
 
 local answer_called_times = 0
 local back_track_times = 0
+local no_answer_times = 0
 
 function PuzzleGen:chains_add_answer()  
   answer_called_times = answer_called_times + 1
@@ -107,6 +108,7 @@ function PuzzleGen:chains_add_answer()
     end
     i = i + 1
   end
+  no_answer_times = no_answer_times + 1
   return nil
 end
 
@@ -200,4 +202,6 @@ end
 
 Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
 
-print("["..answer_called_times..", "..back_track_times.."]")
+print("answer_called_times: "..answer_called_times)
+print("back_track_times: "..back_track_times)
+print("no_answer_times: "..no_answer_times)
