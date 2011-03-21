@@ -191,4 +191,6 @@ end
 
 Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
 
-
+print("answer_called_times: "..answer_called_times)
+print("back_track_times: "..back_track_times)
+print("no_answer_times: "..no_answer_times)
