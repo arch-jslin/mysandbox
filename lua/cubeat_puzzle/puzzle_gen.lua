@@ -131,23 +131,23 @@ function PuzzleGen:next_chain(level)
         if self.colors:top() ~= self.colors[self.colors.size - 1] then            
           local colored_chains = color_chain(self.chains, self.colors)
           local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains)
-            local chained, destroy_count = MapUtils.destroy_chain( colored_map )
-            if destroy_count == len then
-              if self.chains.size >= self.chain_limit then
-              --if self.chains.size > self.chain_limit then
-                self.chains = color_chain(self.chains, self.colors)
-                self.chains:display()
-                return true
-              end
-              self:next_chain( level + 1 )
-              if self.chains.size >= self.chain_limit then 
-              --if self.chains.size > self.chain_limit then
-                return true
-              elseif level < self.chain_limit - 4 then
-                return false -- never backtrack
-              end
-              back_track_times = back_track_times + 1
+          local chained, destroy_count = MapUtils.destroy_chain( colored_map )
+          if destroy_count == len then
+            if self.chains.size >= self.chain_limit then
+            --if self.chains.size > self.chain_limit then
+              self.chains = color_chain(self.chains, self.colors)
+              self.chains:display()
+              return true
             end
+            self:next_chain( level + 1 )
+            if self.chains.size >= self.chain_limit then 
+            --if self.chains.size > self.chain_limit then
+              return true
+            elseif level < self.chain_limit - 4 then
+              return false -- never backtrack
+            end
+            back_track_times = back_track_times + 1
+          end
         end
         self.colors:pop()
       end 
