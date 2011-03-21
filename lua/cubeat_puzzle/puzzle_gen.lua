@@ -126,11 +126,11 @@ function PuzzleGen:next_chain(level)
       local lenH, lenV = MapUtils.analyze(self.chains:top())
       local len = lenH + lenV -- anyway get its length
       local old_ranges, old_heights = self:update_ranges_heights()
-      local ansx, ansy = self:add_answer_to(self.chains)
+      --local ansx, ansy = self:add_answer_to(self.chains)
       --if ansx and not MapUtils.destroy_chain(MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)) 
       --then
-        for j = 0, 3 do
-          self.colors:push(((self.colors:top() + j) % 4) + 1) 
+        --for j = 0, 3 do
+          --self.colors:push(((self.colors:top() + j) % 4) + 1) 
           for k = 0, 3 do 
             self.colors:push(((self.colors:top() + k) % 4) + 1)
             if self.colors:top() ~= self.colors[self.colors.size - 1] then            
@@ -138,38 +138,41 @@ function PuzzleGen:next_chain(level)
               local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains)
               --local state = not MapUtils.destroy_chain( colored_map )
               --if state then 
-              if not MapUtils.destroy_chain( colored_map ) then
-                colored_map[ansy][ansx] = 0 -- clear answer block
-                for y = ansy + 1, self.h do  -- pull down things above the answer
-                  colored_map[y-1][ansx] = colored_map[y][ansx]
-                end
+              --if not MapUtils.destroy_chain( colored_map ) then
+              --if MapUtils.destroy_chain( colored_map ) then 
+                --colored_map[ansy][ansx] = 0 -- clear answer block
+                --for y = ansy + 1, self.h do  -- pull down things above the answer
+                --  colored_map[y-1][ansx] = colored_map[y][ansx]
+                --end
                 local chained, destroy_count = MapUtils.destroy_chain( colored_map )
                 --state = state and destroy_count == len
                 --if state then
                 if destroy_count == len then
-                  if self.chains.size > self.chain_limit then
+                  if self.chains.size >= self.chain_limit then
+                  --if self.chains.size > self.chain_limit then
                     self.chains = color_chain(self.chains, self.colors)
                     self.chains:display()
                     return true
                   end
-                  local ans = self.chains:pop()
-                  local ans_color = self.colors:pop()
+                  --local ans = self.chains:pop()
+                  --local ans_color = self.colors:pop()
                   self:next_chain( level + 1 )
-                  if self.chains.size > self.chain_limit then 
+                  if self.chains.size >= self.chain_limit then 
+                  --if self.chains.size > self.chain_limit then
                     return true
                   elseif level < self.chain_limit - 4 then
                     return false -- never backtrack
                   end
                   back_track_times = back_track_times + 1
-                  self.colors:push(ans_color)
-                  self.chains:push(ans)
+                  --self.colors:push(ans_color)
+                  --self.chains:push(ans)
                 end
-              end
+              --end
             end
             self.colors:pop()
           end 
-          self.colors:pop()          
-        end 
+          --self.colors:pop()          
+        --end 
       --end
       self.chains:pop() if ansx then self.chains:pop() end
       self.row_ranges, self.heights = old_ranges, old_heights
