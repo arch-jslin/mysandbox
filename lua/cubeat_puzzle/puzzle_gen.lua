@@ -81,7 +81,11 @@ function PuzzleGen:not_too_high(c)
   return true
 end
 
+local answer_called_times = 0
+local back_track_times = 0
+
 function PuzzleGen:chains_add_answer()  
+  answer_called_times = answer_called_times + 1
   local answers = self.answers_of[ self.chains:top() ]
   local i = 1
   while answers[i] do
@@ -162,6 +166,9 @@ function PuzzleGen:next_chain(level)
                 elseif level < self.chain_limit - 4 then
                   return false -- never backtrack
                 end
+                
+                back_track_times = back_track_times + 1
+                
                 self.colors:push(ans_color)
                 self.chains:push(ans)
               end
@@ -193,4 +200,4 @@ end
 
 Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
 
-
+print("["..answer_called_times..", "..back_track_times.."]")
