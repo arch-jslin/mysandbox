@@ -13,7 +13,7 @@ function MapUtils.analyze(expr)
          floor(expr % 10)            -- pos y
 end
 
-local function add_chain_to_map(map, expr, chain)
+function MapUtils.add_chain_to_map(map, expr, chain)
   local lenH, lenV, color, x, y = MapUtils.analyze(expr)
   color = color == 0 and chain or color
   if lenH > 0 then
@@ -48,7 +48,7 @@ end
 function MapUtils.gen_map_from_exprs(w, h, exprs)
   local map = MapUtils.create_map(w, h)
   for chain,v in ipairs(exprs) do
-    add_chain_to_map(map, v, chain)
+    MapUtils.add_chain_to_map(map, v, chain)
   end
   return map
 end
@@ -70,6 +70,7 @@ function MapUtils.display(map)
     end
     print()
   end
+  print()
 end
 
 -- MEMO: actually the combinations should be an object with specialized 
@@ -181,6 +182,19 @@ local function mark_for_delete_v(delete_mark, x, y, len)
   for i = 1, len do
     delete_mark[y+i-1][x] = 1
   end
+end
+
+function MapUtils.find_chain(map)
+  for y = 1, map.height do
+    for x = 1, map.width do
+      if map[y][x] > 0 then
+        local res = do_check_chain_v(map, x, y)
+        res = res or do_check_chain_h(map[y], x)
+        if res then return true end
+      end
+    end
+  end
+  return false
 end
 
 function MapUtils.destroy_chain(map)
