@@ -79,7 +79,12 @@ function PuzzleGen:not_too_high(c)
   return true
 end
 
+local answer_called_times = 0
+local back_track_times = 0
+local no_answer_times = 0
+
 function PuzzleGen:add_answer_to(chains)
+  answer_called_times = answer_called_times + 1
   local lenH, lenV, color, x, y = MapUtils.analyze(chains:top())
   local x1, y1
   if lenH > 0 then
@@ -93,6 +98,7 @@ function PuzzleGen:add_answer_to(chains)
     chains:push(10000 + x1*10 + y1)
     return x1, y1
   else 
+    no_answer_times = no_answer_times + 1
     return nil
   end
 end
@@ -153,6 +159,7 @@ function PuzzleGen:next_chain(level)
                 elseif level < self.chain_limit - 4 then
                   return false -- never backtrack
                 end
+                back_track_times = back_track_times + 1
                 self.colors:push(ans_color)
                 self.chains:push(ans)
               end
