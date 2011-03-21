@@ -88,7 +88,7 @@ local function gen_combinations(w, h)
     end
   end
   for len = 3, 4 do -- VERTICAL 5's WILL NEVER BE USABLE!!!!!
-    for y = 1, h - len + 1 do
+    for y = 1, h - len do
       for x = 1, w do
         table.insert(c, 1000*len + x*10 + y)  -- vertical
         -- don't use vertical combinations as starters.
