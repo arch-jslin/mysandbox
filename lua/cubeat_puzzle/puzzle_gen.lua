@@ -23,13 +23,37 @@ function PuzzleGen:init(chain_limit, w, h)
   self.inited = true
 end
 
+function PuzzleGen:distribute_chain_lengths()
+  local chain_lengths = nil
+  if self.chain_limit > 15 then
+    chain_lengths = {}
+    for i = 1, self.chain_limit do table.insert(chain_lengths, 3) end
+    local quota = random(20 - self.chain_limit) + 1
+    local i = 1
+    while i <= self.chain_limit do
+      local chance = random(10)
+      if quota > 1 and chance <= 1 and i < self.chain_limit / 2 and chain_lengths[i-1] ~= 5 then
+        chain_lengths[i] = 5
+        quota = quota - 2
+      elseif quota > 0 and chance <= 3 then
+        chain_lengths[i] = 4
+        quota = quota - 1
+      else
+        chain_lengths[i] = 3
+      end      
+      i = i + 1
+    end
+  end
+  return chain_lengths
+end
+
 function PuzzleGen:reinit()
   self.start_time = os.time()
   self.row_ranges = {}
   self.heights = {}
   self.chains = Stack()
   self.colors = Stack()
-  self.long_chain = {}
+  self.chain_lengths = self:distribute_chain_lengths()
 
   for i = 1, self.h do
     self.row_ranges[i] = {s = self.w, e = 0}
@@ -40,11 +64,13 @@ function PuzzleGen:reinit()
   for k,v in pairs(self.intersects_of) do
     tablex.shuffle(v) -- randomize
   end
-  if self.chain_limit > 15 then
-  
-  end
 
-  self.chains:push(self.starter[random(#self.starter)+1])
+  local c
+  repeat
+    c = self.starter[random(#self.starter)+1]
+    local lenH, lenV = MapUtils.analyze(c)
+  until self:length_ok(1, lenH+lenV)
+  self.chains:push(c)
   self.colors:push(1)
   self:update_ranges_heights()
 end
@@ -111,6 +137,13 @@ local function color_chain(chains, colors)
   return chains_dup
 end
 
+function PuzzleGen:length_ok(level, len)
+  if not self.chain_lengths then return true 
+  else
+    return self.chain_lengths[level] == len
+  end
+end
+
 -- 'fix' PuzzleGen:
 -- break 'next_chain' apart, into small / modulize methods. don't pile lots of statements 
 -- altogether, rather make sure the operation semantic makes sense literally.
@@ -125,9 +158,9 @@ function PuzzleGen:next_chain(level)
   local i = 1
   while os.time() - self.start_time < 2 and intersects[i] do
     local c = intersects[i]
-    if self:not_float(c) and self:not_too_high(c) then
-      self.chains:push(intersects[i])
-      local lenH, lenV = MapUtils.analyze(self.chains:top())
+    local lenH, lenV = MapUtils.analyze(c)
+    if self:length_ok(level, lenH+lenV) and self:not_float(c) and self:not_too_high(c) then
+      self.chains:push(c)
       local len = lenH + lenV -- anyway get its length
       local old_ranges, old_heights = self:update_ranges_heights()
       for k = 0, 3 do 
@@ -169,7 +202,7 @@ function PuzzleGen:generate(chain_limit, w, h)
   repeat
     self:reinit()
     --print("Generating..")
-  until self:next_chain(3) 
+  until self:next_chain(2) 
   print("Ans: ", self.chains:top())
   local res = MapUtils.gen_map_from_exprs(w, h, self.chains)
   return res
