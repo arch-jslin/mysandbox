@@ -6,11 +6,16 @@ local MapUtils = {}
 local floor = math.floor
 
 function MapUtils.analyze(expr)
-  return floor(expr / 10000),        -- length if horizontal
-         floor(expr % 10000 / 1000), -- length if vertical
-         floor(expr % 1000 / 100),   -- reserved
-         floor(expr % 100 / 10),     -- pos x
-         floor(expr % 10)            -- pos y
+  -- return floor(expr / 10000),        -- length if horizontal
+         -- floor(expr % 10000 / 1000), -- length if vertical
+         -- floor(expr % 1000 / 100),   -- reserved
+         -- floor(expr % 100 / 10),     -- pos x
+         -- floor(expr % 10)            -- pos y
+  return floor(expr[1] / 10000),        -- length if horizontal
+         floor(expr[1] % 10000 / 1000), -- length if vertical
+         floor(expr[1] % 1000 / 100),   -- reserved
+         floor(expr[1] % 100 / 10),     -- pos x
+         floor(expr[1] % 10)            -- pos y  
 end
 
 function MapUtils.add_chain_to_map(map, expr, chain)
@@ -29,7 +34,7 @@ function MapUtils.pushup_horizontally(map, x, y, len, color)
     for j = map.height - 1, y, -1 do
       map[j+1][i] = map[j][i]
     end
-    map[y][i] = color or 0
+    map[y][i] = color
   end
   return true
 end
@@ -40,7 +45,7 @@ function MapUtils.pushup_vertically(map, x, y, len, color)
     map[j+len][x] = map[j][x]
   end
   for j = y, y + len - 1 do
-    map[j][x] = color or 0
+    map[j][x] = color
   end
   return true
 end
@@ -78,7 +83,7 @@ local function gen_combinations(w, h)
   for len = 3, 5 do -- for these different chain length
     for y = 1, h do
       for x = 1, w - len + 1 do
-        table.insert(c, 10000*len + x*10 + y) -- horizontal
+        table.insert(c, {10000*len + x*10 + y}) -- horizontal
         if y == 1 then table.insert(starters, c[#c]) end
       end
     end
@@ -86,7 +91,7 @@ local function gen_combinations(w, h)
   for len = 3, 4 do -- VERTICAL 5's WILL NEVER BE USABLE!!!!!
     for y = 1, h - len do
       for x = 1, w do
-        table.insert(c, 1000*len + x*10 + y)  -- vertical
+        table.insert(c, {1000*len + x*10 + y})  -- vertical
         -- don't use vertical combinations as starters.
       end
     end
@@ -160,24 +165,24 @@ local function list_of_answers(key)
   for color = 1, 4 do
     if lenH == 3 then
       for y1 = 1, y do 
-        table.insert(answers, 10000 + color*100 + x*10 + y1)
-        table.insert(answers, 10000 + color*100 + (x+1)*10 + y1)
-        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
+        table.insert(answers, {10000 + color*100 + x*10 + y1})
+        table.insert(answers, {10000 + color*100 + (x+1)*10 + y1})
+        table.insert(answers, {10000 + color*100 + (x+2)*10 + y1})
       end
     elseif lenH == 4 then
       for y1 = 1, y do 
-        table.insert(answers, 10000 + color*100 + (x+1)*10 + y1)
-        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
+        table.insert(answers, {10000 + color*100 + (x+1)*10 + y1})
+        table.insert(answers, {10000 + color*100 + (x+2)*10 + y1})
       end
     elseif lenH == 5 then
       for y1 = 1, y do 
-        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
+        table.insert(answers, {10000 + color*100 + (x+2)*10 + y1})
       end
     elseif lenV == 3 then
-      table.insert(answers, 10000 + color*100 + x*10 + y+1)
-      table.insert(answers, 10000 + color*100 + x*10 + y+2)
+      table.insert(answers, {10000 + color*100 + x*10 + y+1})
+      table.insert(answers, {10000 + color*100 + x*10 + y+2})
     elseif lenV == 4 then
-      table.insert(answers, 10000 + color*100 + x*10 + y+2)
+      table.insert(answers, {10000 + color*100 + x*10 + y+2})
     end
   end
   return answers
