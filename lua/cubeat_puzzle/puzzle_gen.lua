@@ -29,6 +29,7 @@ function PuzzleGen:reinit()
   self.heights = {}
   self.chains = Stack()
   self.colors = Stack()
+  self.long_chain = {}
 
   for i = 1, self.h do
     self.row_ranges[i] = {s = self.w, e = 0}
@@ -38,6 +39,9 @@ function PuzzleGen:reinit()
   end
   for k,v in pairs(self.intersects_of) do
     tablex.shuffle(v) -- randomize
+  end
+  if self.chain_limit > 15 then
+  
   end
 
   self.chains:push(self.starter[random(#self.starter)+1])
