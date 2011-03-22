@@ -72,10 +72,6 @@ function MapUtils.display(map)
   end
 end
 
--- MEMO: actually the combinations should be an object with specialized 
---       methods for ( len 3 / 4 / 5 ) * ( horizontal / vertical ) respectively
---       it will be far better to write small loops all over the place.
--- *** REFACTOR THIS ***
 local function gen_combinations(w, h)
   local c = {}
   local starters = {} -- combinations that can be the "last-invoked" chain.
@@ -157,36 +153,33 @@ function MapUtils.create_intersect_sheet(w, h)
   return intersects_of, starters, counter
 end
 
--- not tested yet.
 local function list_of_answers(key)
   local answers = {}
   local lenH, lenV, _, x, y = MapUtils.analyze(key)
   local i = 1
-  -- for color = 1, 4 do
-    -- local not_same_color = color ~= last_color
-    -- local tempy = not_same_color and y or y-1
-  if lenH == 3 then
-    for y1 = 1, y do 
-      table.insert(answers, 10000 + x*10 + y1)
-      table.insert(answers, 10000 + (x+1)*10 + y1)
-      table.insert(answers, 10000 + (x+2)*10 + y1)
+  for color = 1, 4 do
+    if lenH == 3 then
+      for y1 = 1, y do 
+        table.insert(answers, 10000 + color*100 + x*10 + y1)
+        table.insert(answers, 10000 + color*100 + (x+1)*10 + y1)
+        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
+      end
+    elseif lenH == 4 then
+      for y1 = 1, y do 
+        table.insert(answers, 10000 + color*100 + (x+1)*10 + y1)
+        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
+      end
+    elseif lenH == 5 then
+      for y1 = 1, y do 
+        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
+      end
+    elseif lenV == 3 then
+      table.insert(answers, 10000 + color*100 + x*10 + y+1)
+      table.insert(answers, 10000 + color*100 + x*10 + y+2)
+    elseif lenV == 4 then
+      table.insert(answers, 10000 + color*100 + x*10 + y+2)
     end
-  elseif lenH == 4 then
-    for y1 = 1, y do 
-      table.insert(answers, 10000 + (x+1)*10 + y1)
-      table.insert(answers, 10000 + (x+2)*10 + y1)
-    end
-  elseif lenH == 5 then
-    for y1 = 1, y do 
-      table.insert(answers, 10000 + (x+2)*10 + y1)
-    end
-  elseif lenV == 3 then
-    table.insert(answers, 10000 + x*10 + y+1)
-    table.insert(answers, 10000 + x*10 + y+2)
-  elseif lenV == 4 then
-    table.insert(answers, 10000 + x*10 + y+2)
   end
-  -- end
   return answers
 end
 

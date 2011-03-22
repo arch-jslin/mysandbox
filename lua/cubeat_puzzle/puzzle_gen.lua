@@ -123,26 +123,20 @@ end
 function PuzzleGen:add_final_answer(colored_map)  
   answer_called_times = answer_called_times + 1
   local answers = self.answers_of[ self.chains:top() ]
-  local i = 1
-  while answers[i] do
-    local ans = answers[i]
+  for _,ans in ipairs(answers) do
     if self:not_too_high(ans) then
-      local _, _, _, ansx, ansy = MapUtils.analyze(ans)
+      local _, _, color, ansx, ansy = MapUtils.analyze(ans)
       MapUtils.add_chain_to_map(colored_map, ans)
-      for color = 1, 4 do
-        if color ~= self.colors:top() then
-          colored_map[ansy][ansx] = color
-          local colored_ans = ans + color*100
-          if not MapUtils.find_chain(colored_map) then
-            local colored_chain = color_chain(self.chains, self.colors)
-            colored_chain:push(colored_ans)
-            self.chains = colored_chain
-            return true -- answer found. chain construction complete.
-          end      
-        end
+      if color ~= self.colors:top() then
+        colored_map[ansy][ansx] = color
+        if not MapUtils.find_chain(colored_map) then
+          local colored_chain = color_chain(self.chains, self.colors)
+          colored_chain:push(ans)
+          self.chains = colored_chain
+          return true -- answer found. chain construction complete.
+        end      
       end
     end
-    i = i + 1
   end
   return false
 end
