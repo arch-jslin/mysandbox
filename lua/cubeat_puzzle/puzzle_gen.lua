@@ -17,6 +17,7 @@ function PuzzleGen:init(chain_limit, w, h)
   self.w = w
   self.h = h
   self.intersects_of, self.starter = MapUtils.create_intersect_sheet(w, h)
+  self.answers_of = MapUtils.create_answers_sheet(self.intersects_of, w, h)
   
   self:reinit()
   
@@ -63,6 +64,7 @@ function PuzzleGen:reinit()
   end
   for k,v in pairs(self.intersects_of) do
     tablex.shuffle(v) -- randomize
+    tablex.shuffle(self.answers_of[k])
   end
 
   local c
@@ -112,7 +114,7 @@ end
 local answer_called_times = 0
 local back_track_times = 0
 
-function PuzzleGen:chains_add_answer()  
+function PuzzleGen:add_final_answer(colored_map)  
   answer_called_times = answer_called_times + 1
   local answers = self.answers_of[ self.chains:top() ]
   local i = 1
@@ -120,22 +122,22 @@ function PuzzleGen:chains_add_answer()
     local ans = answers[i]
     if self:not_too_high(ans) then
       local _, _, _, ansx, ansy = MapUtils.analyze(ans)
-      self.chains:push(ans)
-      return ansx, ansy
-      -- MapUtils.add_chain_to_map(cloned_map, ans)
-      -- if not MapUtils.find_chain(cloned_map) then
-        -- colored_chain:push(ans)
-        -- self.chains = colored_chain
-        -- return true -- answer found. chain construction complete.
-      -- end      
-      -- local _, _, _, ansx, ansy = MapUtils.analyze(ans)
-      -- for yp = ansy + 1, self.h do -- remove false answer and pull down
-        -- cloned_map[yp-1][ansx] = cloned_map[yp][ansx]
-      -- end
+      for colored_ans = ans + 100, ans + 400, 100 do
+        MapUtils.add_chain_to_map(colored_map, colored_ans)
+        if not MapUtils.find_chain(colored_map) then
+          local colored_chain = color_chain(self.chains, self.colors)
+          colored_chain:push(colored_ans)
+          self.chains = colored_chain
+          return true -- answer found. chain construction complete.
+        end      
+        for yp = ansy + 1, self.h do -- remove false answer and pull down
+          cloned_map[yp-1][ansx] = cloned_map[yp][ansx]
+        end
+      end
     end
     i = i + 1
   end
-  return nil
+  return false
 end
 
 local function color_chain(chains, colors)
@@ -172,30 +174,28 @@ function PuzzleGen:next_chain(level)
       local old_ranges, old_heights = self:update_ranges_heights()
       for k = 0, 3 do 
         self.colors:push(((self.colors:top() + k) % 4) + 1)
-        if self.colors:top() ~= self.colors[self.colors.size - 1] then            
-          local colored_chains = color_chain(self.chains, self.colors)
-          local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains)
-          local chained, destroy_count = MapUtils.destroy_chain( colored_map )
-          if destroy_count == len then
-            if self.chains.size >= self.chain_limit then
-            --if self.chains.size > self.chain_limit then
-              self.chains = color_chain(self.chains, self.colors)
+        --if self.colors:top() ~= self.colors[self.colors.size - 1] then            
+        local colored_chains = color_chain(self.chains, self.colors)
+        local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains)
+        local chained, destroy_count = MapUtils.destroy_chain( colored_map )
+        if destroy_count == len then
+          if self.chains.size >= self.chain_limit then
+            if self:add_final_answer(colored_map) then
               self.chains:display()
               return true
             end
+          else
             self:next_chain( level + 1 )
-            if self.chains.size >= self.chain_limit then 
-            --if self.chains.size > self.chain_limit then
-              return true
-            elseif level < self.chain_limit - 4 then
-              return false -- never backtrack
-            end
-            back_track_times = back_track_times + 1
           end
+          if self.chains.size > self.chain_limit then return true
+          elseif level < self.chain_limit - 4 then return false end -- never backtrack
+
+          back_track_times = back_track_times + 1
         end
+        --end
         self.colors:pop()
       end 
-      self.chains:pop() if ansx then self.chains:pop() end
+      self.chains:pop()
       self.row_ranges, self.heights = old_ranges, old_heights
     end
     i = i + 1

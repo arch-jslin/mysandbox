@@ -13,7 +13,7 @@ function MapUtils.analyze(expr)
          floor(expr % 10)            -- pos y
 end
 
-local function add_chain_to_map(map, expr, chain)
+function MapUtils.add_chain_to_map(map, expr, chain)
   local lenH, lenV, color, x, y = MapUtils.analyze(expr)
   color = color == 0 and chain or color
   if lenH > 0 then
@@ -48,7 +48,7 @@ end
 function MapUtils.gen_map_from_exprs(w, h, exprs)
   local map = MapUtils.create_map(w, h)
   for chain,v in ipairs(exprs) do
-    add_chain_to_map(map, v, chain)
+    MapUtils.add_chain_to_map(map, v, chain)
   end
   return map
 end
