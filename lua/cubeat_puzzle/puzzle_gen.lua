@@ -111,9 +111,6 @@ function PuzzleGen:not_too_high(c)
   return true
 end
 
-local answer_called_times = 0
-local back_track_times = 0
-
 local function color_chain(chains, colors)
   local chains_dup = Stack()
   for i,v in ipairs(chains) do chains_dup:push(v + colors[i]*100) end
@@ -121,7 +118,6 @@ local function color_chain(chains, colors)
 end
 
 function PuzzleGen:add_final_answer(colored_map)  
-  answer_called_times = answer_called_times + 1
   local answers = self.answers_of[ self.chains:top() ]
   for _,ans in ipairs(answers) do
     if self:not_too_high(ans) then
@@ -159,17 +155,14 @@ end
 
 function PuzzleGen:next_chain(level)
   local intersects = self.intersects_of[ self.chains:top() ]
-  local i = 1
-  while os.time() - self.start_time < 2 and intersects[i] do
-    local c = intersects[i]
+  for _,c in ipairs(intersects) do 
     local lenH, lenV = MapUtils.analyze(c)
     if self:length_ok(level, lenH+lenV) and self:not_float(c) and self:not_too_high(c) then
       self.chains:push(c)
       local len = lenH + lenV -- anyway get its length
       local old_ranges, old_heights = self:update_ranges_heights()
       for k = 0, 3 do 
-        self.colors:push(((self.colors:top() + k) % 4) + 1)
-        --if self.colors:top() ~= self.colors[self.colors.size - 1] then            
+        self.colors:push(((self.colors:top() + k) % 4) + 1)         
         local colored_chains = color_chain(self.chains, self.colors)
         local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains)
         local chained, destroy_count = MapUtils.destroy_chain( colored_map )
@@ -182,18 +175,17 @@ function PuzzleGen:next_chain(level)
           else
             self:next_chain( level + 1 )
           end
-          if self.chains.size > self.chain_limit then return true
-          elseif level < self.chain_limit - 4 then return false end -- never backtrack
-
-          back_track_times = back_track_times + 1
+          if self.chains.size > self.chain_limit then 
+            return true
+          elseif level < self.chain_limit - 4 then 
+            return false 
+          end
         end
-        --end
         self.colors:pop()
       end 
       self.chains:pop()
       self.row_ranges, self.heights = old_ranges, old_heights
     end
-    i = i + 1
   end
   return false
 end
@@ -211,6 +203,3 @@ function PuzzleGen:generate(chain_limit, w, h)
 end
 
 Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
-
-print("answer_called_times: "..answer_called_times)
-print("back_track_times: "..back_track_times)

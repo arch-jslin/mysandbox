@@ -2,7 +2,6 @@
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
 local tablex = require 'pl.tablex'
-local List   = require 'pl.List'
 
 function tablex.shuffle(array)
   for i = 1, #array do
