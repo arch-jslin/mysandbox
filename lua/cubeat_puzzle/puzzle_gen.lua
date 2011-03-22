@@ -1,9 +1,9 @@
 
 package.path = [[c:\local_gitrepo\Penlight\lua\?.lua;]]..package.path
-require 'luarocks.loader'
+--require 'luarocks.loader'
 local MapUtils = require 'maputils'
 local List = require 'pl.List'
-local Test = require 'pl.test'
+--local Test = require 'pl.test'
 local tablex = require 'tablex2'
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
@@ -202,4 +202,5 @@ function PuzzleGen:generate(chain_limit, w, h)
   return res
 end
 
-Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
+--Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
+MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) 
