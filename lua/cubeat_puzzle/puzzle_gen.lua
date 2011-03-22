@@ -112,23 +112,30 @@ end
 local answer_called_times = 0
 local back_track_times = 0
 
-function PuzzleGen:add_answer_to(chains)
+function PuzzleGen:chains_add_answer()  
   answer_called_times = answer_called_times + 1
-  local lenH, lenV, color, x, y = MapUtils.analyze(chains:top())
-  local x1, y1
-  if lenH > 0 then
-    x1 = random(lenH) + x
-    y1 = random(y) + 1
-  elseif lenV > 0 then
-    x1 = x
-    y1 = random(lenV) + y
+  local answers = self.answers_of[ self.chains:top() ]
+  local i = 1
+  while answers[i] do
+    local ans = answers[i]
+    if self:not_too_high(ans) then
+      local _, _, _, ansx, ansy = MapUtils.analyze(ans)
+      self.chains:push(ans)
+      return ansx, ansy
+      -- MapUtils.add_chain_to_map(cloned_map, ans)
+      -- if not MapUtils.find_chain(cloned_map) then
+        -- colored_chain:push(ans)
+        -- self.chains = colored_chain
+        -- return true -- answer found. chain construction complete.
+      -- end      
+      -- local _, _, _, ansx, ansy = MapUtils.analyze(ans)
+      -- for yp = ansy + 1, self.h do -- remove false answer and pull down
+        -- cloned_map[yp-1][ansx] = cloned_map[yp][ansx]
+      -- end
+    end
+    i = i + 1
   end
-  if self:not_too_high(10000 + x1*10 + y1) then
-    chains:push(10000 + x1*10 + y1)
-    return x1, y1
-  else 
-    return nil
-  end
+  return nil
 end
 
 local function color_chain(chains, colors)
