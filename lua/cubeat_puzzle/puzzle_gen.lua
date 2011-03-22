@@ -175,6 +175,7 @@ function PuzzleGen:next_chain(level)
           else
             self:next_chain( level + 1 )
           end
+          os.time() -- dummy call to prevent JIT bug
           if self.chains.size > self.chain_limit then 
             return true
           elseif level < self.chain_limit - 4 then 
