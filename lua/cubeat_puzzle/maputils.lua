@@ -157,6 +157,51 @@ function MapUtils.create_intersect_sheet(w, h)
   return intersects_of, starters, counter
 end
 
+-- not tested yet.
+local function list_of_answers(key)
+  local answers = {}
+  local lenH, lenV, _, x, y = MapUtils.analyze(key)
+  local i = 1
+  -- for color = 1, 4 do
+    -- local not_same_color = color ~= last_color
+    -- local tempy = not_same_color and y or y-1
+  if lenH == 3 then
+    for y1 = 1, y do 
+      table.insert(answers, 10000 + x*10 + y1)
+      table.insert(answers, 10000 + (x+1)*10 + y1)
+      table.insert(answers, 10000 + (x+2)*10 + y1)
+    end
+  elseif lenH == 4 then
+    for y1 = 1, y do 
+      table.insert(answers, 10000 + (x+1)*10 + y1)
+      table.insert(answers, 10000 + (x+2)*10 + y1)
+    end
+  elseif lenH == 5 then
+    for y1 = 1, y do 
+      table.insert(answers, 10000 + (x+2)*10 + y1)
+    end
+  elseif lenV == 3 then
+    table.insert(answers, 10000 + x*10 + y+1)
+    table.insert(answers, 10000 + x*10 + y+2)
+  elseif lenV == 4 then
+    table.insert(answers, 10000 + x*10 + y+2)
+  end
+  -- end
+  return answers
+end
+
+function MapUtils.create_answers_sheet(intersects_of, w, h)
+  w = (w > 9  and 9  or w) or 6 
+  h = (h > 10 and 10 or h) or 10
+  local answers_of = {}
+  local counter = 0
+  for k, _ in pairs(intersects_of) do
+    answers_of[k] = list_of_answers(k)
+    counter = counter + 1
+  end
+  return answers_of, counter
+end
+
 local function do_check_chain_h(row, x)
   local i = x + 1
   while row[i] == row[i-1] do i = i + 1 end
