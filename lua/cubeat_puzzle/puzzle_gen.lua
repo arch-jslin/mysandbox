@@ -29,7 +29,7 @@ function PuzzleGen:distribute_chain_lengths()
   if self.chain_limit > 15 then
     chain_lengths = {}
     for i = 1, self.chain_limit do table.insert(chain_lengths, 3) end
-    local quota = random(20 - self.chain_limit) + 1
+    local quota = random(20 - self.chain_limit + 1) + 1
     local i = 1
     while i <= self.chain_limit do
       local chance = random(10)
@@ -114,6 +114,12 @@ end
 local answer_called_times = 0
 local back_track_times = 0
 
+local function color_chain(chains, colors)
+  local chains_dup = Stack()
+  for i,v in ipairs(chains) do chains_dup:push(v + colors[i]*100) end
+  return chains_dup
+end
+
 function PuzzleGen:add_final_answer(colored_map)  
   answer_called_times = answer_called_times + 1
   local answers = self.answers_of[ self.chains:top() ]
@@ -122,28 +128,25 @@ function PuzzleGen:add_final_answer(colored_map)
     local ans = answers[i]
     if self:not_too_high(ans) then
       local _, _, _, ansx, ansy = MapUtils.analyze(ans)
-      for colored_ans = ans + 100, ans + 400, 100 do
-        MapUtils.add_chain_to_map(colored_map, colored_ans)
-        if not MapUtils.find_chain(colored_map) then
-          local colored_chain = color_chain(self.chains, self.colors)
-          colored_chain:push(colored_ans)
-          self.chains = colored_chain
-          return true -- answer found. chain construction complete.
-        end      
-        for yp = ansy + 1, self.h do -- remove false answer and pull down
-          cloned_map[yp-1][ansx] = cloned_map[yp][ansx]
+      for color = 1, 4 do
+        if color ~= self.colors:top() then
+          local colored_ans = ans + color*100
+          MapUtils.add_chain_to_map(colored_map, colored_ans)
+          if not MapUtils.find_chain(colored_map) then
+            local colored_chain = color_chain(self.chains, self.colors)
+            colored_chain:push(colored_ans)
+            self.chains = colored_chain
+            return true -- answer found. chain construction complete.
+          end      
+          for yp = ansy + 1, self.h do -- remove false answer and pull down
+            colored_map[yp-1][ansx] = colored_map[yp][ansx]
+          end
         end
       end
     end
     i = i + 1
   end
   return false
-end
-
-local function color_chain(chains, colors)
-  local chains_dup = Stack()
-  for i,v in ipairs(chains) do chains_dup:push(v + colors[i]*100) end
-  return chains_dup
 end
 
 function PuzzleGen:length_ok(level, len)

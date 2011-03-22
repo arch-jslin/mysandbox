@@ -228,6 +228,23 @@ local function mark_for_delete_v(delete_mark, x, y, len)
   end
 end
 
+function MapUtils.find_chain(map)
+  for y = 1, map.height do
+    for x = 1, map.width do
+      if map[y][x] > 0 then
+        local res1, len1 = do_check_chain_v(map, x, y)
+        local res2, len2 = do_check_chain_h(map[y], x)
+        len1 = len1 >= 3 and len1 or 0
+        len2 = len2 >= 3 and len2 or 0
+        if res1 or res2 then 
+          return true, len1 + len2 
+        end
+      end
+    end
+  end
+  return false, 0
+end
+
 function MapUtils.destroy_chain(map)
   local delete_mark = MapUtils.create_map(map.width, map.height)
   local chained, count = false, 0
@@ -239,7 +256,7 @@ function MapUtils.destroy_chain(map)
           mark_for_delete_v(delete_mark, x, y, len)
           chained = true
         end
-        res, len       = do_check_chain_h(map[y], x)
+        res, len = do_check_chain_h(map[y], x)
         if res then 
           mark_for_delete_h(delete_mark, x, y, len)
           chained = true
