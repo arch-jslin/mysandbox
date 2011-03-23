@@ -2,7 +2,6 @@
 package.path = [[c:\local_gitrepo\Penlight\lua\?.lua;]]..package.path
 require 'luarocks.loader'
 local MapUtils = require 'maputils'
-local List = require 'pl.List'
 local Test = require 'pl.test'
 local tablex = require 'tablex2'
 local Helper = require 'helpers'
@@ -60,7 +59,7 @@ function PuzzleGen:reinit()
   for i = 1, self.w do 
     self.heights[i] = 0
   end
-  for _,v in pairs(self.all_combinations) do
+  for _,v in ipairs(self.all_combinations) do
     tablex.shuffle(v.intersects) -- randomize
     tablex.shuffle(v.answers)
   end
@@ -74,8 +73,14 @@ function PuzzleGen:reinit()
   self:update_ranges_heights()
 end
 
+local function array_copy(src)
+  local ret = {}
+  for _,v in ipairs(src) do table.insert(ret, v) end
+  return ret
+end
+
 function PuzzleGen:update_ranges_heights() -- inplace modification
-  local old_ranges, old_heights = tablex.deepcopy(self.row_ranges), tablex.deepcopy(self.heights)
+  local old_ranges, old_heights = array_copy(self.row_ranges), array_copy(self.heights)
   self.chains:top():update_ranges_heights(self.row_ranges, self.heights)
   return old_ranges, old_heights
 end
