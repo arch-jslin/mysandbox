@@ -78,7 +78,6 @@ function PuzzleGen:reinit()
 end
 
 function PuzzleGen:update_ranges_heights()
-  --print("stack: "..self.chains.size )
   local old_ranges, old_heights = tablex.deepcopy(self.row_ranges), tablex.deepcopy(self.heights)
   local lenH, lenV, _, x, y = MapUtils.analyze( self.chains:top() )
   if lenH > 0 then

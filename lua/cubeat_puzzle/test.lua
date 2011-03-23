@@ -95,6 +95,11 @@ Test.asserteq(#allcomb[133].intersects, 10)
 Test.asserteq(counter, 147)
 Test.asserteq(#starters, 9)  -- don't use vertical combinations as starters
 
+print("Possible Answers for "..allcomb[50].id)
+for _,v in ipairs(allcomb[50].answers) do
+  io.write(string.format("%8d", v.id))
+end
+
 local a = {1,2,3,4,5}
 tablex.rotate(a,2)
 

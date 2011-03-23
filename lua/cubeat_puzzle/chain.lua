@@ -1,4 +1,6 @@
 
+local tablex = require 'pl.tablex'
+
 local floor = math.floor
 local Horizontal, Vertical = {}, {}
 local Chain3H, Chain4H, Chain5H, Chain3V, Chain4V, Answer = 
@@ -197,6 +199,76 @@ function Chain4V:answer_add()
   for color = 1, 4 do
     table.insert(self.answers, ANS(color*100 + self.x*10 + self.y+2) )
   end
+end
+
+-- update_ranges_heights --
+
+function Chain3H:update_ranges_heights(ranges, heights)
+  heights[ self.x ] = heights[ self.x ] + 1
+  heights[self.x+1] = heights[self.x+1] + 1
+  heights[self.x+2] = heights[self.x+2] + 1
+  if ranges[self.y].s > self.x  then ranges[self.y].s = self.x end
+  if ranges[self.y].e < self.en then ranges[self.y].e = self.en end 
+end
+
+function Chain4H:update_ranges_heights(ranges, heights)
+  heights[ self.x ] = heights[ self.x ] + 1
+  heights[self.x+1] = heights[self.x+1] + 1
+  heights[self.x+2] = heights[self.x+2] + 1
+  heights[self.x+3] = heights[self.x+3] + 1
+  if ranges[self.y].s > self.x  then ranges[self.y].s = self.x end
+  if ranges[self.y].e < self.en then ranges[self.y].e = self.en end 
+end
+
+function Chain5H:update_ranges_heights(ranges, heights)
+  heights[ self.x ] = heights[ self.x ] + 1
+  heights[self.x+1] = heights[self.x+1] + 1
+  heights[self.x+2] = heights[self.x+2] + 1
+  heights[self.x+3] = heights[self.x+3] + 1
+  heights[self.x+4] = heights[self.x+4] + 1
+  if ranges[self.y].s > self.x  then ranges[self.y].s = self.x end
+  if ranges[self.y].e < self.en then ranges[self.y].e = self.en end 
+end
+
+function Chain3V:update_ranges_heights(ranges, heights)
+  heights[self.x] = heights[self.x] + self.len
+  -- it's impossible for vertical combinations to expand row ranges
+end
+
+function Chain4V:update_ranges_heights(ranges, heights)
+  heights[self.x] = heights[self.x] + self.len
+  -- it's impossible for vertical combinations to expand row ranges
+end
+
+-- (not_)too_high --
+
+function Chain3H:too_high(heights, height_limit)
+  return heights[ self.x ] + 1 > height_limit or
+         heights[self.x+1] + 1 > height_limit or
+         heights[self.x+2] + 1 > height_limit
+end
+
+function Chain4H:too_high(heights, height_limit)
+  return heights[ self.x ] + 1 > height_limit or
+         heights[self.x+1] + 1 > height_limit or
+         heights[self.x+2] + 1 > height_limit or
+         heights[self.x+3] + 1 > height_limit
+end
+
+function Chain5H:too_high(heights, height_limit)
+  return heights[ self.x ] + 1 > height_limit or
+         heights[self.x+1] + 1 > height_limit or
+         heights[self.x+2] + 1 > height_limit or
+         heights[self.x+3] + 1 > height_limit or
+         heights[self.x+4] + 1 > height_limit
+end
+
+function Chain3V:too_high(heights, height_limit)
+  return heights[self.x] + self.len > height_limit 
+end
+
+function Chain4V:too_high(heights, height_limit)
+  return heights[self.x] + self.len > height_limit 
 end
 
 return {ctor_of(Chain3H), ctor_of(Chain4H), ctor_of(Chain5H), ctor_of(Chain3V), ctor_of(Chain4V), ANS}
