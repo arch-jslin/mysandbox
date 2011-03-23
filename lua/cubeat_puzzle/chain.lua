@@ -74,6 +74,7 @@ end
 -- intersect_test --
 
 local intersect_add__ = {}
+
 intersect_add__[Horizontal] = {
   [Horizontal] = function(self, other, height_limit) -- H intersect H
     if (other.x < self.x and other.en - self.x <= 1 --[[and self.en - other.en <= 2]]) or -- if x1 is left of x0
@@ -83,14 +84,16 @@ intersect_add__[Horizontal] = {
         table.insert(self.intersects, other)
       end        
     end
-  end,
+  end,  
   [Vertical]   = function(self, other, height_limit) -- V intersect H
     if other.len + self.y <= height_limit then                   
       if other.x >= self.x + (self.len-3) and other.x <= self.x + 2 and other.y <= self.y then
         table.insert(self.intersects, other) 
       end
     end
-  end}
+  end
+  }
+
 intersect_add__[Vertical]   = {
   [Horizontal] = function(self, other, height_limit) -- H intersect V
     if other.en >= self.x and other.x <= self.x then
@@ -109,9 +112,10 @@ intersect_add__[Vertical]   = {
         table.insert(self.intersects, other) 
       end
     end    
-  end}
+  end
+  }
 
-local function intersect_add_(self, other, height_limit)
+local function intersect_add_(self, other, height_limit) -- hand-made double dispatch
   intersect_add__[self.dir][other.dir](self, other, height_limit)
 end
 
