@@ -65,6 +65,8 @@ local function analyze(expr)
          floor(expr % 10)            -- pos y
 end
 
+local function display(self) return tostring(self.id) end
+
 local function Chain_eq(a, b) return a.id == b.id end
 
 local function ctor_base(proto)
@@ -73,7 +75,7 @@ local function ctor_base(proto)
     o.color, o.x, o.y = analyze(expr)
     o.en = proto.dir == Horizontal and o.x + proto.len - 1 or o.y + proto.len - 1
     o.id = proto.base_id + o.color*100 + o.x*10 + o.y
-    setmetatable(o, {__index = proto, __eq = Chain_eq})
+    setmetatable(o, {__index = proto, __eq = Chain_eq, __tostring = display})
     return o
   end
 end
@@ -91,13 +93,22 @@ end
 
 local ANS = ctor_base(Answer)
 
+-- remove_chain_from_map --
+
+function Answer:remove_from_map(map)
+  for y = self.y, map.height - 1 do
+    map[y][self.x] = map[y+1][self.x] -- pull down everything on the same column
+  end
+end
+
 -- add_chain_to_map --
   
 function Answer:add_chain_to_map(map, num)
+  local color = self.color == 0 and num or self.color
   for y = map.height - 1, self.y, -1 do
     map[y+1][self.x] = map[y][self.x]
   end
-  map[self.y][self.x] = self.color
+  map[self.y][self.x] = color
 end
   
 function Chain3H:add_chain_to_map(map, num)
@@ -240,7 +251,33 @@ function Chain4V:update_ranges_heights(ranges, heights)
   -- it's impossible for vertical combinations to expand row ranges
 end
 
+-- (not_)float --
+
+function Chain3H:not_float(ranges)
+  return self.y == 1 or (self.x >= ranges[self.y-1].s) and (self.en <= ranges[self.y-1].e)
+end
+
+function Chain4H:not_float(ranges)
+  return self.y == 1 or (self.x >= ranges[self.y-1].s) and (self.en <= ranges[self.y-1].e)
+end
+
+function Chain5H:not_float(ranges)
+  return self.y == 1 or (self.x >= ranges[self.y-1].s) and (self.en <= ranges[self.y-1].e)
+end
+
+function Chain3V:not_float(ranges)
+  return true -- it should be impossible for vertical combinations to float
+end
+
+function Chain4V:not_float(ranges)
+  return true -- it should be impossible for vertical combinations to float
+end
+
 -- (not_)too_high --
+
+function Answer:too_high(heights, height_limit)
+  return heights[self.x] + 1 > height_limit
+end
 
 function Chain3H:too_high(heights, height_limit)
   return heights[ self.x ] + 1 > height_limit or

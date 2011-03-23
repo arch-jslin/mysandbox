@@ -1,9 +1,9 @@
 
 package.path = [[c:\local_gitrepo\Penlight\lua\?.lua;]]..package.path
---require 'luarocks.loader'
+require 'luarocks.loader'
 local MapUtils = require 'maputils'
 local List = require 'pl.List'
---local Test = require 'pl.test'
+local Test = require 'pl.test'
 local tablex = require 'tablex2'
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
@@ -16,8 +16,7 @@ function PuzzleGen:init(chain_limit, w, h)
   self.chain_limit = chain_limit
   self.w = w
   self.h = h
-  self.intersects_of, self.starter = MapUtils.create_intersect_sheet(w, h)
-  self.answers_of = MapUtils.create_answers_sheet(self.intersects_of, w, h)
+  self.all_combinations, self.starters = MapUtils.create_all_combinations(w, h)
   
   self:reinit()
   
@@ -49,11 +48,10 @@ function PuzzleGen:distribute_chain_lengths()
 end
 
 function PuzzleGen:reinit()
-  self.start_time = os.time()
+  --self.start_time = os.time()
   self.row_ranges = {}
   self.heights = {}
   self.chains = Stack()
-  self.colors = Stack()
   self.chain_lengths = self:distribute_chain_lengths()
 
   for i = 1, self.h do
@@ -62,75 +60,43 @@ function PuzzleGen:reinit()
   for i = 1, self.w do 
     self.heights[i] = 0
   end
-  for k,v in pairs(self.intersects_of) do
-    tablex.shuffle(v) -- randomize
-    tablex.shuffle(self.answers_of[k])
+  for _,v in pairs(self.all_combinations) do
+    tablex.shuffle(v.intersects) -- randomize
+    tablex.shuffle(v.answers)
   end
 
   local c
   repeat
-    c = self.starter[random(#self.starter)+1]
-    local lenH, lenV = MapUtils.analyze(c)
-  until self:length_ok(1, lenH+lenV)
+    c = self.starters[random(#self.starters)+1]
+  until self:length_ok(1, c.len)
   self.chains:push(c)
-  self.colors:push(1)
+  self.chains:top().color = 1
   self:update_ranges_heights()
 end
 
-function PuzzleGen:update_ranges_heights()
+function PuzzleGen:update_ranges_heights() -- inplace modification
   local old_ranges, old_heights = tablex.deepcopy(self.row_ranges), tablex.deepcopy(self.heights)
-  local lenH, lenV, _, x, y = MapUtils.analyze( self.chains:top() )
-  if lenH > 0 then
-    for i = x, x + lenH - 1 do
-      self.heights[i] = self.heights[i] + 1
-    end
-    if self.row_ranges[y].s > x            then self.row_ranges[y].s = x end
-    if self.row_ranges[y].e < x + lenH - 1 then self.row_ranges[y].e = x + lenH - 1 end
-  elseif lenV > 0 then
-    self.heights[x] = self.heights[x] + lenV
-    -- it's impossible for vertical combinations to expand row ranges
-  end
+  self.chains:top():update_ranges_heights(self.row_ranges, self.heights)
   return old_ranges, old_heights
 end
 
 function PuzzleGen:not_float(c)
-  local lenH, lenV, _, x, y = MapUtils.analyze(c)
-  return y == 1 or (x >= self.row_ranges[y-1].s) and (x + lenH - 1 <= self.row_ranges[y-1].e)
+  return c:not_float(self.row_ranges)
 end
 
 function PuzzleGen:not_too_high(c)
-  local lenH, lenV, _, x, y = MapUtils.analyze(c)
-  if lenH > 0 then
-    for i = x, x + lenH - 1 do
-      if self.heights[i] + 1 > self.h then return false end
-    end
-  elseif lenV > 0 then
-    if self.heights[x] + lenV > self.h then return false end
-  end
-  return true
-end
-
-local function color_chain(chains, colors)
-  local chains_dup = Stack()
-  for i,v in ipairs(chains) do chains_dup:push(v + colors[i]*100) end
-  return chains_dup
+  return not c:too_high(self.heights, self.h)
 end
 
 function PuzzleGen:add_final_answer(colored_map)  
-  local answers = self.answers_of[ self.chains:top() ]
-  for _,ans in ipairs(answers) do
-    if self:not_too_high(ans) then
-      local _, _, color, ansx, ansy = MapUtils.analyze(ans)
-      MapUtils.add_chain_to_map(colored_map, ans)
-      if color ~= self.colors:top() then
-        colored_map[ansy][ansx] = color
-        if not MapUtils.find_chain(colored_map) then
-          local colored_chain = color_chain(self.chains, self.colors)
-          colored_chain:push(ans)
-          self.chains = colored_chain
-          return true -- answer found. chain construction complete.
-        end      
-      end
+  for _,ans in ipairs(self.chains:top().answers) do
+    if self:not_too_high(ans) --[[and ans.color ~= self.colors:top()]] then
+      ans:add_chain_to_map(colored_map)
+      if not MapUtils.find_chain(colored_map) then
+        self.chains:push(ans)
+        return true -- answer found. chain construction complete.
+      end      
+      ans:remove_from_map(colored_map) -- restore map to try next answer
     end
   end
   return false
@@ -143,30 +109,19 @@ function PuzzleGen:length_ok(level, len)
   end
 end
 
--- 'fix' PuzzleGen:
--- break 'next_chain' apart, into small / modulize methods. don't pile lots of statements 
--- altogether, rather make sure the operation semantic makes sense literally.
--- pre-compute everywhere, and remove all the small loops:
---   1. all the 'if lenV elseif lenH'
---   2. all the 'for i to lenV or lenH'
--- => this optimization is very very important for luajit. Always write less branchy code,
--- => meta programming (loadstring) when I have time or when the need arises.
-
 function PuzzleGen:next_chain(level)
-  local intersects = self.intersects_of[ self.chains:top() ]
-  for _,c in ipairs(intersects) do 
-    local lenH, lenV = MapUtils.analyze(c)
-    if self:length_ok(level, lenH+lenV) and self:not_float(c) and self:not_too_high(c) then
+  for _,c in ipairs(self.chains:top().intersects) do 
+    if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
       self.chains:push(c)
-      local len = lenH + lenV -- anyway get its length
       local old_ranges, old_heights = self:update_ranges_heights()
       for k = 0, 3 do 
-        self.colors:push(((self.colors:top() + k) % 4) + 1)         
-        local colored_chains = color_chain(self.chains, self.colors)
-        local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, colored_chains)
+        self.chains:top().color = ((self.chains[level-1].color + k) % 4) + 1
+        local colored_map = MapUtils.gen_map_from_exprsx(self.w, self.h, self.chains)
         local chained, destroy_count = MapUtils.destroy_chain( colored_map )
-        if destroy_count == len then
+        if destroy_count == c.len then
           if self.chains.size >= self.chain_limit then
+            MapUtils.drop_blocks(colored_map)
+            self.chains:top():add_chain_to_map(colored_map) -- add it back.. dirty way.
             if self:add_final_answer(colored_map) then
               self.chains:display()
               return true
@@ -181,9 +136,9 @@ function PuzzleGen:next_chain(level)
             return false 
           end
         end
-        self.colors:pop()
+        --self.chains:top().color = 0 -- don't clean the color here??? 
       end 
-      self.chains:pop()
+      self.chains:pop() -- because we cleaned the color already, it's OK to pop it?
       self.row_ranges, self.heights = old_ranges, old_heights
     end
   end
@@ -198,9 +153,9 @@ function PuzzleGen:generate(chain_limit, w, h)
     --print("Generating..")
   until self:next_chain(2) 
   print("Ans: ", self.chains:top())
-  local res = MapUtils.gen_map_from_exprs(w, h, self.chains)
+  local res = MapUtils.gen_map_from_exprsx(w, h, self.chains)
   return res
 end
 
---Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
-MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) 
+Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
+--MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) 

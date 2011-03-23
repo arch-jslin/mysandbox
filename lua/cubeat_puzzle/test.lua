@@ -106,8 +106,19 @@ tablex.rotate(a,2)
 Test.asserteq(a, {4,5,1,2,3})
 
 local s = Stack()
-s:push(1) s:push(2) s:push(3)
+local color = {1,2,3}
+local a, b, c = C3H(011), C3V(011), C3H(012)
+
+s:push(a) s:push(b) s:push(c)
 Test.asserteq(s.size, 3)
+
+s[1].color = color[1]
+s[2].color = color[2]
+s[3].color = color[3]
+
+print(c.color) -- This is bad.. but I can't afford deep clone all these,
+               -- luckily, every combination should be unique in each generation
+
 s:pop() s:pop()
 Test.asserteq(s.size, 1)
 
