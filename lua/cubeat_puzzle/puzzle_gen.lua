@@ -113,7 +113,7 @@ end
 
 local function color_chain(chains, colors)
   local chains_dup = Stack()
-  for i,v in ipairs(chains) do chains_dup:push({v[1] + colors[i]*100}) end
+  for i,v in ipairs(chains) do chains_dup:push(v + colors[i]*100) end
   return chains_dup
 end
 

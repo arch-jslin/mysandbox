@@ -7,16 +7,11 @@ local MapUtils = {}
 local floor = math.floor
 
 function MapUtils.analyze(expr)
-  -- return floor(expr / 10000),        -- length if horizontal
-         -- floor(expr % 10000 / 1000), -- length if vertical
-         -- floor(expr % 1000 / 100),   -- reserved
-         -- floor(expr % 100 / 10),     -- pos x
-         -- floor(expr % 10)            -- pos y
-  return floor(expr[1] / 10000),        -- length if horizontal
-         floor(expr[1] % 10000 / 1000), -- length if vertical
-         floor(expr[1] % 1000 / 100),   -- reserved
-         floor(expr[1] % 100 / 10),     -- pos x
-         floor(expr[1] % 10)            -- pos y  
+  return floor(expr / 10000),        -- length if horizontal
+         floor(expr % 10000 / 1000), -- length if vertical
+         floor(expr % 1000 / 100),   -- reserved
+         floor(expr % 100 / 10),     -- pos x
+         floor(expr % 10)            -- pos y
 end
 
 function MapUtils.add_chain_to_map(map, expr, chain)
@@ -122,7 +117,7 @@ local function gen_combinations(w, h)
   for len = 3, 5 do -- for these different chain length
     for y = 1, h do
       for x = 1, w - len + 1 do
-        table.insert(c, {10000*len + x*10 + y}) -- horizontal
+        table.insert(c, 10000*len + x*10 + y) -- horizontal
         if y == 1 then table.insert(starters, c[#c]) end
       end
     end
@@ -130,7 +125,7 @@ local function gen_combinations(w, h)
   for len = 3, 4 do -- VERTICAL 5's WILL NEVER BE USABLE!!!!!
     for y = 1, h - len do
       for x = 1, w do
-        table.insert(c, {1000*len + x*10 + y})  -- vertical
+        table.insert(c, 1000*len + x*10 + y)  -- vertical
         -- don't use vertical combinations as starters.
       end
     end
@@ -138,12 +133,10 @@ local function gen_combinations(w, h)
   return c, starters
 end
 
-local function list_of_intersectx(key, combinations, height_limit) -- combinations should be immutable
-  key.intersects = {}
+local function populate_intersects_of(key, combinations, height_limit) -- combinations should be immutable
   for _,v in ipairs(combinations) do 
     key:intersect_add(v, height_limit) -- it will just simply insert it if passed
   end 
-  return intersects
 end
 
 -- Warning: UGLY CODE
@@ -192,17 +185,16 @@ local function list_of_intersect(key, combinations, height_limit) -- combination
   return intersects
 end
 
-function MapUtils.create_intersect_sheetx(w, h)
+function MapUtils.create_all_combinations(w, h)
   w = (w > 9  and 9  or w) or 6 
   h = (h > 10 and 10 or h) or 10
-  local c, starters = gen_combinationsx(w, h-1)
-  local intersects_of = {}
+  local all_combinations, starters = gen_combinationsx(w, h-1)
   local counter = 0
-  for _, v in ipairs(c) do
-    intersects_of[v] = list_of_intersectx(v, c, h)
+  for _, v in ipairs(all_combinations) do
+    populate_intersects_of(v, all_combinations, h)
     counter = counter + 1
   end
-  return intersects_of, starters, counter
+  return all_combinations, starters, counter
 end
 
 function MapUtils.create_intersect_sheet(w, h)
@@ -221,36 +213,33 @@ end
 local function list_of_answers(key)
   local answers = {}
   local lenH, lenV, _, x, y = MapUtils.analyze(key)
-  local i = 1
   for color = 1, 4 do
     if lenH == 3 then
       for y1 = 1, y do 
-        table.insert(answers, {10000 + color*100 + x*10 + y1})
-        table.insert(answers, {10000 + color*100 + (x+1)*10 + y1})
-        table.insert(answers, {10000 + color*100 + (x+2)*10 + y1})
+        table.insert(answers, 10000 + color*100 + x*10 + y1)
+        table.insert(answers, 10000 + color*100 + (x+1)*10 + y1)
+        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
       end
     elseif lenH == 4 then
       for y1 = 1, y do 
-        table.insert(answers, {10000 + color*100 + (x+1)*10 + y1})
-        table.insert(answers, {10000 + color*100 + (x+2)*10 + y1})
+        table.insert(answers, 10000 + color*100 + (x+1)*10 + y1)
+        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
       end
     elseif lenH == 5 then
       for y1 = 1, y do 
-        table.insert(answers, {10000 + color*100 + (x+2)*10 + y1})
+        table.insert(answers, 10000 + color*100 + (x+2)*10 + y1)
       end
     elseif lenV == 3 then
-      table.insert(answers, {10000 + color*100 + x*10 + y+1})
-      table.insert(answers, {10000 + color*100 + x*10 + y+2})
+      table.insert(answers, 10000 + color*100 + x*10 + y+1)
+      table.insert(answers, 10000 + color*100 + x*10 + y+2)
     elseif lenV == 4 then
-      table.insert(answers, {10000 + color*100 + x*10 + y+2})
+      table.insert(answers, 10000 + color*100 + x*10 + y+2)
     end
   end
   return answers
 end
 
-function MapUtils.create_answers_sheet(intersects_of, w, h)
-  w = (w > 9  and 9  or w) or 6 
-  h = (h > 10 and 10 or h) or 10
+function MapUtils.create_answers_sheet(intersects_of)
   local answers_of = {}
   local counter = 0
   for k, _ in pairs(intersects_of) do
