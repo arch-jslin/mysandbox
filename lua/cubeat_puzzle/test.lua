@@ -88,7 +88,7 @@ Test.asserteq(MapUtils.gen_map_from_exprsx(5, 8, {C3H(011), C3V(011), C3H(012)})
 Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3, 3), true)
 Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
 
-local intersects_of, starters, counter = MapUtils.create_intersect_sheet(6, 10) -- it's actually only 6*9
+local intersects_of, starters, counter = MapUtils.create_intersect_sheetx(6, 10) -- it's actually only 6*9
 
 Test.asserteq(counter, 147)
 Test.asserteq(#starters, 9)  -- don't use vertical combinations as starters

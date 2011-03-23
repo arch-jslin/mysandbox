@@ -1,6 +1,7 @@
 
 local tablex = require 'pl.tablex'
 local random = require 'helpers'.random
+local C3H, C4H, C5H, C3V, C4V = unpack(require 'chain')
 
 local MapUtils = {}
 local floor = math.floor
@@ -85,6 +86,36 @@ function MapUtils.display(map)
   end
 end
 
+local function gen_combinationsH_(c, w, h, len, ctor, starters)
+  for y = 1, h do
+    for x = 1, w - len + 1 do
+      local temp = ctor(x*10 + y)
+      table.insert(c, temp)
+      if y == 1 then table.insert(starters, temp) end
+    end
+  end
+end
+
+local function gen_combinationsV_(c, w, h, len, ctor)
+  for y = 1, h - len do -- don't +1 here, leave last row empty
+    for x = 1, w do
+      table.insert(c, ctor(x*10 + y))
+      -- don't use vertical combinations as starters.
+    end
+  end
+end
+
+local function gen_combinationsx(w, h)
+  local c = {}
+  local starters = {} -- combinations that can be the "last-invoked" chain.
+  gen_combinationsH_(c, w, h, 3, C3H, starters)
+  gen_combinationsH_(c, w, h, 4, C4H, starters)
+  gen_combinationsH_(c, w, h, 5, C5H, starters)
+  gen_combinationsV_(c, w, h, 3, C3V)
+  gen_combinationsV_(c, w, h, 4, C4V)
+  return c, starters
+end
+
 local function gen_combinations(w, h)
   local c = {}
   local starters = {} -- combinations that can be the "last-invoked" chain.
@@ -105,6 +136,14 @@ local function gen_combinations(w, h)
     end
   end
   return c, starters
+end
+
+local function list_of_intersectx(key, combinations, height_limit) -- combinations should be immutable
+  key.intersects = {}
+  for _,v in ipairs(combinations) do 
+    key:intersect_add(v, height_limit) -- it will just simply insert it if passed
+  end 
+  return intersects
 end
 
 -- Warning: UGLY CODE
@@ -151,6 +190,19 @@ local function list_of_intersect(key, combinations, height_limit) -- combination
     end
   end
   return intersects
+end
+
+function MapUtils.create_intersect_sheetx(w, h)
+  w = (w > 9  and 9  or w) or 6 
+  h = (h > 10 and 10 or h) or 10
+  local c, starters = gen_combinationsx(w, h-1)
+  local intersects_of = {}
+  local counter = 0
+  for _, v in ipairs(c) do
+    intersects_of[v] = list_of_intersectx(v, c, h)
+    counter = counter + 1
+  end
+  return intersects_of, starters, counter
 end
 
 function MapUtils.create_intersect_sheet(w, h)
