@@ -7,6 +7,7 @@ local Test = require 'pl.test'
 local tablex = require 'tablex2'
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
+local C3H, C4H, C5H, C3V, C4V = unpack(require 'chain')
 
 math.randomseed(os.time())
 
@@ -78,25 +79,16 @@ ansmap2 = List.reverse(ansmap2)
 ansmap3 = List.reverse(ansmap3)
 chain15 = List.reverse(chain15)
  
-Test.asserteq(MapUtils.pushup_horizontally(testmap, 2, 1, 3), true)
+Test.asserteq(MapUtils.pushup_horizontally(testmap, 2, 1, 3, 0), true)
 Test.asserteq(testmap, ansmap1)
-Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
+Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3, 0), true)
 Test.asserteq(testmap, ansmap2)
-Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {30111, 03211, 30312}), ansmap3)
-Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {30011, 03011, 30012}), ansmap3)
+Test.asserteq(MapUtils.gen_map_from_exprsx(5, 8, {C3H(111), C3V(211), C3H(312)}), ansmap3)
+Test.asserteq(MapUtils.gen_map_from_exprsx(5, 8, {C3H(011), C3V(011), C3H(012)}), ansmap3)
 Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3, 3), true)
 Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
 
 local intersects_of, starters, counter = MapUtils.create_intersect_sheet(6, 10) -- it's actually only 6*9
-
-for _,v in ipairs(intersects_of[40024]) do
-  io.write(string.format("%8d", v))
-end
-print() print()
-for _,v in ipairs(intersects_of[4033]) do
-  io.write(string.format("%8d", v))
-end
-print()
 
 Test.asserteq(counter, 147)
 Test.asserteq(#starters, 9)  -- don't use vertical combinations as starters

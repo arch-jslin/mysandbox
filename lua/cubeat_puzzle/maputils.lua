@@ -50,6 +50,14 @@ function MapUtils.pushup_vertically(map, x, y, len, color)
   return true
 end
 
+function MapUtils.gen_map_from_exprsx(w, h, exprs)
+  local map = MapUtils.create_map(w, h)
+  for chain,v in ipairs(exprs) do
+    v:add_chain_to_map(map, chain)
+  end
+  return map
+end
+
 function MapUtils.gen_map_from_exprs(w, h, exprs)
   local map = MapUtils.create_map(w, h)
   for chain,v in ipairs(exprs) do
