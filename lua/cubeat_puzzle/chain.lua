@@ -63,7 +63,9 @@ local function analyze(expr)
          floor(expr % 10)            -- pos y
 end
 
-local function display(self) return tostring(self.base_id/1000)..tostring(self.color)..tostring(self.x)..tostring(self.y) end
+local function display(self) 
+  return tostring(self.base_id/1000)..tostring(self.color)..tostring(self.x)..tostring(self.y) 
+end
 
 local function Chain_eq(a, b) return a.id == b.id end
 

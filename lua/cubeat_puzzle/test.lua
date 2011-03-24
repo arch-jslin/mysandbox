@@ -95,6 +95,21 @@ print("Possible Answers for "..allcomb[50].id)
 for _,v in ipairs(allcomb[50].answers) do
   io.write(string.format("%8d", v.id))
 end
+print()
+print("Possible Answers for "..allcomb[133].id)
+for _,v in ipairs(allcomb[133].answers) do
+  io.write(string.format("%8d", v.id))
+end
+print()
+print("Possible Answers for "..allcomb[123].id)
+for _,v in ipairs(allcomb[123].answers) do
+  io.write(string.format("%8d", v.id))
+end
+print()
+print("Possible Answers for "..allcomb[143].id)
+for _,v in ipairs(allcomb[143].answers) do
+  io.write(string.format("%8d", v.id))
+end
 
 local s = Stack()
 local color = {1,2,3}
@@ -107,6 +122,7 @@ s[1].color = color[1]
 s[2].color = color[2]
 s[3].color = color[3]
 
+print()
 print(c.color) -- This is bad.. but I can't afford deep clone all these,
                -- luckily, every combination should be unique in each generation
 
