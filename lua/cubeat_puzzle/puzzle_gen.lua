@@ -156,15 +156,64 @@ function PuzzleGen:next_chain(level)
           elseif level < self.chain_limit - 4 then 
             return false 
           end
-          back_track_times = back_track_times + 1
         end
       end 
       self.chains:top().color = 0 -- clean the color here??? 
       self.chains:pop() -- because we cleaned the color already, it's OK to pop it?
       self.heights = old_heights
+      back_track_times = back_track_times + 1
     end
   end
   return false
+end
+
+function PuzzleGen:generate_(level)
+  if level == 1 then    
+    local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
+    if self:add_final_answer(colored_map) then
+      self.chains:display()
+      return true
+    end
+    return false
+  else
+    local intersects = self.chains:top().intersects
+    local ptr = self.chains:top().intersects_ptr
+    for i = 1, #intersects do
+      local c = intersects[ ((i+ptr) % #intersects) + 1 ]
+      if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
+        local last_color = self.chains:top().color
+        self.chains:push(c:scopy())
+        local old_heights = self:update_heights()
+        for k = 0, 3 do 
+          self.chains:top().color = ((last_color + k) % 4) + 1
+          local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
+          local chained, destroy_count = MapUtils.destroy_chain( colored_map )
+          if destroy_count == c.len then
+            if self:generate_(level-1) then
+              return true
+            elseif level > 5 then 
+              return false
+            end
+          end        
+        end
+        self.chains:pop()           -- and pop it?
+        self.heights = old_heights
+        back_track_times = back_track_times + 1
+      end
+    end
+  end
+end
+
+function PuzzleGen:generate2(chain_limit, w, h)
+  w, h = w or 6, h or 10
+  if not self.inited then self:init(chain_limit, w, h) end
+  while not self:generate_(chain_limit) do
+    self:reinit()
+    regen_times = regen_times + 1
+  end
+  print("Ans: ", self.chains:top())
+  local res = MapUtils.gen_map_from_exprs(w, h, self.chains)
+  return res
 end
 
 function PuzzleGen:generate(chain_limit, w, h)
@@ -179,8 +228,8 @@ function PuzzleGen:generate(chain_limit, w, h)
   return res
 end
 
-Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
---MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) 
+--Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
+Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate2((tonumber(arg[1]) or 4), 6, 10) ) end)
 
 print("answer_called_times: "..answer_called_times)
 print("back_track_times: "..back_track_times)
