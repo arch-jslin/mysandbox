@@ -43,7 +43,7 @@ intersect_add__[Vertical]   = {
     end    
   end,
   [Vertical]   = function(self, other, height_limit) -- V intersect V
-    if other.x == self.x then
+    if other.x == self.x and self.en + other.len <= height_limit then
       if self.len == 3 and (other.y == self.y + 1 or other.y == self.y + 2) then
         table.insert(self.intersects, other) 
       elseif self.len == 4 and other.y == self.y + 2 then

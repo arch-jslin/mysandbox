@@ -87,6 +87,11 @@ Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
 local allcomb, starters, counter = MapUtils.create_all_combinations(6, 10) -- it's actually only 6*9
 
 Test.asserteq(#allcomb[50].intersects, 30)
+print("Possible Intersections for "..allcomb[133].id)
+for _,v in ipairs(allcomb[133].intersects) do
+  io.write(string.format("%8d", v.id))
+end
+print()
 Test.asserteq(#allcomb[133].intersects, 10)
 Test.asserteq(counter, 147)
 Test.asserteq(#starters, 9)  -- don't use vertical combinations as starters
