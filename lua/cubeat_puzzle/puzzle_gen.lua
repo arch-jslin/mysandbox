@@ -113,7 +113,7 @@ local regen_times = 0
 function PuzzleGen:add_final_answer(colored_map)  
   answer_called_times = answer_called_times + 1
   for _,ans in ipairs(self.chains:top().answers) do
-    if self:not_too_high(ans) --[[and ans.color ~= self.colors:top()]] then
+    if self:not_too_high(ans) --[[and ans.color ~= self.chains:top().color]] then
       ans:add_chain_to_map(colored_map)
       if not MapUtils.find_chain(colored_map) then
         self.chains:push(ans)
@@ -147,8 +147,6 @@ function PuzzleGen:next_chain(level)
             self.chains:top():add_chain_to_map(colored_map) -- add it back.. dirty way.
             if self:add_final_answer(colored_map) then
               self.chains:display()
-              print()
-              MapUtils.display(colored_map)
               return true
             end
           else
@@ -179,7 +177,6 @@ function PuzzleGen:generate(chain_limit, w, h)
     regen_times = regen_times + 1
   until self:next_chain(2) 
   print("Ans: ", self.chains:top())
-  self.chains:display()
   local res = MapUtils.gen_map_from_exprs(w, h, self.chains)
   return res
 end
