@@ -100,7 +100,11 @@ function PuzzleGen:not_too_high(c)
   return not c:too_high(self.heights, self.h)
 end
 
+local answer_called_times = 0
+local back_track_times = 0
+
 function PuzzleGen:add_final_answer(colored_map)  
+  answer_called_times = answer_called_times + 1
   for _,ans in ipairs(self.chains:top().answers) do
     if self:not_too_high(ans) --[[and ans.color ~= self.colors:top()]] then
       ans:add_chain_to_map(colored_map)
@@ -128,23 +132,24 @@ function PuzzleGen:next_chain(level)
           if self.chains.size >= self.chain_limit then
             MapUtils.drop_blocks(colored_map)
             self.chains:top():add_chain_to_map(colored_map) -- add it back.. dirty way.
-            --if self:add_final_answer(colored_map) then
+            if self:add_final_answer(colored_map) then
               self.chains:display()
               print()
               MapUtils.display(colored_map)
               return true
-            --end
+            end
           else
             self:next_chain( level + 1 )
           end
           os.time() -- dummy call to prevent JIT bug
-          if self.chains.size >= self.chain_limit then 
+          if self.chains.size > self.chain_limit then 
             return true
           elseif level < self.chain_limit - 4 then 
             return false 
           end
+          back_track_times = back_track_times + 1
         end
-        --self.chains:top().color = 0 -- don't clean the color here??? 
+        self.chains:top().color = 0 -- don't clean the color here??? 
       end 
       self.chains:pop() -- because we cleaned the color already, it's OK to pop it?
       self.row_ranges, self.heights = old_ranges, old_heights
@@ -168,3 +173,6 @@ end
 
 Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
 --MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) 
+
+print("answer_called_times: "..answer_called_times)
+print("back_track_times: "..back_track_times)
