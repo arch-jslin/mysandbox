@@ -124,9 +124,12 @@ function PuzzleGen:next_chain(level)
       local last_color = self.chains:top().color
       self.chains:push(c)
       local old_ranges, old_heights = self:update_ranges_heights()
-      
-      
-      
+      io.write("ranges:  ")
+      for _,v in ipairs(self.row_ranges) do io.write(tostring(v.s).."-"..tostring(v.e)..", ") end
+      print()      
+      io.write("heights: ")
+      for _,v in ipairs(self.heights) do io.write(tostring(v)..", ") end
+      print()
       for k = 0, 3 do 
         self.chains:top().color = ((last_color + k) % 4) + 1
         local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
