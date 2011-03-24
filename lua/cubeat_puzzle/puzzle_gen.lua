@@ -113,13 +113,19 @@ local regen_times = 0
 function PuzzleGen:add_final_answer(colored_map)  
   answer_called_times = answer_called_times + 1
   for _,ans in ipairs(self.chains:top().answers) do
-    if self:not_too_high(ans) --[[and ans.color ~= self.chains:top().color]] then
+    if self:not_too_high(ans) then
       ans:add_chain_to_map(colored_map)
-      if not MapUtils.find_chain(colored_map) then
-        self.chains:push(ans)
-        return true -- answer found. chain construction complete.
-      end      
-      ans:remove_from_map(colored_map) -- restore map to try next answer
+      for color = 1, 4 do
+        if color ~= self.chains:top().color then
+          colored_map[ans.y][ans.x] = color
+          if not MapUtils.find_chain(colored_map) then
+            self.chains:push(ans:scopy())
+            self.chains:top().color = color
+            return true -- answer found. chain construction complete.
+          end      
+        end
+      end
+      ans:remove_from_map(colored_map) -- restore map to try next answer if all color failed.
     end
   end
   return false
@@ -143,8 +149,6 @@ function PuzzleGen:next_chain(level)
         local chained, destroy_count = MapUtils.destroy_chain( colored_map )
         if destroy_count == c.len then
           if self.chains.size >= self.chain_limit then
-            MapUtils.drop_blocks(colored_map)
-            self.chains:top():add_chain_to_map(colored_map) -- add it back.. dirty way.
             if self:add_final_answer(colored_map) then
               self.chains:display()
               return true

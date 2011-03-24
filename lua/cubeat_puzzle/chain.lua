@@ -171,44 +171,46 @@ Chain4V.intersect_add = intersect_add_
 
 -- answer_add --
 
+local color = 0 -- quick hack
+
 function Chain3H:answer_add()
-  for color = 1, 4 do
+  --for color = 1, 4 do
     for y1 = 1, self.y do 
       table.insert(self.answers, ANS(color*100 + self.x*10 + y1) )
       table.insert(self.answers, ANS(color*100 + (self.x+1)*10 + y1) )
       table.insert(self.answers, ANS(color*100 + (self.x+2)*10 + y1) )
     end
-  end
+  --end
 end
 
 function Chain4H:answer_add()
-  for color = 1, 4 do
+  --for color = 1, 4 do
     for y1 = 1, self.y do 
       table.insert(self.answers, ANS(color*100 + (self.x+1)*10 + y1) )
       table.insert(self.answers, ANS(color*100 + (self.x+2)*10 + y1) )
     end
-  end
+  --end
 end
 
 function Chain5H:answer_add()
-  for color = 1, 4 do
+  --for color = 1, 4 do
     for y1 = 1, self.y do 
       table.insert(self.answers, ANS(color*100 + (self.x+2)*10 + y1) )
     end
-  end
+  --end
 end
 
 function Chain3V:answer_add()
-  for color = 1, 4 do 
+  --for color = 1, 4 do 
     table.insert(self.answers, ANS(color*100 + self.x*10 + self.y+1) )
     table.insert(self.answers, ANS(color*100 + self.x*10 + self.y+2) )
-  end
+  --end
 end
 
 function Chain4V:answer_add()
-  for color = 1, 4 do 
+  --for color = 1, 4 do 
     table.insert(self.answers, ANS(color*100 + self.x*10 + self.y+2) )
-  end
+  --end
 end
 
 -- update_ranges_heights --
