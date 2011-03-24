@@ -108,6 +108,7 @@ end
 
 local answer_called_times = 0
 local back_track_times = 0
+local regen_times = 0
 
 function PuzzleGen:add_final_answer(colored_map)  
   answer_called_times = answer_called_times + 1
@@ -175,7 +176,7 @@ function PuzzleGen:generate(chain_limit, w, h)
   if not self.inited then self:init(chain_limit, w, h) end
   repeat
     self:reinit()
-    --print("Generating..")
+    regen_times = regen_times + 1
   until self:next_chain(2) 
   print("Ans: ", self.chains:top())
   self.chains:display()
@@ -188,3 +189,4 @@ Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(
 
 print("answer_called_times: "..answer_called_times)
 print("back_track_times: "..back_track_times)
+print("regen_times: "..regen_times)
