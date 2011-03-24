@@ -46,6 +46,8 @@ function PuzzleGen:distribute_chain_lengths()
   return chain_lengths
 end
 
+local time_used_by_shuffle = 0
+
 function PuzzleGen:reinit()
   --self.start_time = os.time()
   self.heights = {}
@@ -55,11 +57,16 @@ function PuzzleGen:reinit()
   for i = 1, self.w do 
     self.heights[i] = 0
   end
+  
+  local t = os.clock()
   for _,v in ipairs(self.all_combinations) do
-    tablex.shuffle(v.intersects) -- randomize
-    tablex.shuffle(v.answers)
+    --tablex.shuffle(v.intersects) -- randomize
+    --tablex.shuffle(v.answers)
+    v.intersects_ptr = random(#v.intersects) + 1
+    v.answers_ptr    = random(#v.answers) + 1
   end
-
+  time_used_by_shuffle = time_used_by_shuffle + (os.clock() - t)
+  
   local c
   repeat
     c = self.starters[random(#self.starters)+1]
@@ -122,11 +129,14 @@ function PuzzleGen:add_final_answer(colored_map)
 end
 
 function PuzzleGen:next_chain(level)
-  for _,c in ipairs(self.chains:top().intersects) do 
+  local intersects = self.chains:top().intersects
+  local ptr = self.chains:top().intersects_ptr
+  for i = 1, #intersects do
+    local c = intersects[ ((i+ptr) % #intersects) + 1 ]
     if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
       local last_color = self.chains:top().color
       self.chains:push(c:scopy())
-      local old_heights = self:update_heights()     
+      local old_heights = self:update_heights()
       for k = 0, 3 do 
         self.chains:top().color = ((last_color + k) % 4) + 1
         local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
@@ -175,3 +185,4 @@ Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(
 print("answer_called_times: "..answer_called_times)
 print("back_track_times: "..back_track_times)
 print("regen_times: "..regen_times)
+print("time_used_by_shuffle: "..time_used_by_shuffle)

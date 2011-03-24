@@ -70,7 +70,8 @@ end
 local function Chain_eq(a, b) return a.id == b.id end
 
 local function shallow_copy(self) 
-  local o = {color = self.color, x = self.x, y = self.y, en = self.en, id = self.id}
+  local o = {color = self.color, x = self.x, y = self.y, 
+    en = self.en, id = self.id, intersects_ptr = self.intersects_ptr, answers_ptr = self.answers_ptr }
   setmetatable(o, getmetatable(self))
   o.intersects = self.intersects -- shallow
   o.answers = self.answers       -- shallow
@@ -80,6 +81,7 @@ end
 local function ctor_of(proto)
   return function(expr)
     local o = {}
+    o.intersects_ptr, o.answers_ptr = 1, 1
     o.color, o.x, o.y = analyze(expr)
     o.en = proto.dir == Horizontal and o.x + proto.len - 1 or o.y + proto.len - 1
     o.id = proto.base_id + o.color*100 + o.x*10 + o.y
