@@ -73,14 +73,20 @@ function PuzzleGen:reinit()
   self:update_ranges_heights()
 end
 
-local function array_copy(src)
+local function spec_copy(src)
   local ret = {}
-  for _,v in ipairs(src) do table.insert(ret, v) end
+  for _,v in ipairs(src) do 
+    if type(v) == 'table' then
+      table.insert(ret, {s=v.s, e=v.e})
+    else 
+      table.insert(ret, v)
+    end
+  end
   return ret
 end
 
 function PuzzleGen:update_ranges_heights() -- inplace modification
-  local old_ranges, old_heights = array_copy(self.row_ranges), array_copy(self.heights)
+  local old_ranges, old_heights = spec_copy(self.row_ranges), spec_copy(self.heights)
   self.chains:top():update_ranges_heights(self.row_ranges, self.heights)
   return old_ranges, old_heights
 end
@@ -124,20 +130,20 @@ function PuzzleGen:next_chain(level)
       local last_color = self.chains:top().color
       self.chains:push(c)
       local old_ranges, old_heights = self:update_ranges_heights()
-      io.write("ranges:  ")
-      for _,v in ipairs(self.row_ranges) do io.write(tostring(v.s).."-"..tostring(v.e)..", ") end
-      print()      
-      io.write("heights: ")
-      for _,v in ipairs(self.heights) do io.write(tostring(v)..", ") end
-      print()
+      -- io.write("ranges:  ")
+      -- for _,v in ipairs(self.row_ranges) do io.write(tostring(v.s).."-"..tostring(v.e)..", ") end
+      -- print()      
+      -- io.write("heights: ")
+      -- for _,v in ipairs(self.heights) do io.write(tostring(v)..", ") end
+      -- print()
       for k = 0, 3 do 
-        self.chains:top().color = ((last_color + k) % 4) + 1
+        c.color = ((last_color + k) % 4) + 1
         local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
         local chained, destroy_count = MapUtils.destroy_chain( colored_map )
         if destroy_count == c.len then
           if self.chains.size >= self.chain_limit then
             MapUtils.drop_blocks(colored_map)
-            self.chains:top():add_chain_to_map(colored_map) -- add it back.. dirty way.
+            c:add_chain_to_map(colored_map) -- add it back.. dirty way.
             if self:add_final_answer(colored_map) then
               self.chains:display()
               print()
@@ -156,7 +162,7 @@ function PuzzleGen:next_chain(level)
           back_track_times = back_track_times + 1
         end
       end 
-      self.chains:top().color = 0 -- clean the color here??? 
+      c.color = 0 -- clean the color here??? 
       self.chains:pop() -- because we cleaned the color already, it's OK to pop it?
       self.row_ranges, self.heights = old_ranges, old_heights
     end
