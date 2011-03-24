@@ -70,7 +70,7 @@ function PuzzleGen:reinit()
   local c
   repeat
     c = self.starters[random(#self.starters)+1]
-  until self:length_ok(1, c.len)
+  until self:length_ok(c.len)
   self.chains:push(c:scopy())
   self.chains:top().color = 1
   self:update_heights()
@@ -88,10 +88,10 @@ function PuzzleGen:update_heights() -- inplace modification
   return old_heights
 end
 
-function PuzzleGen:length_ok(level, len)
+function PuzzleGen:length_ok(len)
   if not self.chain_lengths then return true 
   else
-    return self.chain_lengths[level] == len
+    return self.chain_lengths[self.chains.size + 1] == len
   end
 end
 
@@ -133,7 +133,7 @@ function PuzzleGen:next_chain(level)
   local ptr = self.chains:top().intersects_ptr
   for i = 1, #intersects do
     local c = intersects[ ((i+ptr) % #intersects) + 1 ]
-    if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
+    if self:length_ok(c.len) and self:not_float(c) and self:not_too_high(c) then
       local last_color = self.chains:top().color
       self.chains:push(c:scopy())
       local old_heights = self:update_heights()
@@ -167,6 +167,52 @@ function PuzzleGen:next_chain(level)
   return false
 end
 
+function PuzzleGen:iterate_()
+  local level = 2 
+  local generation_failed = false
+  while level <= self.chain_limit and not generation_failed do
+    local intersects = self.chains:top().intersects
+    local ptr = self.chains:top().intersects_ptr
+    local back_tracking = true
+    for i = 1, #intersects do
+      local c = intersects[ ((i+ptr) % #intersects) + 1 ]
+      if self:length_ok(c.len) and self:not_float(c) and self:not_too_high(c) then
+        local last_color = self.chains:top().color
+        self.chains:push(c:scopy())
+        self:update_heights()
+        for k = 0, 3 do 
+          self.chains:top().color = ((last_color + k) % 4) + 1
+          local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
+          local chained, destroy_count = MapUtils.destroy_chain( colored_map )
+          if destroy_count == c.len then
+            if self.chains.size >= self.chain_limit then
+              if self:add_final_answer(colored_map) then
+                self.chains:display()
+                return true -- chain construction complete, return directly.
+              end
+            else
+              back_tracking = false
+              level = level + 1
+              break 
+            end
+          end
+        end 
+        if back_tracking then
+          self.chains:pop() -- pop it?
+          back_track_times = back_track_times + 1
+        else 
+          break
+        end
+      end
+    end
+    if back_tracking then
+      level = level - 1
+      generation_failed = level < (self.chain_limit - 4)
+    end
+  end
+  return false
+end
+
 function PuzzleGen:generate_(level)
   if level == 1 then    
     local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
@@ -180,7 +226,7 @@ function PuzzleGen:generate_(level)
     local ptr = self.chains:top().intersects_ptr
     for i = 1, #intersects do
       local c = intersects[ ((i+ptr) % #intersects) + 1 ]
-      if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
+      if self:length_ok(c.len) and self:not_float(c) and self:not_too_high(c) then
         local last_color = self.chains:top().color
         self.chains:push(c:scopy())
         local old_heights = self:update_heights()
@@ -191,7 +237,7 @@ function PuzzleGen:generate_(level)
           if destroy_count == c.len then
             if self:generate_(level-1) then
               return true
-            elseif level > 5 then 
+            elseif level > 6 then 
               return false
             end
           end        
@@ -228,8 +274,8 @@ function PuzzleGen:generate(chain_limit, w, h)
   return res
 end
 
---Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
-Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate2((tonumber(arg[1]) or 4), 6, 10) ) end)
+Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
+--Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate2((tonumber(arg[1]) or 4), 6, 10) ) end)
 
 print("answer_called_times: "..answer_called_times)
 print("back_track_times: "..back_track_times)
