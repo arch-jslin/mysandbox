@@ -141,6 +141,9 @@ function PuzzleGen:add_final_answer(colored_map)
           end      
         end
       end
+      for y = ansy, self.h - 1 do
+        colored_map[y][ansx] = colored_map[y+1][ansx] -- remove answer from map if all color failed
+      end
     end
     i = i + 1
   end
