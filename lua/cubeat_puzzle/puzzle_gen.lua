@@ -46,6 +46,8 @@ function PuzzleGen:distribute_chain_lengths()
   return chain_lengths
 end
 
+local time_used_on_shuffle = 0
+
 function PuzzleGen:reinit()
   --self.start_time = os.time()
   self.heights = {}
@@ -55,17 +57,17 @@ function PuzzleGen:reinit()
   for i = 1, self.w do 
     self.heights[i] = 0
   end
+  local t = os.clock()
   for _,v in ipairs(self.all_combinations) do
     tablex.shuffle(v.intersects) -- randomize
     tablex.shuffle(v.answers)
   end
-
+  time_used_on_shuffle = time_used_on_shuffle + (os.clock() - t)
   local c
   repeat
     c = self.starters[random(#self.starters)+1]
   until self:length_ok(1, c.len)
-  self.chains:push(c:scopy())
-  self.chains:top().color = 1
+  self.chains:push(c)
   self:update_heights()
 end
 
@@ -103,7 +105,7 @@ local regen_times = 0
 function PuzzleGen:add_final_answer(colored_map)  
   answer_called_times = answer_called_times + 1
   for _,ans in ipairs(self.chains:top().answers) do
-    if self:not_too_high(ans) --[[and ans.color ~= self.chains:top().color]] then
+    if self:not_too_high(ans) then
       ans:add_chain_to_map(colored_map)
       if not MapUtils.find_chain(colored_map) then
         self.chains:push(ans)
@@ -118,35 +120,30 @@ end
 function PuzzleGen:next_chain(level)
   for _,c in ipairs(self.chains:top().intersects) do 
     if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
-      local last_color = self.chains:top().color
-      self.chains:push(c:scopy())
-      local old_heights = self:update_heights()
-      for k = 0, 3 do 
-        self.chains:top().color = ((last_color + k) % 4) + 1
-        local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
-        local chained, destroy_count = MapUtils.destroy_chain( colored_map )
-        if destroy_count == c.len then
-          if self.chains.size >= self.chain_limit then
-            MapUtils.drop_blocks(colored_map)
-            self.chains:top():add_chain_to_map(colored_map) -- add it back.. dirty way.
-            if self:add_final_answer(colored_map) then
-              self.chains:display()
-              return true
-            end
-          else
-            self:next_chain( level + 1 )
-          end
-          os.time() -- dummy call to prevent JIT bug
-          if self.chains.size > self.chain_limit then 
+      self.chains:push(c)
+      local old_heights = self:update_heights() 
+      local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
+      local chained, destroy_count = MapUtils.destroy_chain( colored_map )
+      if destroy_count == c.len then
+        if self.chains.size >= self.chain_limit then
+          MapUtils.drop_blocks(colored_map)
+          self.chains:top():add_chain_to_map(colored_map) -- add it back.. dirty way.
+          if self:add_final_answer(colored_map) then
+            self.chains:display()
             return true
-          elseif level < self.chain_limit - 4 then 
-            return false 
           end
-          back_track_times = back_track_times + 1
+        else
+          self:next_chain( level + 1 )
         end
-      end 
-      self.chains:top().color = 0 -- clean the color here??? 
-      self.chains:pop() -- because we cleaned the color already, it's OK to pop it?
+        os.time() -- dummy call to prevent JIT bug
+        if self.chains.size > self.chain_limit then 
+          return true
+        elseif level < self.chain_limit - 5 then 
+          return false 
+        end
+        back_track_times = back_track_times + 1
+      end
+      self.chains:pop() 
       self.heights = old_heights
     end
   end
@@ -171,3 +168,4 @@ Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(
 print("answer_called_times: "..answer_called_times)
 print("back_track_times: "..back_track_times)
 print("regen_times: "..regen_times)
+print("time_used_on_shuffle: "..time_used_on_shuffle)
