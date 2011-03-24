@@ -6,7 +6,7 @@ local C3H, C4H, C5H, C3V, C4V = unpack(require 'chain')
 local MapUtils = {}
 local floor = math.floor
 
-function MapUtils.gen_map_from_exprsx(w, h, exprs)
+function MapUtils.gen_map_from_exprs(w, h, exprs)
   local map = MapUtils.create_map(w, h)
   for chain,v in ipairs(exprs) do
     v:add_chain_to_map(map, chain)

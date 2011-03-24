@@ -1,6 +1,4 @@
 
-local tablex = require 'pl.tablex'
-
 local floor = math.floor
 local Horizontal, Vertical = {}, {}
 local Chain3H, Chain4H, Chain5H, Chain3V, Chain4V, Answer = 
@@ -65,7 +63,7 @@ local function analyze(expr)
          floor(expr % 10)            -- pos y
 end
 
-local function display(self) return tostring(self.id) end
+local function display(self) return tostring(self.base_id/1000)..tostring(self.color)..tostring(self.x)..tostring(self.y) end
 
 local function Chain_eq(a, b) return a.id == b.id end
 
@@ -99,6 +97,7 @@ function Answer:remove_from_map(map)
   for y = self.y, map.height - 1 do
     map[y][self.x] = map[y+1][self.x] -- pull down everything on the same column
   end
+  map[map.height][self.x] = 0
 end
 
 -- add_chain_to_map --
@@ -173,67 +172,43 @@ Chain4V.intersect_add = intersect_add_
 -- answer_add --
 
 function Chain3H:answer_add()
-  -- for color = 1, 4 do
-    -- for y1 = 1, self.y do 
-      -- table.insert(self.answers, ANS(color*100 + self.x*10 + y1) )
-      -- table.insert(self.answers, ANS(color*100 + (self.x+1)*10 + y1) )
-      -- table.insert(self.answers, ANS(color*100 + (self.x+2)*10 + y1) )
-    -- end
-  -- end
-  for y1 = 1, self.y do
-    table.insert(self.answers, ANS(100 + self.x*10 + y1) )
-    table.insert(self.answers, ANS(100 + (self.x+1)*10 + y1) )
-    table.insert(self.answers, ANS(100 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(200 + self.x*10 + y1) )
-    table.insert(self.answers, ANS(200 + (self.x+1)*10 + y1) )
-    table.insert(self.answers, ANS(200 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(300 + self.x*10 + y1) )
-    table.insert(self.answers, ANS(300 + (self.x+1)*10 + y1) )
-    table.insert(self.answers, ANS(300 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(400 + self.x*10 + y1) )
-    table.insert(self.answers, ANS(400 + (self.x+1)*10 + y1) )
-    table.insert(self.answers, ANS(400 + (self.x+2)*10 + y1) )
+  for color = 1, 4 do
+    for y1 = 1, self.y do 
+      table.insert(self.answers, ANS(color*100 + self.x*10 + y1) )
+      table.insert(self.answers, ANS(color*100 + (self.x+1)*10 + y1) )
+      table.insert(self.answers, ANS(color*100 + (self.x+2)*10 + y1) )
+    end
   end
 end
 
 function Chain4H:answer_add()
-  for y1 = 1, self.y do 
-    table.insert(self.answers, ANS(100 + (self.x+1)*10 + y1) )
-    table.insert(self.answers, ANS(100 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(200 + (self.x+1)*10 + y1) )
-    table.insert(self.answers, ANS(200 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(300 + (self.x+1)*10 + y1) )
-    table.insert(self.answers, ANS(300 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(400 + (self.x+1)*10 + y1) )
-    table.insert(self.answers, ANS(400 + (self.x+2)*10 + y1) )
+  for color = 1, 4 do
+    for y1 = 1, self.y do 
+      table.insert(self.answers, ANS(color*100 + (self.x+1)*10 + y1) )
+      table.insert(self.answers, ANS(color*100 + (self.x+2)*10 + y1) )
+    end
   end
 end
 
 function Chain5H:answer_add()
-  for y1 = 1, self.y do 
-    table.insert(self.answers, ANS(100 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(200 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(300 + (self.x+2)*10 + y1) )
-    table.insert(self.answers, ANS(400 + (self.x+2)*10 + y1) )
+  for color = 1, 4 do
+    for y1 = 1, self.y do 
+      table.insert(self.answers, ANS(color*100 + (self.x+2)*10 + y1) )
+    end
   end
 end
 
 function Chain3V:answer_add()
-  table.insert(self.answers, ANS(100 + self.x*10 + self.y+1) )
-  table.insert(self.answers, ANS(100 + self.x*10 + self.y+2) )
-  table.insert(self.answers, ANS(200 + self.x*10 + self.y+1) )
-  table.insert(self.answers, ANS(200 + self.x*10 + self.y+2) )
-  table.insert(self.answers, ANS(300 + self.x*10 + self.y+1) )
-  table.insert(self.answers, ANS(300 + self.x*10 + self.y+2) )
-  table.insert(self.answers, ANS(400 + self.x*10 + self.y+1) )
-  table.insert(self.answers, ANS(400 + self.x*10 + self.y+2) )
+  for color = 1, 4 do 
+    table.insert(self.answers, ANS(color*100 + self.x*10 + self.y+1) )
+    table.insert(self.answers, ANS(color*100 + self.x*10 + self.y+2) )
+  end
 end
 
 function Chain4V:answer_add()
-  table.insert(self.answers, ANS(100 + self.x*10 + self.y+2) )
-  table.insert(self.answers, ANS(200 + self.x*10 + self.y+2) )
-  table.insert(self.answers, ANS(300 + self.x*10 + self.y+2) )
-  table.insert(self.answers, ANS(400 + self.x*10 + self.y+2) )
+  for color = 1, 4 do 
+    table.insert(self.answers, ANS(color*100 + self.x*10 + self.y+2) )
+  end
 end
 
 -- update_ranges_heights --

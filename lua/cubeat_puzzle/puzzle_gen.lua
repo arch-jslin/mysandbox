@@ -85,6 +85,13 @@ function PuzzleGen:update_ranges_heights() -- inplace modification
   return old_ranges, old_heights
 end
 
+function PuzzleGen:length_ok(level, len)
+  if not self.chain_lengths then return true 
+  else
+    return self.chain_lengths[level] == len
+  end
+end
+
 function PuzzleGen:not_float(c)
   return c:not_float(self.row_ranges)
 end
@@ -107,13 +114,6 @@ function PuzzleGen:add_final_answer(colored_map)
   return false
 end
 
-function PuzzleGen:length_ok(level, len)
-  if not self.chain_lengths then return true 
-  else
-    return self.chain_lengths[level] == len
-  end
-end
-
 function PuzzleGen:next_chain(level)
   for _,c in ipairs(self.chains:top().intersects) do 
     if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
@@ -121,21 +121,24 @@ function PuzzleGen:next_chain(level)
       local old_ranges, old_heights = self:update_ranges_heights()
       for k = 0, 3 do 
         self.chains:top().color = ((self.chains[level-1].color + k) % 4) + 1
-        local colored_map = MapUtils.gen_map_from_exprsx(self.w, self.h, self.chains)
+        if self.chains:top().color == 0 then error("SHIT!") end
+        local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
         local chained, destroy_count = MapUtils.destroy_chain( colored_map )
         if destroy_count == c.len then
           if self.chains.size >= self.chain_limit then
             MapUtils.drop_blocks(colored_map)
             self.chains:top():add_chain_to_map(colored_map) -- add it back.. dirty way.
-            if self:add_final_answer(colored_map) then
+            --if self:add_final_answer(colored_map) then
               self.chains:display()
+              print()
+              MapUtils.display(colored_map)
               return true
-            end
+            --end
           else
             self:next_chain( level + 1 )
           end
           os.time() -- dummy call to prevent JIT bug
-          if self.chains.size > self.chain_limit then 
+          if self.chains.size >= self.chain_limit then 
             return true
           elseif level < self.chain_limit - 4 then 
             return false 
@@ -158,7 +161,8 @@ function PuzzleGen:generate(chain_limit, w, h)
     --print("Generating..")
   until self:next_chain(2) 
   print("Ans: ", self.chains:top())
-  local res = MapUtils.gen_map_from_exprsx(w, h, self.chains)
+  self.chains:display()
+  local res = MapUtils.gen_map_from_exprs(w, h, self.chains)
   return res
 end
 

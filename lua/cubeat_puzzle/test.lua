@@ -79,12 +79,8 @@ ansmap2 = List.reverse(ansmap2)
 ansmap3 = List.reverse(ansmap3)
 chain15 = List.reverse(chain15)
  
-Test.asserteq(MapUtils.pushup_horizontally(testmap, 2, 1, 3, 0), true)
-Test.asserteq(testmap, ansmap1)
-Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3, 0), true)
-Test.asserteq(testmap, ansmap2)
-Test.asserteq(MapUtils.gen_map_from_exprsx(5, 8, {C3H(111), C3V(211), C3H(312)}), ansmap3)
-Test.asserteq(MapUtils.gen_map_from_exprsx(5, 8, {C3H(011), C3V(011), C3H(012)}), ansmap3)
+Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {C3H(111), C3V(211), C3H(312)}), ansmap3)
+Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {C3H(011), C3V(011), C3H(012)}), ansmap3)
 Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3, 3), true)
 Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
 
@@ -99,11 +95,6 @@ print("Possible Answers for "..allcomb[50].id)
 for _,v in ipairs(allcomb[50].answers) do
   io.write(string.format("%8d", v.id))
 end
-
-local a = {1,2,3,4,5}
-tablex.rotate(a,2)
-
-Test.asserteq(a, {4,5,1,2,3})
 
 local s = Stack()
 local color = {1,2,3}
