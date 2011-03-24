@@ -37,6 +37,9 @@ local function gen_combinationsH_(c, w, h, len, ctor, starters)
   for y = 1, h do
     for x = 1, w - len + 1 do
       local temp = ctor(x*10 + y)
+      temp.intersects = {}
+      temp.answers = {}
+      temp:answer_add() -- generate all possible answers in the c'tor
       table.insert(c, temp)
       if y == 1 then table.insert(starters, temp) end
     end
@@ -46,7 +49,11 @@ end
 local function gen_combinationsV_(c, w, h, len, ctor)
   for y = 1, h - len do -- don't +1 here, leave last row empty
     for x = 1, w do
-      table.insert(c, ctor(x*10 + y))
+      local temp = ctor(x*10 + y)
+      temp.intersects = {}
+      temp.answers = {}
+      temp:answer_add() -- generate all possible answers in the c'tor
+      table.insert(c, temp)
       -- don't use vertical combinations as starters.
     end
   end

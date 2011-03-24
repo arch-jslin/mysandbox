@@ -69,29 +69,27 @@ end
 
 local function Chain_eq(a, b) return a.id == b.id end
 
-local function ctor_base(proto)
+local function shallow_copy(self) 
+  local o = {color = self.color, x = self.x, y = self.y, en = self.en, id = self.id}
+  setmetatable(o, getmetatable(self))
+  o.intersects = self.intersects -- shallow
+  o.answers = self.answers       -- shallow
+  return o
+end
+
+local function ctor_of(proto)
   return function(expr)
     local o = {}
     o.color, o.x, o.y = analyze(expr)
     o.en = proto.dir == Horizontal and o.x + proto.len - 1 or o.y + proto.len - 1
     o.id = proto.base_id + o.color*100 + o.x*10 + o.y
+    o.scopy = shallow_copy
     setmetatable(o, {__index = proto, __eq = Chain_eq, __tostring = display})
     return o
   end
 end
 
-local function ctor_of(proto)
-  local Base = ctor_base(proto)
-  return function(expr)
-    o = Base(expr)
-    o.intersects = {}
-    o.answers = {}
-    o:answer_add() -- generate all possible answers in the c'tor
-    return o
-  end
-end
-
-local ANS = ctor_base(Answer)
+local ANS = ctor_of(Answer)
 
 -- remove_chain_from_map --
 
