@@ -15,18 +15,22 @@ local intersect_add__ = {}
 
 intersect_add__[Horizontal] = {
   [Horizontal] = function(self, other, height_limit) -- H intersect H
-    if (other.x < self.x and other.en - self.x <= 1 --[[and self.en - other.en <= 2]]) or -- if x1 is left of x0
-       (other.x > self.x and other.x <= self.x + 2 and self.en - other.x <= 1)        -- if x1 is right of x0
-    then                                       
-      if other.y <= self.y then
+    if (other.x < self.x and other.en - self.x <= 1) or                        -- if x1 is left of x0
+       (other.x > self.x and other.x <= self.x + 2 and self.en - other.x <= 1) -- if x1 is right of x0
+    then                                        
+      if other.y == self.y and other.color ~= self.color then
         table.insert(self.intersects, other)
-      end        
+      elseif other.y < self.y then
+        table.insert(self.intersects, other)
+      end      
     end
   end,  
   [Vertical]   = function(self, other, height_limit) -- V intersect H
     if other.len + self.y <= height_limit then                   
       if other.x >= self.x + (self.len-3) and other.x <= self.x + 2 and other.y <= self.y then
-        table.insert(self.intersects, other) 
+        if self.y > other.en or other.color ~= self.color then
+          table.insert(intersects, v) 
+        end        
       end
     end
   end
@@ -34,7 +38,7 @@ intersect_add__[Horizontal] = {
 
 intersect_add__[Vertical]   = {
   [Horizontal] = function(self, other, height_limit) -- H intersect V
-    if other.en >= self.x and other.x <= self.x then
+    if other.en >= self.x and other.x <= self.x and other.color ~= self.color then
       if self.len == 3 and (other.y == self.y + 1 or other.y == self.y + 2) then
         table.insert(self.intersects, other) 
       elseif self.len == 4 and other.y == self.y + 2 then
@@ -43,7 +47,7 @@ intersect_add__[Vertical]   = {
     end    
   end,
   [Vertical]   = function(self, other, height_limit) -- V intersect V
-    if other.x == self.x then
+    if other.x == self.x and self.en + other.len <= height_limit and self.color ~= other.color then
       if self.len == 3 and (other.y == self.y + 1 or other.y == self.y + 2) then
         table.insert(self.intersects, other) 
       elseif self.len == 4 and other.y == self.y + 2 then
