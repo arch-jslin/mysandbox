@@ -48,14 +48,10 @@ end
 
 function PuzzleGen:reinit()
   --self.start_time = os.time()
-  self.row_ranges = {}
   self.heights = {}
   self.chains = Stack()
   self.chain_lengths = self:distribute_chain_lengths()
-
-  for i = 1, self.h do
-    self.row_ranges[i] = {s = self.w, e = 0}
-  end
+  
   for i = 1, self.w do 
     self.heights[i] = 0
   end
@@ -70,25 +66,19 @@ function PuzzleGen:reinit()
   until self:length_ok(1, c.len)
   self.chains:push(c:scopy())
   self.chains:top().color = 1
-  self:update_ranges_heights()
+  self:update_heights()
 end
 
-local function spec_copy(src)
+local function array_copy(src)
   local ret = {}
-  for _,v in ipairs(src) do 
-    if type(v) == 'table' then
-      table.insert(ret, {s=v.s, e=v.e})
-    else 
-      table.insert(ret, v)
-    end
-  end
+  for _,v in ipairs(src) do table.insert(ret, v) end
   return ret
 end
 
-function PuzzleGen:update_ranges_heights() -- inplace modification
-  local old_ranges, old_heights = spec_copy(self.row_ranges), spec_copy(self.heights)
-  self.chains:top():update_ranges_heights(self.row_ranges, self.heights)
-  return old_ranges, old_heights
+function PuzzleGen:update_heights() -- inplace modification
+  local old_heights = array_copy(self.heights)
+  self.chains:top():update_heights(self.heights)
+  return old_heights
 end
 
 function PuzzleGen:length_ok(level, len)
@@ -99,7 +89,7 @@ function PuzzleGen:length_ok(level, len)
 end
 
 function PuzzleGen:not_float(c)
-  return c:not_float(self.row_ranges)
+  return c:not_float(self.heights)
 end
 
 function PuzzleGen:not_too_high(c)
@@ -130,13 +120,7 @@ function PuzzleGen:next_chain(level)
     if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
       local last_color = self.chains:top().color
       self.chains:push(c:scopy())
-      local old_ranges, old_heights = self:update_ranges_heights()
-      -- io.write("ranges:  ")
-      -- for _,v in ipairs(self.row_ranges) do io.write(tostring(v.s).."-"..tostring(v.e)..", ") end
-      -- print()      
-      -- io.write("heights: ")
-      -- for _,v in ipairs(self.heights) do io.write(tostring(v)..", ") end
-      -- print()
+      local old_heights = self:update_heights()
       for k = 0, 3 do 
         self.chains:top().color = ((last_color + k) % 4) + 1
         local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
@@ -163,7 +147,7 @@ function PuzzleGen:next_chain(level)
       end 
       self.chains:top().color = 0 -- clean the color here??? 
       self.chains:pop() -- because we cleaned the color already, it's OK to pop it?
-      self.row_ranges, self.heights = old_ranges, old_heights
+      self.heights = old_heights
     end
   end
   return false

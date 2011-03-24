@@ -211,64 +211,65 @@ function Chain4V:answer_add()
   end
 end
 
--- update_ranges_heights --
+-- update_heights --
 
-function Chain3H:update_ranges_heights(ranges, heights)
+function Chain3H:update_heights(heights)
   heights[ self.x ] = heights[ self.x ] + 1
   heights[self.x+1] = heights[self.x+1] + 1
   heights[self.x+2] = heights[self.x+2] + 1
-  if ranges[self.y].s > self.x  then ranges[self.y].s = self.x end
-  if ranges[self.y].e < self.en then ranges[self.y].e = self.en end 
 end
 
-function Chain4H:update_ranges_heights(ranges, heights)
+function Chain4H:update_heights(heights)
   heights[ self.x ] = heights[ self.x ] + 1
   heights[self.x+1] = heights[self.x+1] + 1
   heights[self.x+2] = heights[self.x+2] + 1
   heights[self.x+3] = heights[self.x+3] + 1
-  if ranges[self.y].s > self.x  then ranges[self.y].s = self.x end
-  if ranges[self.y].e < self.en then ranges[self.y].e = self.en end 
 end
 
-function Chain5H:update_ranges_heights(ranges, heights)
+function Chain5H:update_heights(heights)
   heights[ self.x ] = heights[ self.x ] + 1
   heights[self.x+1] = heights[self.x+1] + 1
   heights[self.x+2] = heights[self.x+2] + 1
   heights[self.x+3] = heights[self.x+3] + 1
   heights[self.x+4] = heights[self.x+4] + 1
-  if ranges[self.y].s > self.x  then ranges[self.y].s = self.x end
-  if ranges[self.y].e < self.en then ranges[self.y].e = self.en end 
 end
 
-function Chain3V:update_ranges_heights(ranges, heights)
+function Chain3V:update_heights(heights)
   heights[self.x] = heights[self.x] + self.len
-  -- it's impossible for vertical combinations to expand row ranges
 end
 
-function Chain4V:update_ranges_heights(ranges, heights)
+function Chain4V:update_heights(heights) 
   heights[self.x] = heights[self.x] + self.len
-  -- it's impossible for vertical combinations to expand row ranges
 end
 
--- (not_)float --
-
-function Chain3H:not_float(ranges)
-  return self.y == 1 or (self.x >= ranges[self.y-1].s) and (self.en <= ranges[self.y-1].e)
+function Chain3H:not_float(heights)
+  return self.y == 1 or (
+    heights[ self.x ] + 1 >= self.y and  
+    heights[self.x+1] + 1 >= self.y and
+    heights[self.x+2] + 1 >= self.y
+  )
 end
 
-function Chain4H:not_float(ranges)
-  return self.y == 1 or (self.x >= ranges[self.y-1].s) and (self.en <= ranges[self.y-1].e)
+function Chain4H:not_float(heights)
+  return self.y == 1 or (
+    heights[ self.x ] + 1 >= self.y and heights[self.x+1] + 1 >= self.y and
+    heights[self.x+2] + 1 >= self.y and heights[self.x+3] + 1 >= self.y 
+  )
 end
 
-function Chain5H:not_float(ranges)
-  return self.y == 1 or (self.x >= ranges[self.y-1].s) and (self.en <= ranges[self.y-1].e)
+function Chain5H:not_float(heights)
+  return self.y == 1 or (
+    heights[ self.x ] + 1 >= self.y and heights[self.x+1] + 1 >= self.y and
+    heights[self.x+2] + 1 >= self.y and heights[self.x+3] + 1 >= self.y and
+    heights[self.x+4] + 1 >= self.y
+  )
 end
 
-function Chain3V:not_float(ranges)
+function Chain3V:not_float()
   return true -- it should be impossible for vertical combinations to float
 end
 
-function Chain4V:not_float(ranges)
+function Chain4V:not_float()
   return true -- it should be impossible for vertical combinations to float
 end
 
