@@ -84,6 +84,7 @@ end
 local function ctor_of(proto)
   return function(expr)
     local o = {}
+    o.intersects_ptr, o.answers_ptr = 1, 1
     o.color, o.x, o.y = analyze(expr)
     o.en = proto.dir == Horizontal and o.x + proto.len - 1 or o.y + proto.len - 1
     o.id = proto.base_id + o.color*100 + o.x*10 + o.y

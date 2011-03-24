@@ -59,8 +59,10 @@ function PuzzleGen:reinit()
   end
   local t = os.clock()
   for _,v in ipairs(self.all_combinations) do
-    tablex.shuffle(v.intersects) -- randomize
-    tablex.shuffle(v.answers)
+    --tablex.shuffle(v.intersects) -- randomize
+    --tablex.shuffle(v.answers)
+    v.intersects_ptr = random(#v.intersects) + 1
+    v.answers_ptr = random(#v.answers) + 1
   end
   time_used_on_shuffle = time_used_on_shuffle + (os.clock() - t)
   local c
@@ -118,7 +120,10 @@ function PuzzleGen:add_final_answer(colored_map)
 end
 
 function PuzzleGen:next_chain(level)
-  for _,c in ipairs(self.chains:top().intersects) do 
+  local intersects = self.chains:top().intersects
+  local ptr = self.chains:top().intersects_ptr
+  for i = 1, #intersects do
+    local c = intersects[ ((i + ptr) % #intersects) + 1 ]
     if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
       self.chains:push(c)
       local old_heights = self:update_heights() 
