@@ -103,25 +103,25 @@ end
 -- add_chain_to_map --
   
 function Answer:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+  --local color = self.color == 0 and num or self.color
   for y = map.height - 1, self.y, -1 do
     map[y+1][self.x] = map[y][self.x]
   end
-  map[self.y][self.x] = color
+  map[self.y][self.x] = self.color
 end
   
 function Chain3H:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+  --local color = self.color == 0 and num or self.color
   for y = map.height - 1, self.y, -1 do 
     map[y+1][ self.x ] = map[y][ self.x ] 
     map[y+1][self.x+1] = map[y][self.x+1]
     map[y+1][self.x+2] = map[y][self.x+2]
   end
-  map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2] = color, color, color
+  map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2] = self.color, self.color, self.color
 end
 
 function Chain4H:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+  --local color = self.color == 0 and num or self.color
   for y = map.height - 1, self.y, -1 do 
     map[y+1][ self.x ] = map[y][ self.x ] 
     map[y+1][self.x+1] = map[y][self.x+1]
@@ -129,11 +129,11 @@ function Chain4H:add_chain_to_map(map, num)
     map[y+1][self.x+3] = map[y][self.x+3]
   end
   map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2], 
-  map[self.y][self.x+3] = color, color, color, color
+  map[self.y][self.x+3] = self.color, self.color, self.color, self.color
 end
 
 function Chain5H:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+  --local color = self.color == 0 and num or self.color
   for y = map.height - 1, self.y, -1 do 
     map[y+1][ self.x ] = map[y][ self.x ] 
     map[y+1][self.x+1] = map[y][self.x+1]
@@ -142,23 +142,23 @@ function Chain5H:add_chain_to_map(map, num)
     map[y+1][self.x+4] = map[y][self.x+4]
   end
   map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2], 
-  map[self.y][self.x+3], map[self.y][self.x+4] = color, color, color, color, color
+  map[self.y][self.x+3], map[self.y][self.x+4] = self.color, self.color, self.color, self.color, self.color
 end
 
 function Chain3V:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+  --local color = self.color == 0 and num or self.color
   for y = map.height - 3, self.y, -1 do
     map[y+3][self.x] = map[y][self.x]
   end
-  map[ self.y ][self.x], map[self.y+1][self.x], map[self.y+2][self.x] = color, color, color
+  map[ self.y ][self.x], map[self.y+1][self.x], map[self.y+2][self.x] = self.color, self.color, self.color
 end
 
 function Chain4V:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+  --local color = self.color == 0 and num or self.color
   for y = map.height - 4, self.y, -1 do
     map[y+4][self.x] = map[y][self.x]
   end
-  map[ self.y ][self.x], map[self.y+1][self.x], map[self.y+2][self.x], map[self.y+3][self.x] = color, color, color, color
+  map[ self.y ][self.x], map[self.y+1][self.x], map[self.y+2][self.x], map[self.y+3][self.x] = self.color, self.color, self.color, self.color
 end
 
 -- intersect_add --
