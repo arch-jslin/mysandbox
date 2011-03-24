@@ -29,7 +29,7 @@ intersect_add__[Horizontal] = {
     if other.len + self.y <= height_limit then                   
       if other.x >= self.x + (self.len-3) and other.x <= self.x + 2 and other.y <= self.y then
         if self.y > other.en or other.color ~= self.color then
-          table.insert(intersects, v) 
+          table.insert(self.intersects, other)
         end        
       end
     end
