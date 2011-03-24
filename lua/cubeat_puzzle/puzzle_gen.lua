@@ -121,11 +121,14 @@ end
 function PuzzleGen:next_chain(level)
   for _,c in ipairs(self.chains:top().intersects) do 
     if self:length_ok(level, c.len) and self:not_float(c) and self:not_too_high(c) then
+      local last_color = self.chains:top().color
       self.chains:push(c)
       local old_ranges, old_heights = self:update_ranges_heights()
+      
+      
+      
       for k = 0, 3 do 
-        self.chains:top().color = ((self.chains[level-1].color + k) % 4) + 1
-        if self.chains:top().color == 0 then error("SHIT!") end
+        self.chains:top().color = ((last_color + k) % 4) + 1
         local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
         local chained, destroy_count = MapUtils.destroy_chain( colored_map )
         if destroy_count == c.len then
@@ -149,8 +152,8 @@ function PuzzleGen:next_chain(level)
           end
           back_track_times = back_track_times + 1
         end
-        self.chains:top().color = 0 -- don't clean the color here??? 
       end 
+      self.chains:top().color = 0 -- clean the color here??? 
       self.chains:pop() -- because we cleaned the color already, it's OK to pop it?
       self.row_ranges, self.heights = old_ranges, old_heights
     end
