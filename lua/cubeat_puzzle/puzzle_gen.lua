@@ -124,6 +124,8 @@ function PuzzleGen:add_final_answer(colored_map)
   return false
 end
 
+local time_used_by_gen_map_and_destroy = 0 
+
 function PuzzleGen:next_chain(level)
   local intersects = self.chains:top().intersects
   local ptr = self.chains:top().intersects_ptr
@@ -135,21 +137,16 @@ function PuzzleGen:next_chain(level)
       self:update_heights()
       for k = 0, 3 do 
         self.chains:top().color = ((last_color + k) % 4) + 1
+        local t = os.clock()
         local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
         local chained, destroy_count = MapUtils.destroy_chain( colored_map )
+        time_used_by_gen_map_and_destroy = time_used_by_gen_map_and_destroy + (os.clock() - t)
         if destroy_count == c.len then
           if self.chains.size >= self.chain_limit then
-            if self:add_final_answer(colored_map) then
-              return true
-            end
+            if self:add_final_answer(colored_map) then return true end
           else
-            self:next_chain( level + 1 )
-          end
-          os.time() -- dummy call to prevent JIT bug
-          if self.chains.size > self.chain_limit then 
-            return true
-          elseif level < self.chain_limit - 4 then 
-            return false 
+            if self:next_chain( level + 1 ) then return true 
+            elseif level < self.chain_limit - 4 then return false end
           end
         end
       end  
@@ -157,7 +154,7 @@ function PuzzleGen:next_chain(level)
       back_track_times = back_track_times + 1
     end
   end
-  return false
+  return false -- if all possible answers for this level has been tried, return false
 end
 
 function PuzzleGen:generate_(level)
@@ -203,6 +200,7 @@ function PuzzleGen:generate(chain_limit, w, h)
     self:reinit()
     regen_times = regen_times + 1
   until self:next_chain(2) 
+  self.chains:display()
   print("Ans: ", self.chains:top())
   local res = MapUtils.gen_map_from_exprs(w, h, self.chains)
   return res
@@ -215,6 +213,7 @@ function PuzzleGen:generate2(chain_limit, w, h)
     self:reinit()
     regen_times = regen_times + 1
   end
+  self.chains:display()
   print("Ans: ", self.chains:top())
   local res = MapUtils.gen_map_from_exprs(w, h, self.chains)
   return res
@@ -227,3 +226,4 @@ print("answer_called_times: "..answer_called_times)
 print("back_track_times: "..back_track_times)
 print("regen_times: "..regen_times)
 print("time_used_by_shuffle: "..time_used_by_shuffle)
+print("time_used_by_gen_map_and_destroy: "..time_used_by_gen_map_and_destroy)
