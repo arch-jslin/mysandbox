@@ -143,13 +143,13 @@ function PuzzleGen:next_chain(level)
         os.time() -- dummy call to prevent JIT bug
         if self.chains.size > self.chain_limit then 
           return true
-        elseif level < self.chain_limit - 5 then 
+        elseif level < self.chain_limit - 4 then 
           return false 
         end
-        back_track_times = back_track_times + 1
       end
       self.chains:pop() 
       self.heights = old_heights
+      back_track_times = back_track_times + 1
     end
   end
   return false
