@@ -9,7 +9,8 @@ local floor = math.floor
 function MapUtils.gen_map_from_exprs(w, h, exprs)
   local map = MapUtils.create_map(w, h)
   for chain,v in ipairs(exprs) do
-    v:add_chain_to_map(map, chain)
+    v:push_up_blocks_of(map)
+    v:put_color_in(map, chain)
   end
   return map
 end

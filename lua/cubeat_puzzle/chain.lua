@@ -93,7 +93,7 @@ end
 
 local ANS = ctor_of(Answer)
 
--- remove_chain_from_map --
+-- remove_from_map --
 
 function Answer:remove_from_map(map)
   for y = self.y, map.height - 1 do
@@ -102,40 +102,105 @@ function Answer:remove_from_map(map)
   map[map.height][self.x] = 0
 end
 
--- add_chain_to_map --
+function Chain3H:remove_from_map(map)
+  for y = self.y, map.height - 1 do
+    map[y][ self.x ] = map[y+1][ self.x ] -- pull down everything on the same column
+    map[y][self.x+1] = map[y+1][self.x+1]
+    map[y][self.x+2] = map[y+1][self.x+2]
+  end
+  map[map.height][ self.x ] = 0 
+  map[map.height][self.x+1] = 0 
+  map[map.height][self.x+2] = 0 
+end
+
+function Chain4H:remove_from_map(map)
+  for y = self.y, map.height - 1 do
+    map[y][ self.x ] = map[y+1][ self.x ] -- pull down everything on the same column
+    map[y][self.x+1] = map[y+1][self.x+1]
+    map[y][self.x+2] = map[y+1][self.x+2]
+    map[y][self.x+3] = map[y+1][self.x+3]
+  end
+  map[map.height][ self.x ] = 0 
+  map[map.height][self.x+1] = 0 
+  map[map.height][self.x+2] = 0 
+  map[map.height][self.x+3] = 0 
+end
+
+function Chain5H:remove_from_map(map)
+  for y = self.y, map.height - 1 do
+    map[y][ self.x ] = map[y+1][ self.x ] -- pull down everything on the same column
+    map[y][self.x+1] = map[y+1][self.x+1]
+    map[y][self.x+2] = map[y+1][self.x+2]
+    map[y][self.x+3] = map[y+1][self.x+3]
+    map[y][self.x+4] = map[y+1][self.x+4]
+  end
+  map[map.height][ self.x ] = 0 
+  map[map.height][self.x+1] = 0 
+  map[map.height][self.x+2] = 0 
+  map[map.height][self.x+3] = 0 
+  map[map.height][self.x+4] = 0 
+end
+
+function Chain3V:remove_from_map(map)
+  for y = self.y, map.height - 3 do
+    map[y][self.x] = map[y+3][self.x] -- pull down everything on the same column
+  end
+  map[ map.height ][self.x] = 0 
+  map[map.height-1][self.x] = 0
+  map[map.height-2][self.x] = 0
+end
+
+function Chain4V:remove_from_map(map)
+  for y = self.y, map.height - 4 do
+    map[y][self.x] = map[y+4][self.x] -- pull down everything on the same column
+  end
+  map[ map.height ][self.x] = 0 
+  map[map.height-1][self.x] = 0
+  map[map.height-2][self.x] = 0
+  map[map.height-3][self.x] = 0
+end
+
+-- push_up_blocks_of & put_color_in --
   
-function Answer:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+function Answer:push_up_blocks_of(map)
   for y = map.height - 1, self.y, -1 do
     map[y+1][self.x] = map[y][self.x]
   end
-  map[self.y][self.x] = color
+end
+
+function Answer:put_color_in(map, num)
+  map[self.y][self.x] = self.color == 0 and num or self.color
 end
   
-function Chain3H:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+function Chain3H:push_up_blocks_of(map)
   for y = map.height - 1, self.y, -1 do 
     map[y+1][ self.x ] = map[y][ self.x ] 
     map[y+1][self.x+1] = map[y][self.x+1]
     map[y+1][self.x+2] = map[y][self.x+2]
   end
+end
+
+function Chain3H:put_color_in(map, num)
+  local color = self.color == 0 and num or self.color
   map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2] = color, color, color
 end
 
-function Chain4H:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+function Chain4H:push_up_blocks_of(map, num)
   for y = map.height - 1, self.y, -1 do 
     map[y+1][ self.x ] = map[y][ self.x ] 
     map[y+1][self.x+1] = map[y][self.x+1]
     map[y+1][self.x+2] = map[y][self.x+2]
     map[y+1][self.x+3] = map[y][self.x+3]
   end
+end
+
+function Chain4H:put_color_in(map, num)
+  local color = self.color == 0 and num or self.color
   map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2], 
   map[self.y][self.x+3] = color, color, color, color
 end
 
-function Chain5H:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+function Chain5H:push_up_blocks_of(map, num)
   for y = map.height - 1, self.y, -1 do 
     map[y+1][ self.x ] = map[y][ self.x ] 
     map[y+1][self.x+1] = map[y][self.x+1]
@@ -143,23 +208,33 @@ function Chain5H:add_chain_to_map(map, num)
     map[y+1][self.x+3] = map[y][self.x+3]
     map[y+1][self.x+4] = map[y][self.x+4]
   end
+end
+
+function Chain5H:put_color_in(map, num)
+  local color = self.color == 0 and num or self.color
   map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2], 
   map[self.y][self.x+3], map[self.y][self.x+4] = color, color, color, color, color
 end
 
-function Chain3V:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+function Chain3V:push_up_blocks_of(map, num)
   for y = map.height - 3, self.y, -1 do
     map[y+3][self.x] = map[y][self.x]
   end
+end
+
+function Chain3V:put_color_in(map, num)
+  local color = self.color == 0 and num or self.color
   map[ self.y ][self.x], map[self.y+1][self.x], map[self.y+2][self.x] = color, color, color
 end
 
-function Chain4V:add_chain_to_map(map, num)
-  local color = self.color == 0 and num or self.color
+function Chain4V:push_up_blocks_of(map, num)
   for y = map.height - 4, self.y, -1 do
     map[y+4][self.x] = map[y][self.x]
   end
+end
+
+function Chain4V:put_color_in(map, num)
+  local color = self.color == 0 and num or self.color
   map[ self.y ][self.x], map[self.y+1][self.x], map[self.y+2][self.x], map[self.y+3][self.x] = color, color, color, color
 end
 
