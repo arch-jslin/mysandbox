@@ -127,7 +127,7 @@ function PuzzleGen:add_final_answer(colored_map)
   return false
 end
 
-local time_used_by_new_map = 0 
+local time_used_by_find_chain = 0 
 
 function PuzzleGen:next_chain(level)
   local intersects = self.chains:top().intersects
@@ -143,8 +143,8 @@ function PuzzleGen:next_chain(level)
         self.chains:top().color = ((last_color + k) % 4) + 1
         local t = os.clock()
         self.chains:top():put_color_in( self.mapcache )
-        time_used_by_new_map = time_used_by_new_map + (os.clock() - t)
         local chained, possible_count = MapUtils.find_chain( self.mapcache )
+        time_used_by_find_chain = time_used_by_find_chain + (os.clock() - t)
         if possible_count == c.len then
           if self.chains.size >= self.chain_limit then
             if self:add_final_answer( self.mapcache ) then return true end
@@ -231,4 +231,4 @@ print("answer_called_times: "..answer_called_times)
 print("back_track_times: "..back_track_times)
 print("regen_times: "..regen_times)
 print("time_used_by_shuffle: "..time_used_by_shuffle)
-print("time_used_by_new_map: "..time_used_by_new_map)
+print("time_used_by_find_chain: "..time_used_by_find_chain)
