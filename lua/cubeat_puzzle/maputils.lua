@@ -115,16 +115,19 @@ local function mark_for_delete_v(delete_mark, x, y, len)
 end
 
 function MapUtils.find_chain(map)
+  local chained, count = false, 0
   for y = 1, map.height do
     for x = 1, map.width do
       if map[y][x] > 0 then
-        local res1 = do_check_chain_v(map, x, y)
-        local res2 = do_check_chain_h(map[y], x)
-        if res1 or res2 then return true end
+        local res, len = do_check_chain_v(map, x, y)
+        if res then chained = true; count = count + len end
+        res, len = do_check_chain_h(map[y], x)
+        if res then chained = true; count = count + len end
       end
     end
   end
-  return false
+  -- if we count len here, it sometimes will count duplication. but for verification purpose it should be ok.
+  return chained, count
 end
 
 function MapUtils.destroy_chain(map)

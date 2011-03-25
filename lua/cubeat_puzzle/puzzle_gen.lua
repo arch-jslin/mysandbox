@@ -105,18 +105,22 @@ local regen_times = 0
 
 function PuzzleGen:add_final_answer(colored_map)  
   answer_called_times = answer_called_times + 1
-  for _,ans in ipairs(self.chains:top().answers) do
+  local answers = self.chains:top().answers
+  local ptr = self.chains:top().answers_ptr
+  for i = 1, #answers do
+    local ans = answers[ ((i+ptr) % #answers) + 1 ]
+  --for _,ans in ipairs(self.chains:top().answers) do
     if self:not_too_high(ans) then
       ans:add_chain_to_map(colored_map)
       for color = 1, 4 do
-        if color ~= self.chains:top().color then
+        --if color ~= self.chains:top().color then
           colored_map[ans.y][ans.x] = color
           if not MapUtils.find_chain(colored_map) then
             self.chains:push(ans:scopy())
             self.chains:top().color = color
             return true -- answer found. chain construction complete.
           end      
-        end
+        --end
       end
       ans:remove_from_map(colored_map) -- restore map to try next answer if all color failed.
     end
@@ -139,9 +143,12 @@ function PuzzleGen:next_chain(level)
         self.chains:top().color = ((last_color + k) % 4) + 1
         local t = os.clock()
         local colored_map = MapUtils.gen_map_from_exprs(self.w, self.h, self.chains)
-        local chained, destroy_count = MapUtils.destroy_chain( colored_map )
+        --local chained, destroy_count = MapUtils.destroy_chain( colored_map )
+        local chained, possible_count = MapUtils.find_chain( colored_map )
+        --print(chained, possible_count)
         time_used_by_gen_map_and_destroy = time_used_by_gen_map_and_destroy + (os.clock() - t)
-        if destroy_count == c.len then
+        --if destroy_count == c.len then
+        if possible_count == c.len then
           if self.chains.size >= self.chain_limit then
             if self:add_final_answer(colored_map) then return true end
           else
