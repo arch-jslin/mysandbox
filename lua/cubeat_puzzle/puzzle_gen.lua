@@ -114,7 +114,7 @@ function PuzzleGen:add_final_answer(colored_map)
     if self:not_too_high(ans) then
       ans:push_up_blocks_of(colored_map)
       for color = 1, 4 do
-        ans:put_color_in( self.mapcache )
+        colored_map[ans.y][ans.x] = color
         if not MapUtils.find_chain(colored_map) then
           self.chains:push(ans:scopy())
           self.chains:top().color = color
@@ -142,7 +142,7 @@ function PuzzleGen:next_chain(level)
       for k = 0, 3 do 
         self.chains:top().color = ((last_color + k) % 4) + 1
         local t = os.clock()
-        self.chains:top():put_color_in( self.mapcache )
+        self.chains:top():put_color_in( self.mapcache ) -- important, only call this after color is assigned.
         local chained, possible_count = MapUtils.find_chain( self.mapcache )
         time_used_by_find_chain = time_used_by_find_chain + (os.clock() - t)
         if possible_count == c.len then

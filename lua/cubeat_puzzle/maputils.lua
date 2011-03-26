@@ -32,6 +32,7 @@ function MapUtils.display(map)
     end
     print()
   end
+  print()
 end
 
 local function gen_combinationsH_(c, w, h, len, ctor, starters)
