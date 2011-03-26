@@ -127,10 +127,6 @@ s[1].color = color[1]
 s[2].color = color[2]
 s[3].color = color[3]
 
-print()
-print(c.color) -- This is bad.. but I can't afford deep clone all these,
-               -- luckily, every combination should be unique in each generation
-
 s:pop() s:pop()
 Test.asserteq(s.size, 1)
 
