@@ -13,7 +13,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add directory="C:\lang\luajit\include" />
+					<Add directory="C:\lang\luarocks\2.0\include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />

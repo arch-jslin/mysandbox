@@ -8,8 +8,8 @@ int main()
     //binding1(L);
     //run_simple_interpreter(L);
     //stack(L);
-    //binding2(L);
-    storing_state_test(L);
+    binding2(L);
+    //storing_state_test(L);
 
     lua_close(L);
     system("pause");
