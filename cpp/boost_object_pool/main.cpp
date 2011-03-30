@@ -1,13 +1,12 @@
 
 #include <iostream>
-#include <memory>
-#include <functional>
-#include <tuple>
+#include <sstream>
+#include <tr1/memory>
+#include <tr1/functional>
+#include <tr1/tuple>
 #include <utility>
 #include <list>
 #include <cstdlib>
-#include <deque>
-#include <algorithm>
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -19,46 +18,21 @@
 #include "ObjectPool.hpp"
 
 using namespace std;
-
-template <class T>
-int func(T t) {
-    cout << 0 << endl;
-    return 0;
-}
-
-template <class T, class ...Args>
-int func(T t, Args... args) {
-    int i = sizeof...(Args);
-    std::cout << i;
-    return i + func(args...);
-}
-
-template<int N, int Last1 = 1, int Last2 = 0>
-struct fib{ enum{ value = fib<N-1, Last1+Last2, Last1>::value };
-};
-
-template<int Last1, int Last2>
-struct fib<1, Last1, Last2> { enum{ value = Last1 }; };
-
-int moveint(int&& i)
-{
-    cout << i << endl;
-    return i;
-}
+using namespace tr1;
 
 namespace view {
     class A{};
-    typedef std::shared_ptr<A> pA;
-    typedef std::weak_ptr<A>  wpA;
+    typedef shared_ptr<A> pA;
+    typedef weak_ptr<A>  wpA;
 }
 
 class B{};
 class C{};
 enum ENUM{D};
 
-typedef std::function<void(view::pA&, int, int)>         CB;
-typedef std::tuple<CB const*, B const*, ENUM, view::wpA> Event;
-typedef std::list<Event>                                 Listener;
+typedef function<void(view::pA&, int, int)>         CB;
+typedef tuple<CB const*, B const*, ENUM, view::wpA> Event;
+typedef list<Event>                                 Listener;
 
 void push_tuple(CB const* cb, view::wpA const& pa, B const* b, ENUM const& e)
 {
@@ -66,15 +40,13 @@ void push_tuple(CB const* cb, view::wpA const& pa, B const* b, ENUM const& e)
     listener.push_back( make_tuple(cb,b,e,pa) );
 }
 
-using std::bind;
-
-typedef std::shared_ptr<char> pchar;
-typedef std::weak_ptr<char> wpchar;
+typedef shared_ptr<char> pchar;
+typedef weak_ptr<char> wpchar;
 using namespace psc;
 using namespace utils;
 
 struct Data {
-    typedef std::shared_ptr<Data> pointer_type;
+    typedef shared_ptr<Data> pointer_type;
     static pointer_type create(int i, pchar p) {
         return ObjectPool<Data>::create(i, p);
     }
@@ -89,15 +61,15 @@ struct Data {
     pchar pch;
 };
 
-typedef Data::pointer_type pint;
+typedef Data::pointer_type pData;
 
 boost::mutex io_mutex;
 
 struct Utils{
-    static void clone_a_lot_of_times(pint orig) {
+    static void clone_a_lot_of_times(pData orig) {
         for( volatile int i = 0; i < 10000; ++i ) {
-            //pint clone = pint(new Data(i, orig->pch));
-            pint clone = Data::create(i, pchar(new char('*')));
+            //pData clone = pData(new Data(i, orig->pch));
+            pData clone = Data::create(i, pchar(new char('*')));
         }
     }
 };
@@ -115,7 +87,7 @@ public:
     template<typename T>
     Logger& buf(T const& in) {
         if( oss_.get() == 0 )
-            oss_.reset(new std::ostringstream);
+            oss_.reset(new ostringstream);
         *oss_ << in;
         return *this;
     }
@@ -123,14 +95,14 @@ public:
     template<typename T>
     Logger& buf(T const* in) {
         if( oss_.get() == 0 )
-            oss_.reset(new std::ostringstream);
+            oss_.reset(new ostringstream);
         *oss_ << in;
         return *this;
     }
 
     Logger& endl() {
         if( oss_.get() == 0 )
-            oss_.reset(new std::ostringstream);
+            oss_.reset(new ostringstream);
         scoped_lock l(io_mutex_);
         std::cout << oss_->str() << std::endl;
         oss_->str("");
@@ -139,7 +111,7 @@ public:
 
     Logger& out() {
         if( oss_.get() == 0 )
-            oss_.reset(new std::ostringstream);
+            oss_.reset(new ostringstream);
         scoped_lock l(io_mutex_);
         std::cout << oss_->str();
         oss_->str("");
@@ -158,7 +130,7 @@ boost::mutex Logger::io_mutex_;
 class ThreadedClass {
 public:
     typedef boost::mutex::scoped_lock lock;
-    void go(std::vector<pint> const& data, int mult) {
+    void go(vector<pData> const& data, int mult) {
         Logger::i().buf("thread ").buf(mult).buf(" before_data_assignment_and_clearance").endl();
         data_ = data;
         Logger::i().buf("thread ").buf(mult).buf(" after_data_assignment_and_clearance").endl();
@@ -179,12 +151,12 @@ public:
                 Logger::i().buf("thread ").buf(mult).buf(" pushing(").buf(i*mult).buf(")").endl();
         }
     }
-    pint fetch(int i) {
+    pData fetch(unsigned int i) {
         lock l(mutex_);
         if( !data_.empty() && i < data_.size() )
             return data_[i];
         else
-            return pint();
+            return pData();
     }
     void pop() {
         lock l(mutex_);
@@ -195,23 +167,23 @@ public:
 private:
     friend class Utils;
     boost::mutex mutex_;
-    std::vector<pint> data_;
+    vector<pData> data_;
 };
 
 class Runner {
-    typedef std::shared_ptr< boost::thread > pThread;
+    typedef shared_ptr< boost::thread > pThread;
     typedef boost::mutex::scoped_lock lock;
 public:
     Runner():pch1(new char('a')), pch2(new char('b')), pch3(new char('c')) {}
 
     void run_threads()
     {
-        std::vector<pint> orig_data;
+        vector<pData> orig_data;
         for( int i=0; i<10; ++i )
-            orig_data.push_back(pint(new Data(-1, pch1) ));
+            orig_data.push_back(pData(new Data(-1, pch1) ));
 
-        std::vector<pint> copied_data1, copied_data2, copied_data3;
-        BOOST_FOREACH(pint& i, orig_data) {
+        vector<pData> copied_data1, copied_data2, copied_data3;
+        BOOST_FOREACH(pData& i, orig_data) {
             copied_data1.push_back( Data::create(i->d, pchar(new char('a'))) ) ;
             copied_data2.push_back( Data::create(i->d*2, pchar(new char('b'))) ) ;
             copied_data3.push_back( Data::create(i->d*3, pchar(new char('c'))) ) ;
@@ -223,7 +195,7 @@ public:
     }
 
     void probe_and_pop(int i) {
-        pint a, b, c;
+        pData a, b, c;
         Logger::i().buf("   fetching ...").endl();
         a = tc1.fetch(0); b = tc2.fetch(0); c = tc3.fetch(0);
         if( i%30 == 0 ) {
@@ -257,21 +229,7 @@ void print_log()
 
 int main()
 {
-    CB cb; B b; view::pA pa(new view::A);
-    push_tuple(&cb, pa, &b, D);
-
-    cout << pa << endl;
-
-    cout << fib<11>::value << endl;
-    cout << func(1,'2',"3",4.f) << endl;
-
-    std::shared_ptr<int> i(new int(1)), j;
-    j = i;
-    std::cout << (j == i) << "\n";
-
     Runner r;
-    Logger::i().buf("Hi. This is ").buf(j).endl();
-    Logger::i().buf("Hi. This is ").buf(i).endl();
 
     for( int j = 0; j < 5; ++j ) {
         r.run_threads();
@@ -279,16 +237,6 @@ int main()
             r.probe_and_pop(i);
         r.join_all();
     }
-
-    std::deque<int> idq{10, 3, 5};
-
-    std::sort(idq.begin(), idq.end());
-
-    while( !idq.empty() ) {
-        std::cout << idq.front() << " ";
-        idq.pop_front();
-    }
-    std::cout << std::endl;
 
     return 0;
 }
