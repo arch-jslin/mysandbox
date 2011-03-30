@@ -7,6 +7,7 @@ local Test = require 'pl.test'
 local tablex = require 'tablex2'
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
+local C3H, C4H, C5H, C3V, C4V = unpack(require 'chain')
 
 math.randomseed(os.time())
 
@@ -78,36 +79,54 @@ ansmap2 = List.reverse(ansmap2)
 ansmap3 = List.reverse(ansmap3)
 chain15 = List.reverse(chain15)
  
-Test.asserteq(MapUtils.pushup_horizontally(testmap, 2, 1, 3), true)
-Test.asserteq(testmap, ansmap1)
-Test.asserteq(MapUtils.pushup_vertically(testmap, 5, 1, 3), true)
-Test.asserteq(testmap, ansmap2)
-Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {30011, 03011, 30012}), ansmap3)
-Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3), true)
-Test.asserteq(MapUtils.check_puzzle_correctness(chain15), true)
+Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {C3H(111), C3V(211), C3H(312)}), ansmap3)
+Test.asserteq(MapUtils.gen_map_from_exprs(5, 8, {C3H(011), C3V(011), C3H(012)}), ansmap3)
+Test.asserteq(MapUtils.check_puzzle_correctness(ansmap3, 3), true)
+Test.asserteq(MapUtils.check_puzzle_correctness(chain15, 15), true)
 
-local intersects_of, starters, counter = MapUtils.create_intersect_sheet(6, 10) -- it's actually only 6*9
+local allcomb, starters, counter = MapUtils.create_all_combinations(6, 10) -- it's actually only 6*9
 
-Test.asserteq(counter, 189)
-Test.asserteq(#starters, 9) -- don't use vertical combinations as starters
+Test.asserteq(#allcomb[50].intersects, 30)
+print("Possible Intersections for "..allcomb[133].id)
+for _,v in ipairs(allcomb[133].intersects) do
+  io.write(string.format("%8d", v.id))
+end
+print()
+Test.asserteq(#allcomb[133].intersects, 10)
+Test.asserteq(counter, 147)
+Test.asserteq(#starters, 9)  -- don't use vertical combinations as starters
 
-local a = {1,2,3,4,5}
-tablex.rotate(a,2)
-
-Test.asserteq(a, {4,5,1,2,3})
+print("Possible Answers for "..allcomb[50].id)
+for _,v in ipairs(allcomb[50].answers) do
+  io.write(string.format("%8d", v.id))
+end
+print()
+print("Possible Answers for "..allcomb[133].id)
+for _,v in ipairs(allcomb[133].answers) do
+  io.write(string.format("%8d", v.id))
+end
+print()
+print("Possible Answers for "..allcomb[123].id)
+for _,v in ipairs(allcomb[123].answers) do
+  io.write(string.format("%8d", v.id))
+end
+print()
+print("Possible Answers for "..allcomb[143].id)
+for _,v in ipairs(allcomb[143].answers) do
+  io.write(string.format("%8d", v.id))
+end
 
 local s = Stack()
-s:push(1) s:push(2) s:push(3)
+local color = {1,2,3}
+local a, b, c = C3H(011), C3V(011), C3H(012)
+
+s:push(a) s:push(b) s:push(c)
 Test.asserteq(s.size, 3)
+
+s[1].color = color[1]
+s[2].color = color[2]
+s[3].color = color[3]
+
 s:pop() s:pop()
 Test.asserteq(s.size, 1)
- 
-Test.timer("", 10, function() 
-  local counter = 0
-  for v in Helper.perm_all2{1,2,3,4,5,6,7,8,9} do
-    counter = counter + 1
-    --for _,v2 in ipairs(v) do io.write(string.format("%3d",v2)) end
-    --print()
-  end
-  --print(counter)
-end)
+

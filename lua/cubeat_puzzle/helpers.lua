@@ -33,30 +33,6 @@ function Helper.stack(data)
   return stack  
 end
 
-local function permgen(a, n)
-  if n == 0 then
-    coroutine.yield(a)
-  else
-    for i=1,n do
-      a[n], a[i] = a[i], a[n]
-      permgen(a, n - 1)
-      a[n], a[i] = a[i], a[n]
-    end
-  end
-end
-
-function Helper.perm_all(a)
-  return coroutine.wrap(function() permgen(a, #a) end)
-end
-
-function Helper.perm_all2(a)
-  local co = coroutine.create(function () permgen(a, #a) end)
-  return function ()   -- iterator
-    local code, res = coroutine.resume(co)
-    return res
-  end
-end
-
 function Helper.random(n) 
   n = n or 1
   return math.floor(math.random()*math.abs(n)) 

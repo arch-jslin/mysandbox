@@ -1,53 +1,16 @@
 
 local tablex = require 'pl.tablex'
 local random = require 'helpers'.random
+local C3H, C4H, C5H, C3V, C4V = unpack(require 'chain')
 
 local MapUtils = {}
 local floor = math.floor
 
-function MapUtils.analyze(expr)
-  return floor(expr / 10000),        -- length if horizontal
-         floor(expr % 10000 / 1000), -- length if vertical
-         floor(expr % 1000 / 100),   -- reserved
-         floor(expr % 100 / 10),     -- pos x
-         floor(expr % 10)            -- pos y
-end
-
-local function add_chain_to_map(map, expr, chain)
-  local lenH, lenV, _, x, y = MapUtils.analyze(expr)
-  if lenH > 0 then
-    return MapUtils.pushup_horizontally(map, x, y, lenH, chain)
-  elseif lenV > 0 then
-    return MapUtils.pushup_vertically(map, x, y, lenV, chain)
-  end
-end
-
-function MapUtils.pushup_horizontally(map, x, y, len, chain)
-  if y + 1 > map.height then return false end 
-  for i = x, x + len - 1 do
-    for j = map.height - 1, y, -1 do
-      map[j+1][i] = map[j][i]
-    end
-    map[y][i] = chain or 0
-  end
-  return true
-end
-
-function MapUtils.pushup_vertically(map, x, y, len, chain)
-  if y + len > map.height then return false end
-  for j = map.height - len, y, -1 do
-    map[j+len][x] = map[j][x]
-  end
-  for j = y, y + len - 1 do
-    map[j][x] = chain or 0
-  end
-  return true
-end
-
 function MapUtils.gen_map_from_exprs(w, h, exprs)
   local map = MapUtils.create_map(w, h)
   for chain,v in ipairs(exprs) do
-    add_chain_to_map(map, v, chain)
+    v:push_up_blocks_of(map)
+    v:put_color_in(map, chain)
   end
   return map
 end
@@ -69,78 +32,62 @@ function MapUtils.display(map)
     end
     print()
   end
+  print()
 end
 
--- MEMO: actually the combinations should be an object with specialized 
---       methods for ( len 3 / 4 / 5 ) * ( horizontal / vertical ) respectively
---       it will be far better to write small loops all over the place.
--- *** REFACTOR THIS ***
-local function gen_combinations(w, h)
-  local c = {}
-  local starters = {} -- combinations that can be the "last-invoked" chain.
-  for len = 3, 5 do -- for these different chain length
-    for y = 1, h do
-      for x = 1, w - len + 1 do
-        table.insert(c, 10000*len + x*10 + y) -- horizontal
-        if y == 1 then table.insert(starters, c[#c]) end
-      end
-    end
-    for y = 1, h - len + 1 do
-      for x = 1, w do
-        table.insert(c, 1000*len + x*10 + y)  -- vertical
-        -- don't use vertical combinations as starters.
-      end
+local function gen_combinationsH_(c, w, h, len, ctor, starters)
+  for y = 1, h do
+    for x = 1, w - len + 1 do
+      local temp = ctor(x*10 + y)
+      temp.intersects = {}
+      temp.answers = {}
+      temp:answer_add() -- generate all possible answers in the c'tor
+      table.insert(c, temp)
+      if y == 1 then table.insert(starters, temp) end
     end
   end
+end
+
+local function gen_combinationsV_(c, w, h, len, ctor)
+  for y = 1, h - len do -- don't +1 here, leave last row empty
+    for x = 1, w do
+      local temp = ctor(x*10 + y)
+      temp.intersects = {}
+      temp.answers = {}
+      temp:answer_add() -- generate all possible answers in the c'tor
+      table.insert(c, temp)
+      -- don't use vertical combinations as starters.
+    end
+  end
+end
+
+local function gen_combinationsx(w, h)
+  local c = {}
+  local starters = {} -- combinations that can be the "last-invoked" chain.
+  gen_combinationsH_(c, w, h, 3, C3H, starters)
+  gen_combinationsH_(c, w, h, 4, C4H, starters)
+  gen_combinationsH_(c, w, h, 5, C5H, starters)
+  gen_combinationsV_(c, w, h, 3, C3V)
+  gen_combinationsV_(c, w, h, 4, C4V)
   return c, starters
 end
 
--- Warning: UGLY CODE
-local function list_of_intersect(key, combinations) -- combinations should be immutable
-  local intersects = {}
-  local lenH0, lenV0, _, x0, y0 = MapUtils.analyze(key)
-  
-  for _, v in ipairs(combinations) do
-    local lenH1, lenV1, _, x1, y1 = MapUtils.analyze(v)
-    -- tricky things to do here... 
-    if     lenV1 > 0 and lenH0 > 0 then               -- vertical intercept horizontal
-      if x1 >= x0 + (lenH0-3) and x1 < x0 + 3 and y1 <= y0 then
-        table.insert(intersects, v) 
-      end
-    elseif lenV1 > 0 and lenV0 > 0 and lenV0 < 5 then -- vertical intercept vertical
-      if x1 == x0 and y1 > y0 and y1 < y0 + 3 then
-        table.insert(intersects, v)
-      end
-    elseif lenH1 > 0 and lenV0 > 0 then               -- horizontal intercept vertical
-      if x1 + lenH1 > x0 and x1 <= x0 and
-         y1 > y0         and y1 < y0 + lenV0
-      then
-        table.insert(intersects, v)
-      end
-    elseif lenH1 > 0 and lenH0 > 0 and lenH0 < 5 then -- horizontal intercept horizontal
-      if (x1 < x0 and x1 + lenH1 > x0 and (x0 + lenH0) - (x1 + lenH1) < 3) or -- if x1 is left of x0
-         (x1 > x0 and x1 < x0 + 3)                                            -- if x1 is right of x0
-      then                                       
-        if y1 <= y0 then
-          table.insert(intersects, v)
-        end        
-      end
-    end
-  end
-  return intersects
+local function populate_intersects_of(key, combinations, height_limit) -- combinations should be immutable
+  for _,v in ipairs(combinations) do 
+    key:intersect_add(v, height_limit) -- it will just simply insert it if passed
+  end 
 end
 
-function MapUtils.create_intersect_sheet(w, h)
-  w = (w > 9 and 9 or w) or 6 -- we don't want w be more than 9 here.
-  h = (h > 9 and 9 or h) or 9 -- we don't want h be more than 9 here.
-  local c, starters = gen_combinations(w, h)
-  local intersects_of = {}
+function MapUtils.create_all_combinations(w, h)
+  w = (w > 9  and 9  or w) or 6 
+  h = (h > 10 and 10 or h) or 10
+  local all_combinations, starters = gen_combinationsx(w, h-1)
   local counter = 0
-  for _, v in ipairs(c) do
-    intersects_of[v] = list_of_intersect(v, c)
+  for _, v in ipairs(all_combinations) do
+    populate_intersects_of(v, all_combinations, h)
     counter = counter + 1
   end
-  return intersects_of, starters, counter
+  return all_combinations, starters, counter
 end
 
 local function do_check_chain_h(row, x)
@@ -169,9 +116,25 @@ local function mark_for_delete_v(delete_mark, x, y, len)
   end
 end
 
+function MapUtils.find_chain(map)
+  local chained, count = false, 0
+  for y = 1, map.height do
+    for x = 1, map.width do
+      if map[y][x] > 0 then
+        local res, len = do_check_chain_v(map, x, y)
+        if res then chained = true; count = count + len end
+        res, len = do_check_chain_h(map[y], x)
+        if res then chained = true; count = count + len end
+      end
+    end
+  end
+  -- if we count len here, it sometimes will count duplication. but for verification purpose it should be ok.
+  return chained, count
+end
+
 function MapUtils.destroy_chain(map)
   local delete_mark = MapUtils.create_map(map.width, map.height)
-  local chained = false
+  local chained, count = false, 0
   for y = 1, map.height do
     for x = 1, map.width do
       if map[y][x] > 0 then
@@ -180,7 +143,7 @@ function MapUtils.destroy_chain(map)
           mark_for_delete_v(delete_mark, x, y, len)
           chained = true
         end
-        res, len       = do_check_chain_h(map[y], x)
+        res, len = do_check_chain_h(map[y], x)
         if res then 
           mark_for_delete_h(delete_mark, x, y, len)
           chained = true
@@ -192,10 +155,11 @@ function MapUtils.destroy_chain(map)
     for x = 1, map.width do
       if delete_mark[y][x] > 0 then
         map[y][x] = 0
+        count = count + 1
       end
     end
   end
-  return chained
+  return chained, count
 end
 
 function MapUtils.drop_blocks(map)
@@ -213,12 +177,13 @@ function MapUtils.drop_blocks(map)
   end
 end
 
-function MapUtils.check_puzzle_correctness(map)
+function MapUtils.check_puzzle_correctness(map, level)
   local clone = tablex.deepcopy(map)
-  local chained = true
-  while chained do
-    chained = MapUtils.destroy_chain(clone)
+  local chained, chain_count, destroy_count = true, -1, 3
+  while chained and destroy_count >= 3 and destroy_count <= 5 do
+    chained, destroy_count = MapUtils.destroy_chain(clone)
     MapUtils.drop_blocks(clone)
+    chain_count = chain_count + 1
   end
   for y = 1, clone.height do
     for x = 1, clone.width do
@@ -227,7 +192,7 @@ function MapUtils.check_puzzle_correctness(map)
       end
     end
   end
-  return true
+  return true and chain_count == level
 end
 
 return MapUtils
