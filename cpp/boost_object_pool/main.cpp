@@ -137,7 +137,7 @@ public:
         Logger::i().buf("thread ").buf(mult).buf(" says i am alive.").endl();
 
         Logger::i().buf(" thread yell ").buf(mult).endl();
-        for( int i = 0; i < 100; ++i ) {
+        for( int i = 0; i < 10; ++i ) {
             lock l(mutex_);
             Logger::i().buf(" thread ").buf(mult).buf(" before creating new clone.").endl();
 
@@ -233,7 +233,7 @@ int main()
 
     for( int j = 0; j < 5; ++j ) {
         r.run_threads();
-        for( int i = 0; i < 100; ++i )
+        for( int i = 0; i < 10000; ++i )
             r.probe_and_pop(i);
         r.join_all();
     }
