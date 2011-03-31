@@ -15,8 +15,8 @@
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-Os" />
 					<Add option="-O3" />
+					<Add option="-std=c++98" />
 					<Add option="-Wall" />
-					<Add option="-std=c++0x" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
