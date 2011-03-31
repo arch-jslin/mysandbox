@@ -25,9 +25,14 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Logger.hpp" />
 		<Unit filename="ObjectPool.hpp" />
 		<Unit filename="loki\Singleton.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="main2.cpp">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />
