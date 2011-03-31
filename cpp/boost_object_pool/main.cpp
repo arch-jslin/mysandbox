@@ -1,13 +1,15 @@
 
 #include <iostream>
 #include <sstream>
-#include <tr1/memory>
+//#include <tr1/memory>
 #include <tr1/functional>
 #include <tr1/tuple>
 #include <utility>
 #include <list>
 #include <cstdlib>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
@@ -20,6 +22,8 @@
 
 using namespace std;
 using namespace tr1;
+using boost::shared_ptr;
+using boost::weak_ptr;
 
 namespace view {
     class A{};
