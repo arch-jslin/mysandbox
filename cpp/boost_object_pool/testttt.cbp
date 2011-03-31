@@ -20,7 +20,7 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="boost_thread-mgw44-mt-1_40" />
+					<Add library="boost_thread-mgw45-mt-1_43" />
 				</Linker>
 			</Target>
 		</Build>
