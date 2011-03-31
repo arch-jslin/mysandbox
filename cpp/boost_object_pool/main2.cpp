@@ -28,13 +28,13 @@ struct Dummy {
 typedef shared_ptr<Dummy> pDummy;
 
 void threaded_func1() {
-    for( int i = 0; i < 1000; ++i ) {
+    for( int i = 0; i < 10000; ++i ) {
         pDummy dummy = pDummy(new Dummy(1)); //although dummy's life cycle is so short
         //it won't give back the memory of some mysterious things... it's not new Dummy(1)'s memory.
     }
 //    for( int i = 0; i < 1000; ++i ) {
 //        volatile Dummy* dummy = new Dummy(1);
-//        dummy->i_[0] = 2; //anyway make sure it's not optimized by compiler.
+//        dummy->i_ = 2;    //anyway make sure it's not optimized by compiler.
 //        delete dummy;     //and you'll find out all is released here correctly. (no mem growth)
 //    }
 }
@@ -45,10 +45,14 @@ int main()
 
     pThread my_thread_;
 
-    for( int j = 0; j < 1000; ++j ) {
-        my_thread_ = pThread( new boost::thread(&threaded_func1) );
-        my_thread_->join();
-    }
+//    for( int j = 0; j < 1000; ++j ) {
+//        my_thread_ = pThread( new boost::thread(&threaded_func1) );
+//        my_thread_->join();
+//    }
+
+    for( int j = 0; j < 1000; ++j )
+        threaded_func1(); //This is the shittiest thing I've encountered lately.
+        //The memory growth have nothing to do with threads. shared_ptr's done it all.
 
     Logger::i().buf(" Main Program ends.").endl();
 
