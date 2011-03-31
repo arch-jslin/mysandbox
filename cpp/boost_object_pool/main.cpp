@@ -20,60 +20,6 @@
 using namespace std;
 using namespace tr1;
 
-namespace view {
-    class A{};
-    typedef shared_ptr<A> pA;
-    typedef weak_ptr<A>  wpA;
-}
-
-class B{};
-class C{};
-enum ENUM{D};
-
-typedef function<void(view::pA&, int, int)>         CB;
-typedef tuple<CB const*, B const*, ENUM, view::wpA> Event;
-typedef list<Event>                                 Listener;
-
-void push_tuple(CB const* cb, view::wpA const& pa, B const* b, ENUM const& e)
-{
-    Listener listener;
-    listener.push_back( make_tuple(cb,b,e,pa) );
-}
-
-typedef shared_ptr<char> pchar;
-typedef weak_ptr<char> wpchar;
-using namespace psc;
-using namespace utils;
-
-struct Data {
-    typedef shared_ptr<Data> pointer_type;
-    static pointer_type create(int i, pchar p) {
-        return ObjectPool<Data>::create(i, p);
-    }
-    static pointer_type create(int i) {
-        return ObjectPool<Data>::create(i);
-    }
-
-    Data(int i, pchar p):d(i), pch(p){}
-    Data(int i):d(i){}
-
-    int d;
-    pchar pch;
-};
-
-typedef Data::pointer_type pData;
-
-boost::mutex io_mutex;
-
-struct Utils{
-    static void clone_a_lot_of_times(pData orig) {
-        for( volatile int i = 0; i < 10000; ++i ) {
-            //pData clone = pData(new Data(i, orig->pch));
-            pData clone = Data::create(i, pchar(new char('*')));
-        }
-    }
-};
-
 class Logger {
     typedef boost::thread_specific_ptr< std::ostringstream > pOSS;
     typedef boost::mutex::scoped_lock scoped_lock;
@@ -127,28 +73,104 @@ private:
 
 boost::mutex Logger::io_mutex_;
 
+
+namespace view {
+    class A{};
+    typedef shared_ptr<A> pA;
+    typedef weak_ptr<A>  wpA;
+}
+
+class B{};
+class C{};
+enum ENUM{D};
+
+typedef function<void(view::pA&, int, int)>         CB;
+typedef tuple<CB const*, B const*, ENUM, view::wpA> Event;
+typedef list<Event>                                 Listener;
+
+void push_tuple(CB const* cb, view::wpA const& pa, B const* b, ENUM const& e)
+{
+    Listener listener;
+    listener.push_back( make_tuple(cb,b,e,pa) );
+}
+
+typedef shared_ptr<char> pchar;
+typedef weak_ptr<char> wpchar;
+using namespace psc;
+using namespace utils;
+
+struct Data {
+    typedef shared_ptr<Data> pointer_type;
+    static pointer_type create(int i, pchar p) {
+        return ObjectPool<Data>::create(i, p);
+    }
+    static pointer_type create(int i) {
+        return ObjectPool<Data>::create(i);
+    }
+
+
+    Data(int i, pchar p):d(i), pch(p){}
+    Data(int i):d(i){}
+    Data():d(0){}
+
+    ~Data(){
+        //Logger::i().buf("Data destructor called.").endl();
+    }
+
+    int d;
+    double dd[100];
+    pchar pch;
+};
+
+typedef Data::pointer_type pData;
+
+boost::mutex io_mutex;
+
+struct Utils{
+    static void clone_a_lot_of_times(pData orig) {
+        //volatile Data* big_array[1000];
+        Data bigarray[1000];
+        Logger::i().endl();
+        Logger::i().buf(" ----------- Start of massive allocation ----------- ").endl();
+        for( volatile int i = 0; i < 1000; ++i ) {
+            //pData clone = pData(new Data(i, orig->pch));
+            //pData clone = Data::create(i, pchar(new char('*')));
+            //big_array[i] = new Data(i, pchar(new char('*')));
+            bigarray[1000].dd[5] = (double)i;
+        }
+        for( volatile int i = 0; i < 1000; ++i ) {
+            //delete big_array[i];
+            Data d(i);
+            d.dd[3] = 3.0;
+        }
+        Logger::i().endl();
+        Logger::i().buf(" ----------- End of massive allocation ----------- ").endl();
+        //delete [] big_array;
+    }
+};
+
 class ThreadedClass {
 public:
     typedef boost::mutex::scoped_lock lock;
     void go(vector<pData> const& data, int mult) {
-        Logger::i().buf("thread ").buf(mult).buf(" before_data_assignment_and_clearance").endl();
+        //Logger::i().buf("thread ").buf(mult).buf(" before_data_assignment_and_clearance").endl();
         data_ = data;
-        Logger::i().buf("thread ").buf(mult).buf(" after_data_assignment_and_clearance").endl();
-        Logger::i().buf("thread ").buf(mult).buf(" says i am alive.").endl();
+        //Logger::i().buf("thread ").buf(mult).buf(" after_data_assignment_and_clearance").endl();
+        //Logger::i().buf("thread ").buf(mult).buf(" says i am alive.").endl();
 
-        Logger::i().buf(" thread yell ").buf(mult).endl();
-        for( int i = 0; i < 10; ++i ) {
+        //Logger::i().buf(" thread yell ").buf(mult).endl();
+        for( int i = 0; i < 1000; ++i ) {
             lock l(mutex_);
-            Logger::i().buf(" thread ").buf(mult).buf(" before creating new clone.").endl();
+            //Logger::i().buf(" thread ").buf(mult).buf(" before creating new clone.").endl();
 
             data_.push_back(Data::create( i*mult, pchar(new char('*'))));
             Utils::clone_a_lot_of_times(data_.back());
 
-            Logger::i().buf(" thread ").buf(mult).buf(" after creating new clone.").endl();
+            //Logger::i().buf(" thread ").buf(mult).buf(" after creating new clone.").endl();
 
             boost::thread::yield();
-            if( i%30 == 0 )
-                Logger::i().buf("thread ").buf(mult).buf(" pushing(").buf(i*mult).buf(")").endl();
+            //if( i%30 == 0 )
+                //Logger::i().buf("thread ").buf(mult).buf(" pushing(").buf(i*mult).buf(")").endl();
         }
     }
     pData fetch(unsigned int i) {
@@ -196,20 +218,20 @@ public:
 
     void probe_and_pop(int i) {
         pData a, b, c;
-        Logger::i().buf("   fetching ...").endl();
+        //Logger::i().buf("   fetching ...").endl();
         a = tc1.fetch(0); b = tc2.fetch(0); c = tc3.fetch(0);
         if( i%30 == 0 ) {
-            Logger::i().buf("main thread fetch from thread1: ").buf(a?a->d:-1).endl()
-                       .buf("main thread fetch from thread2: ").buf(b?b->d:-1).endl()
-                       .buf("main thread fetch from thread3: ").buf(c?c->d:-1).endl();
+            //Logger::i().buf("main thread fetch from thread1: ").buf(a?a->d:-1).endl()
+            //           .buf("main thread fetch from thread2: ").buf(b?b->d:-1).endl()
+            //           .buf("main thread fetch from thread3: ").buf(c?c->d:-1).endl();
         }
-        Logger::i().buf("   popping ...").endl();
+        //Logger::i().buf("   popping ...").endl();
         tc1.pop(); tc2.pop(); tc3.pop();
-        Logger::i().buf("  end of probing and popping").endl();
+        //Logger::i().buf("  end of probing and popping").endl();
     }
 
     void join_all() {
-        Logger::i().buf(" call join all").endl();
+        //Logger::i().buf(" call join all").endl();
         thrd1->join();
         thrd2->join();
         thrd3->join();
