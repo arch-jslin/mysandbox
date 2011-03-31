@@ -99,9 +99,18 @@ typedef weak_ptr<char> wpchar;
 using namespace psc;
 using namespace utils;
 
+struct Dummy {
+    Dummy(int i):i_(i){}
+    ~Dummy() {
+        //Logger::i().buf(" Dummy ").buf(this).buf(" is killed.").endl();
+    }
+    int i_;
+};
+typedef shared_ptr<Dummy> pDummy;
+
 struct Data {
     typedef shared_ptr<Data> pointer_type;
-    static pointer_type create(int i, pchar p) {
+    static pointer_type create(int i, pDummy p) {
         return ObjectPool<Data>::create(i, p);
     }
     static pointer_type create(int i) {
@@ -109,7 +118,7 @@ struct Data {
     }
 
 
-    Data(int i, pchar p):d(i), pch(p){}
+    Data(int i, pDummy p):d(i), pd(p){}
     Data(int i):d(i){}
     Data():d(0){}
 
@@ -118,8 +127,8 @@ struct Data {
     }
 
     int d;
-    double dd[100];
-    pchar pch;
+    double dd[10];
+    pDummy pd;
 };
 
 typedef Data::pointer_type pData;
@@ -128,20 +137,20 @@ boost::mutex io_mutex;
 
 struct Utils{
     static void clone_a_lot_of_times(pData orig) {
-        //volatile Data* big_array[1000];
-        Data bigarray[1000];
+        volatile Data* big_array[100];
+        //Data bigarray[1000];
         Logger::i().endl();
         Logger::i().buf(" ----------- Start of massive allocation ----------- ").endl();
-        for( volatile int i = 0; i < 1000; ++i ) {
+        for( volatile int i = 0; i < 100; ++i ) {
             //pData clone = pData(new Data(i, orig->pch));
-            //pData clone = Data::create(i, pchar(new char('*')));
-            //big_array[i] = new Data(i, pchar(new char('*')));
-            bigarray[1000].dd[5] = (double)i;
+            //pData clone = Data::create(i);
+            big_array[i] = new Data(i, pDummy(new Dummy(1)));
+            //bigarray[i].dd[5] = (double)i;
         }
-        for( volatile int i = 0; i < 1000; ++i ) {
-            //delete big_array[i];
-            Data d(i);
-            d.dd[3] = 3.0;
+        for( volatile int i = 0; i < 100; ++i ) {
+            delete big_array[i];
+            //Data d(i);
+            //d.dd[3] = 3.0;
         }
         Logger::i().endl();
         Logger::i().buf(" ----------- End of massive allocation ----------- ").endl();
@@ -163,7 +172,7 @@ public:
             lock l(mutex_);
             //Logger::i().buf(" thread ").buf(mult).buf(" before creating new clone.").endl();
 
-            data_.push_back(Data::create( i*mult, pchar(new char('*'))));
+            data_.push_back(Data::create( i*mult, pDummy(new Dummy(1))));
             Utils::clone_a_lot_of_times(data_.back());
 
             //Logger::i().buf(" thread ").buf(mult).buf(" after creating new clone.").endl();
@@ -196,19 +205,19 @@ class Runner {
     typedef shared_ptr< boost::thread > pThread;
     typedef boost::mutex::scoped_lock lock;
 public:
-    Runner():pch1(new char('a')), pch2(new char('b')), pch3(new char('c')) {}
+    Runner():pd1(new Dummy(1)), pd2(new Dummy(2)), pd3(new Dummy(3)) {}
 
     void run_threads()
     {
         vector<pData> orig_data;
         for( int i=0; i<10; ++i )
-            orig_data.push_back(pData(new Data(-1, pch1) ));
+            orig_data.push_back(pData(new Data(-1, pd1) ));
 
         vector<pData> copied_data1, copied_data2, copied_data3;
         BOOST_FOREACH(pData& i, orig_data) {
-            copied_data1.push_back( Data::create(i->d, pchar(new char('a'))) ) ;
-            copied_data2.push_back( Data::create(i->d*2, pchar(new char('b'))) ) ;
-            copied_data3.push_back( Data::create(i->d*3, pchar(new char('c'))) ) ;
+            copied_data1.push_back( Data::create(i->d, pDummy(new Dummy(1))) ) ;
+            copied_data2.push_back( Data::create(i->d*2, pDummy(new Dummy(2))) ) ;
+            copied_data3.push_back( Data::create(i->d*3, pDummy(new Dummy(3))) ) ;
         }
 
         thrd1 = pThread( new boost::thread( bind(&ThreadedClass::go, &tc1, copied_data1, 1) ) );
@@ -240,7 +249,7 @@ public:
 private:
     pThread thrd1, thrd2, thrd3;
     ThreadedClass tc1, tc2, tc3;
-    pchar pch1, pch2, pch3;
+    pDummy pd1, pd2, pd3;
 };
 
 void print_log()
