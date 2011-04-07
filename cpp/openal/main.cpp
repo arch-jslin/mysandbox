@@ -25,12 +25,26 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    /* make sure OpenAL is started up */
     if(!alureInitDevice(NULL, NULL))
     {
         fprintf(stderr, "Failed to open OpenAL device: %s\n", alureGetErrorString());
         return 1;
     }
 
+    //alureStreamSizeIsMicroSec(AL_TRUE);  let's still use byte as length unit. We're not making general music player.
+
+    /* create streams and buffers to specific files */
+    stream = alureCreateStreamFromFile(argv[1], 4096, NUM_BUFS, buf);
+    if( argc > 2 )
+        stream2 = alureCreateStreamFromFile(argv[2], 4096, NUM_BUFS, buf2);
+
+    if(!stream)
+        fprintf(stderr, "Could not load %s: %s\n", argv[1], alureGetErrorString());
+    if( argc > 2 && !stream2 )
+        fprintf(stderr, "Could not load %s: %s\n", argv[2], alureGetErrorString());
+
+    /* Now this is specific to every distinct play through */
     alGenSources(1, &src);
     if( argc > 2 )
         alGenSources(1, &src2);
@@ -41,31 +55,11 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    //alureStreamSizeIsMicroSec(AL_TRUE);  let's still use byte as length unit. We're not making general music player.
-
-    stream = alureCreateStreamFromFile(argv[1], 4096, NUM_BUFS, buf);
-    if( argc > 2 )
-        stream2 = alureCreateStreamFromFile(argv[2], 4096, NUM_BUFS, buf2);
-    if(!stream)
-    {
-        fprintf(stderr, "Could not load %s: %s\n", argv[1], alureGetErrorString());
-        alDeleteSources(1, &src);
-
-        alureShutdownDevice();
-        return 1;
-    }
-    if( argc > 2 && !stream2 ) {
-        fprintf(stderr, "Could not load %s: %s\n", argv[2], alureGetErrorString());
-        alDeleteSources(1, &src2);
-
-        alureShutdownDevice();
-        return 1;
-    }
-
     alSourcef(src, AL_GAIN, 0.5f);
     if( argc > 2 )
         alSourcef(src2, AL_GAIN, 0.25f);
 
+    /* Actuall playing the stream.. */
     if(!alurePlaySourceStream(src, stream, NUM_BUFS, -1, eos_callback, NULL))
     {
         fprintf(stderr, "Failed to play stream %s: %s\n", argv[1], alureGetErrorString());
@@ -76,6 +70,7 @@ int main(int argc, char **argv)
         isdone = 1;
     }
 
+    /* update loop */
     while(!isdone)
     {
         alureSleep(0.01);
