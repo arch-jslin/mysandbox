@@ -20,5 +20,6 @@
 *.mingw
 *.redcar
 
+bin
 bin/Release
 bin/Debug
