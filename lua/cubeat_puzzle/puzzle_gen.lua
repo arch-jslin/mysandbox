@@ -1,8 +1,5 @@
 
-package.path = [[c:\local_gitrepo\Penlight\lua\?.lua;]]..package.path
-require 'luarocks.loader'
 local MapUtils = require 'maputils'
-local Test = require 'pl.test'
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
 
