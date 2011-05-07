@@ -1,5 +1,4 @@
 
-local tablex = require 'pl.tablex'
 local random = require 'helpers'.random
 local C3H, C4H, C5H, C3V, C4V = unpack(require 'chain')
 

@@ -4,7 +4,6 @@ require 'luarocks.loader'
 local MapUtils = require 'maputils'
 local List = require 'pl.List'
 local Test = require 'pl.test'
-local tablex = require 'tablex2'
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
 local C3H, C4H, C5H, C3V, C4V = unpack(require 'chain')

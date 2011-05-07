@@ -11,6 +11,14 @@ math.randomseed(os.time())
 local PuzzleGen = {}
 
 function PuzzleGen:init(chain_limit, w, h)
+
+  -- debug information --
+  self.answer_called_times = 0
+  self.back_track_times = 0
+  self.regen_times = 0
+  self.time_used_by_find_chain = 0 
+  self.time_used_by_shuffle = 0
+
   self.chain_limit = chain_limit
   self.w = w
   self.h = h
@@ -45,8 +53,6 @@ function PuzzleGen:distribute_chain_lengths()
   return chain_lengths
 end
 
-local time_used_by_shuffle = 0
-
 function PuzzleGen:reinit()
   self.heights = {}
   self.chains = Stack()
@@ -65,7 +71,7 @@ function PuzzleGen:reinit()
     v.intersects_ptr = random(#v.intersects) + 1
     v.answers_ptr    = random(#v.answers) + 1
   end
-  time_used_by_shuffle = time_used_by_shuffle + (os.clock() - t)
+  self.time_used_by_shuffle = self.time_used_by_shuffle + (os.clock() - t)
   
   local c
   repeat
@@ -101,12 +107,8 @@ function PuzzleGen:not_too_high(c)
   return not c:too_high(self.heights[self.chains.size], self.h)
 end
 
-local answer_called_times = 0
-local back_track_times = 0
-local regen_times = 0
-
 function PuzzleGen:add_final_answer(colored_map)  
-  answer_called_times = answer_called_times + 1
+  self.answer_called_times = self.answer_called_times + 1
   local answers = self.chains:top().answers
   local ptr = self.chains:top().answers_ptr
   for i = 1, #answers do
@@ -127,8 +129,6 @@ function PuzzleGen:add_final_answer(colored_map)
   return false
 end
 
-local time_used_by_find_chain = 0 
-
 function PuzzleGen:next_chain(level)
   local intersects = self.chains:top().intersects
   local ptr = self.chains:top().intersects_ptr
@@ -144,7 +144,7 @@ function PuzzleGen:next_chain(level)
         local t = os.clock()
         self.chains:top():put_color_in( self.mapcache ) -- important, only call this after color is assigned.
         local chained, possible_count = MapUtils.find_chain( self.mapcache )
-        time_used_by_find_chain = time_used_by_find_chain + (os.clock() - t)
+        self.time_used_by_find_chain = self.time_used_by_find_chain + (os.clock() - t)
         if possible_count == c.len then
           if self.chains.size >= self.chain_limit then
             if self:add_final_answer( self.mapcache ) then return true end
@@ -156,7 +156,7 @@ function PuzzleGen:next_chain(level)
       end  
       self.chains:top():remove_from_map( self.mapcache )
       self.chains:pop() -- pop after we tested all colors of this combination
-      back_track_times = back_track_times + 1
+      self.back_track_times = self.back_track_times + 1
     end
   end
   return false -- if all possible answers for this level has been tried, return false
@@ -192,7 +192,7 @@ function PuzzleGen:generate_(level)
           end        
         end
         self.chains:pop()           -- and pop it?
-        back_track_times = back_track_times + 1
+        self.back_track_times = self.back_track_times + 1
       end
     end
   end
@@ -203,7 +203,7 @@ function PuzzleGen:generate(chain_limit, w, h)
   if not self.inited then self:init(chain_limit, w, h) end
   repeat
     self:reinit()
-    regen_times = regen_times + 1
+    self.regen_times = self.regen_times + 1
   until self:next_chain(2) 
   self.chains:display()
   print("Ans: ", self.chains:top())
@@ -216,7 +216,7 @@ function PuzzleGen:generate2(chain_limit, w, h)
   if not self.inited then self:init(chain_limit, w, h) end
   while not self:generate_(chain_limit) do
     self:reinit()
-    regen_times = regen_times + 1
+    self.regen_times = self.regen_times + 1
   end
   self.chains:display()
   print("Ans: ", self.chains:top())
@@ -224,11 +224,4 @@ function PuzzleGen:generate2(chain_limit, w, h)
   return res
 end
 
-Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate((tonumber(arg[1]) or 4), 6, 10) ) end)
---Test.timer( "", 1, function(res) MapUtils.display( PuzzleGen:generate2((tonumber(arg[1]) or 4), 6, 10) ) end)
-
-print("answer_called_times: "..answer_called_times)
-print("back_track_times: "..back_track_times)
-print("regen_times: "..regen_times)
-print("time_used_by_shuffle: "..time_used_by_shuffle)
-print("time_used_by_find_chain: "..time_used_by_find_chain)
+return PuzzleGen
