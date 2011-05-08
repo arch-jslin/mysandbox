@@ -5,7 +5,7 @@ local PuzzleGen = require 'puzzle_gen'
 local WIDTH, HEIGHT = display.contentWidth, display.contentHeight
 
 local cube = display.newImage( "rc/cr.png" )
-cube:scale(2, 2)
+cube:scale(3, 3)
 cube.x, cube.y = WIDTH/2, HEIGHT/2
 
 local myText = display.newText( "Hello, World!", 0, 0, native.systemFont, 40 )
