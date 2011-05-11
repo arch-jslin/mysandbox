@@ -16,12 +16,11 @@ function PuzzleGen:init(chain_limit, w, h)
   self.time_used_by_find_chain = 0 
   self.time_used_by_shuffle = 0
 
-  self.chain_limit = chain_limit
   self.w = w
   self.h = h
   self.all_combinations, self.starters = MapUtils.create_all_combinations(w, h)
   
-  self:reinit()
+  self:reinit(chain_limit)
   
   self.inited = true
 end
@@ -50,7 +49,8 @@ function PuzzleGen:distribute_chain_lengths()
   return chain_lengths
 end
 
-function PuzzleGen:reinit()
+function PuzzleGen:reinit(chain_limit)
+  self.chain_limit = chain_limit
   self.heights = {}
   self.chains = Stack()
   self.chain_lengths = self:distribute_chain_lengths()
@@ -199,7 +199,7 @@ function PuzzleGen:generate(chain_limit, w, h)
   w, h = w or 6, h or 10
   if not self.inited then self:init(chain_limit, w, h) end
   repeat
-    self:reinit()
+    self:reinit(chain_limit)
     self.regen_times = self.regen_times + 1
   until self:next_chain(2) 
   self.chains:display()
@@ -212,7 +212,7 @@ function PuzzleGen:generate2(chain_limit, w, h)
   w, h = w or 6, h or 10
   if not self.inited then self:init(chain_limit, w, h) end
   while not self:generate_(chain_limit) do
-    self:reinit()
+    self:reinit(chain_limit)
     self.regen_times = self.regen_times + 1
   end
   self.chains:display()
