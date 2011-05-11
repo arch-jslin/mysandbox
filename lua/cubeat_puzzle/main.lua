@@ -4,17 +4,20 @@ local PuzzleGen = require 'puzzle_gen'
 local Cube      = require 'cube'
 
 local WIDTH, HEIGHT = display.contentWidth, display.contentHeight
+local Level = 3
 local PuzzleGame = {}
 
-function PuzzleGame:init(chain_num)
+function PuzzleGame:init(chain_num) --this needs to be an instance
   local t = os.clock()
   local map = PuzzleGen:generate(chain_num)
   MapUtils.display( map )
   
+  self.cubes_ = {}
   for y = 1, 10 do
+    self.cubes_[y] = {}
     for x = 1, 6 do
       if map[y][x] ~= 0 then
-        Cube:new(map[y][x], x*72, 800-y*72)  
+        self.cubes_[y][x] = Cube:new(map[y][x], x*72, 800-y*72)  
       end
     end
   end
@@ -28,5 +31,23 @@ function PuzzleGame:init(chain_num)
   print("time_used_by_find_chain: "..PuzzleGen.time_used_by_find_chain)
 end
 
-PuzzleGame:init(18)
-PuzzleGame:init(8)
+function PuzzleGame:cleanup()
+  print("cleaning up...")
+  for y = 1, 10 do
+    for x = 1, 6 do
+      if self.cubes_[y][x] ~= nil then
+        self.cubes_[y][x]:removeBody()
+      end
+    end
+  end
+  collectgarbage("collect") -- just in case. might not be needed.
+  print("garbage collected.")
+end
+
+PuzzleGame:init(Level)
+
+Runtime:addEventListener("tap", function() 
+  PuzzleGame:cleanup()
+  Level = Level < 19 and Level + 1 or Level
+  PuzzleGame:init(Level)  
+end)

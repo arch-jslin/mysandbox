@@ -31,5 +31,6 @@ end
 
 function Cube:setX(x) self.body.x = x end
 function Cube:setY(y) self.body.y = y end
+function Cube:removeBody() self.body:removeSelf() end
 
 return Cube
