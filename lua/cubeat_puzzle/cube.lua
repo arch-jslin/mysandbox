@@ -27,8 +27,8 @@ function Cube:init(color_idx)
   self.body:scale(3, 3)
 end
 
-function Cube:needs_update()
-  return self.body.y >= 800-self.y*72 + 72
+function Cube:arrived_at_logical_position()
+  return self.body.y >= 800 - self.y*72
 end
 
 function Cube:set_pos(x, y)

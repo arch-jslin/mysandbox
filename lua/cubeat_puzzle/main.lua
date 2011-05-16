@@ -13,14 +13,14 @@ end
 
 function Game:init(chain_num) 
   self.level_ = chain_num or 3
-  self.cubes_ = {}
-  self.cubes_.height_ = 11
-  self.cubes_.width_  = 6
-  for y = 1, self.cubes_.height_ do 
-    self.cubes_[y] = {}
+  self.cubes = {}
+  self.cubes.height = 11
+  self.cubes.width  = 6
+  for y = 1, self.cubes.height do 
+    self.cubes[y] = {}
   end
-  self.cubes_.for2d = Helper.foreach2d
-  self.cubes_.for2d_with_i = Helper.foreach2d_with_index
+  self.cubes.for2d = Helper.foreach2d
+  self.cubes.for2d_with_idx = Helper.foreach2d_with_index
   -- self:load_map(chain_num) -- if it is puzzle mode
 end
 
@@ -33,12 +33,12 @@ function Game:load_map()
   MapUtils.display( generated_puzzle )
   
   local temprow = {} -- Puzzle only produce "just fit" puzzles. We have to make reservations.
-  for x = 1, self.cubes_.width_ do temprow[x] = 0 end
-  generated_puzzle[self.cubes_.height_] = temprow
+  for x = 1, self.cubes.width do temprow[x] = 0 end
+  generated_puzzle[self.cubes.height] = temprow
   
-  self.cubes_:for2d_with_i(function(c, x, y)
+  self.cubes:for2d_with_idx(function(c, x, y)
     if generated_puzzle[y][x] ~= 0 then
-      self.cubes_[y][x] = Cube:new(generated_puzzle[y][x], x, y)  
+      self.cubes[y][x] = Cube:new(generated_puzzle[y][x], x, y)  
     end
   end)
   
@@ -55,33 +55,125 @@ function Game:create_new_cubes_event()
   if not self.create_new_cubes_event_ then 
     self.create_new_cubes_event_ = function()
       print("creating cubes...")
-      for x = 1, self.cubes_.width_ do
-        self.cubes_[self.cubes_.height_][x] = Cube:new(random(4)+1, x, self.cubes_.height_)
+      for x = 1, self.cubes.width do
+        if not self.cubes[self.cubes.height - 1][x] then
+          local c = Cube:new(random(4)+1, x, self.cubes.height)
+          self.cubes[self.cubes.height][x] = c
+          c.body:addEventListener("touch", function(event)
+            if event.phase == "began" then
+              c:remove_body()
+              self.cubes[c.y][c.x] = nil
+              return true
+            end
+          end)
+        end
       end
     end
   end
   return self.create_new_cubes_event_
 end
 
+function Game:is_below_empty(c)
+  return c.y > 1 and not self.cubes[c.y-1][c.x]
+end
+
+local function drop_cube(c, now_t, last_t)
+  c.body.y = c.body.y + 4 * (1/(1000/60)) * (now_t - last_t)
+end
+
+local function drop_cube_logical(c, cubes)
+  c:set_pos(c.x, c.y - 1)
+  c.need_check = false
+  cubes[c.y][c.x] = c     -- this is actually quite dangerous. we can only do this
+  cubes[c.y+1][c.x] = nil -- when we are sure "below_is_empty."
+end
+
+local function stop_cube(c, now_t, last_t) end
+local function stop_cube_logical(c)
+  c.need_check = true
+end
+
+function Game:process_dropping(now_t, last_t)
+  self.cubes:for2d(function(c)        
+    if c.cycle ~= drop_cube and self:is_below_empty(c) then 
+      c.state_change = drop_cube_logical
+      c.cycle = drop_cube
+    end
+    
+    if c.state_change then c:state_change(self.cubes); c.state_change = nil end
+    if c.cycle then c:cycle(now_t, last_t) end 
+    
+    if c:arrived_at_logical_position() then
+      if self:is_below_empty(c) then
+        c.state_change = drop_cube_logical
+      else
+        c:update_real_pos()
+        c.state_change = stop_cube_logical
+        c.cycle = nil
+      end
+    end
+  end)
+end
+
+local function do_check_chain_h(row, x)
+  local i = x + 1
+  while row[i] and row[i].need_check and row[i].id == row[i-1].id do i = i + 1 end
+  local len = i - x
+  return (len >= 3), len
+end
+
+local function do_check_chain_v(map, x, y)
+  local i = y + 1
+  while map[i][x] and map[i][x].need_check and map[i][x].id == map[i-1][x].id do i = i + 1 end
+  local len = i - y
+  return (len >= 3), len 
+end
+
+local function mark_for_delete_h(map, x, y, len)
+  for i = 1, len do
+    map[y][x+i-1].need_delete = true
+  end
+end
+
+local function mark_for_delete_v(map, x, y, len)
+  for i = 1, len do
+    map[y+i-1][x].need_delete = true
+  end
+end
+
+function Game:process_chaining()
+  local chained, count = false, 0
+  self.cubes:for2d(function(c)
+    if c.need_check then 
+      local res, len = do_check_chain_v(self.cubes, c.x, c.y)
+      if res then
+        mark_for_delete_v(self.cubes, c.x, c.y, len)
+        chained = true
+      end
+      res, len = do_check_chain_h(self.cubes[c.y], c.x)
+      if res then 
+        mark_for_delete_h(self.cubes, c.x, c.y, len)
+        chained = true
+      end
+    end
+  end)
+  self.cubes:for2d(function(c)
+    if c.need_delete then
+      c:remove_body()
+      self.cubes[c.y][c.x] = nil
+      count = count + 1
+    end
+  end)
+  return chained, count
+end
+
 function Game:cycle_event()
   if not self.cycle_event_ then
-    self.cycle_event_ = function()
-      local cubes_need_update = {}    
-      self.cubes_:for2d(function(c)
-        if c.y > 1 and not self.cubes_[c.y-1][c.x] then -- temp for "can_drop" state change
-          c.body.y = c.body.y + 25
-          if c:needs_update() then
-            c:set_pos(c.x, c.y - 1)
-            if c.y == 1 or self.cubes_[c.y-1][c.x] then c:update_real_pos() end 
-            cubes_need_update[#cubes_need_update + 1] = c
-          end
-        end
-      end)
-      for i = 1, #cubes_need_update do
-        local c = cubes_need_update[i]
-        self.cubes_[c.y][c.x] = self.cubes_[c.y+1][c.x]
-        self.cubes_[c.y+1][c.x] = nil -- this is a must. move reference...
-      end
+    self.last_t = system.getTimer() -- not os.clock() here
+    self.cycle_event_ = function(event)
+      self:process_dropping(event.time, self.last_t)
+      self:process_chaining()
+      self.last_t = event.time
     end
   end
   return self.cycle_event_
@@ -89,7 +181,7 @@ end
 
 function Game:cleanup()
   print("cleaning up...")
-  self.cubes_:for2d(function(c)
+  self.cubes:for2d(function(c)
     c:remove_body()
   end)
   collectgarbage("collect") -- just in case. might not be needed.
@@ -98,12 +190,24 @@ end
 
 local game = Game:new()
 
+--[[
 Runtime:addEventListener("tap", function()
   game:cleanup()
   local level = game.level_ < 19 and game.level_ + 1 or game.level_
   game = Game:new(level)
 end)
-
+--]]
 --temp dropping cubes
-timer.performWithDelay(3000, game:create_new_cubes_event(), 10)
-timer.performWithDelay(10, game:cycle_event(), -1)
+timer.performWithDelay(2000, game:create_new_cubes_event(), -1)
+--[[
+timer.performWithDelay(1000, function()
+  for y = game.cubes.height, 1, -1 do
+    for x = 1, game.cubes.width do
+      io.write(string.format("%2d", game.cubes[y][x] and game.cubes[y][x].id or 0))
+    end
+    print()
+  end
+  print()
+end, -1)
+--]]
+Runtime:addEventListener("enterFrame", game:cycle_event())

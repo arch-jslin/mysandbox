@@ -40,8 +40,8 @@ end
 
 function Helper.foreach2d(t, proc)
   local x, y = 1, 1
-  for y = 1, t.height_ do
-    for x = 1, t.width_ do -- we do this so we can tolerate nil in the table.
+  for y = 1, t.height do
+    for x = 1, t.width do -- we do this so we can tolerate nil in the table.
       if t[y][x] then proc(t[y][x]) end
     end
   end
@@ -49,8 +49,8 @@ end
 
 function Helper.foreach2d_with_index(t, proc)
   local x, y = 1, 1
-  for y = 1, t.height_ do
-    for x = 1, t.width_ do -- we do this so we can tolerate nil in the table.
+  for y = 1, t.height do
+    for x = 1, t.width do -- we do this so we can tolerate nil in the table.
       proc(t[y][x], x, y)
     end
   end
