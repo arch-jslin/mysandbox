@@ -24,11 +24,12 @@ function Cube:init(color_idx)
   else
     error("Exception at Cube:init, color_idx choosing.")
   end
-  self.body:scale(3, 3)
+  self.body:scale(2.75, 2.75)
+  self.event_handler = { owner = self }
 end
 
 function Cube:arrived_at_logical_position()
-  return self.body.y >= 800 - self.y*72
+  return self.body.y >= 730 - self.y*68
 end
 
 function Cube:set_pos(x, y)
@@ -37,12 +38,16 @@ function Cube:set_pos(x, y)
 end
 
 function Cube:update_real_pos()
-  self.body.x = self.x*72
-  self.body.y = 800-self.y*72
+  self.body.x = self.x*68
+  self.body.y = 730 - self.y*68
 end
 
 function Cube:setX(x) self.x = x; self:update_real_pos() end
 function Cube:setY(y) self.y = y; self:update_real_pos() end
 function Cube:remove_body() self.body:removeSelf() end
+function Cube:is_dropping() return self.state == "dropping" end
+function Cube:is_waiting() return self.state == "waiting" end
+
+-------------------------------------------------------------------
 
 return Cube
