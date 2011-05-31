@@ -34,7 +34,7 @@ function Puzzle:load_map(level)
           self.owner:remove_body()
           game.cubes[self.owner.y][self.owner.x] = nil
           timer.performWithDelay(1, game:remove_all_touch_event())
-          game.check_success_timer = timer.performWithDelay(50, game:check_success_event(), -1)
+          game.check_success_timer = timer.performWithDelay(500, game:check_success_event(), -1)
           return true
         end
       end
