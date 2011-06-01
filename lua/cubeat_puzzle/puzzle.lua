@@ -23,9 +23,6 @@ function Puzzle:load_map(level)
   self.cubes:for2d_with_idx(function(_, x, y)
     if generated_puzzle[y][x] ~= 0 then
       local c = Cube:new(generated_puzzle[y][x], x, y) 
-      c.state = "waiting"
-      c.need_check = false
-      
       self.cubes[y][x] = c
       
       local game = self -- avoid "self" clashes. 

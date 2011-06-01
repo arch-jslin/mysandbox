@@ -15,8 +15,6 @@ function SinglePlayerGame:create_new_cubes_event()
       for x = 1, self.cubes.width do
         if not self.cubes[self.cubes.height - 1][x] then
           local c = Cube:new(random(4)+1, x, self.cubes.height)
-          c.state = "waiting"
-          c.need_check = false
           self.cubes[self.cubes.height][x] = c
           
           local self_cubes = self.cubes -- avoid "self" clashes.

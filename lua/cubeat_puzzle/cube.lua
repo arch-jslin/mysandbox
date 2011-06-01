@@ -5,13 +5,11 @@ function Cube:new(color_idx, x, y)
   x = x or -1
   y = y or -1
   local o = setmetatable({}, {__index = self})
-  o:init(color_idx)
-  o:set_pos(x, y)
-  o:update_real_pos()
+  o:init(color_idx, x, y)
   return o
 end
 
-function Cube:init(color_idx)
+function Cube:init(color_idx, x, y)
   self.id = color_idx
   if color_idx == 1 then
     self.body = display.newImage( "rc/cr.png" )
@@ -26,6 +24,21 @@ function Cube:init(color_idx)
   end
   self.body:scale(2.75, 2.75)
   self.event_handler = { owner = self }
+  
+  self:set_pos(x, y)
+  self:update_real_pos()
+  
+  self.state = "waiting"
+  self.need_check = false
+end
+
+function Cube:drop_a_frame(now_t, last_t)
+  self.body.y = self.body.y + 7 * (1/(1000/60)) * (now_t - last_t)
+end
+
+function Cube:wait()
+  self.state = "waiting"
+  self.need_check = true
 end
 
 function Cube:arrived_at_logical_position()

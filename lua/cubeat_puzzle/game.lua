@@ -26,10 +26,6 @@ end
 
 -- CODE BELOW NEED FIX --
 
-local function drop_cube(c, now_t, last_t)
-  c.body.y = c.body.y + 7 * (1/(1000/60)) * (now_t - last_t)
-end
-
 local function drop_cube_logical(c, cubes)
   c:set_pos(c.x, c.y - 1)
   c.need_check = false
@@ -38,31 +34,22 @@ local function drop_cube_logical(c, cubes)
   cubes[c.y+1][c.x] = nil -- when we are sure "below_is_empty."
 end
 
-local function stop_cube(c, now_t, last_t) 
-  c:update_real_pos()
-end
-
-local function stop_cube_logical(c)
-  c.state = "waiting"
-  c.need_check = true
-end
-
 -- let's keep this simple and stupid for now. it's a lot easier to understand the flow.
-function Game:process_dropping(now_t, last_t)
+function Game:next_state(now_t, last_t)
   self.cubes:for2d(function(c)        
     if c:is_waiting() then
       if self:is_below_empty(c) then 
         drop_cube_logical(c, self.cubes)
-        drop_cube(c, now_t, last_t)
+        c:drop_a_frame(now_t, last_t)
       end
     elseif c:is_dropping() then
-      drop_cube(c, now_t, last_t)
+      c:drop_a_frame(now_t, last_t)
       if c:arrived_at_logical_position() then
         if self:is_below_empty(c) then
           drop_cube_logical(c, self.cubes)
         else
-          stop_cube_logical(c)        
-          stop_cube(c)
+          c:wait()
+          c:update_real_pos() 
         end
       end
     end     
@@ -143,7 +130,7 @@ function Game:cycle_event()
   if not self.cycle_event_ then
     self.last_t = system.getTimer() -- not os.clock() here
     self.cycle_event_ = function(event)
-      self:process_dropping(event.time, self.last_t)
+      self:next_state(event.time, self.last_t)
       self:process_chaining()
       self.last_t = event.time
     end
