@@ -44,9 +44,22 @@ function Cube:drop()
   self.need_check = false
 end
 
-function Cube:fade()
+function Cube:die()
+  self.state = "dead"
+  self.need_check = false
+end
+
+function Cube:fade(duration)
   self.state = "fading"
   self.need_check = false
+  transition.to(self.body, {
+    alpha = 0, 
+    time = duration, 
+    onComplete = function() 
+      self.body:removeSelf() 
+      self:die() 
+    end
+  })
 end
 
 function Cube:arrived_at_logical_position()
@@ -69,6 +82,7 @@ function Cube:remove_body() self.body:removeSelf() end
 function Cube:is_dropping() return self.state == "dropping" end
 function Cube:is_waiting() return self.state == "waiting" end
 function Cube:is_fading() return self.state == "fading" end
+function Cube:is_dead() return self.state == "dead" end
 
 -------------------------------------------------------------------
 

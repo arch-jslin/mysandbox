@@ -47,8 +47,10 @@ function Game:next_state(now_t, last_t)
           c:wait()
           c:update_real_pos() 
         end
-      end
-    end     
+      end 
+    elseif c:is_dead() then
+      self.cubes[c.y][c.x] = nil
+    end    
   end)
 end
 
@@ -110,13 +112,17 @@ function Game:process_chaining()
       c.need_check = false
     end
   end)
-  self.cubes:for2d(function(c)
-    if c.need_delete then
-      c:remove_body()
-      self.cubes[c.y][c.x] = nil
-      count = count + 1
-    end
-  end)
+  
+  if chained then
+    local delay_deletion = 500
+    self.cubes:for2d(function(c)
+      if c.need_delete then
+        c:fade(delay_deletion)
+        c.need_delete = false
+        count = count + 1
+      end
+    end)
+  end
   return chained, count
 end
 

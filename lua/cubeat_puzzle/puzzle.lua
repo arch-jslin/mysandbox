@@ -28,6 +28,7 @@ function Puzzle:load_map(level)
       local game = self -- avoid "self" clashes. 
       c.event_handler.touch = function(self, event)
         if event.phase == "began" then
+          if not c:is_dropping() and not c:is_waiting() then return false end 
           self.owner:remove_body()
           game.cubes[self.owner.y][self.owner.x] = nil
           timer.performWithDelay(1, game:remove_all_touch_event())
@@ -60,7 +61,7 @@ function Puzzle:check_success_event()
       
       self.cubes:for2d(function(c)
         some_cube_still_alive = true
-        if c:is_dropping() or (c:is_waiting() and self:is_below_empty(c)) then 
+        if not (c:is_waiting() and not self:is_below_empty(c)) then 
           all_waiting = false 
         end
       end)

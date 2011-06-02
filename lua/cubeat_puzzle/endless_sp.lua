@@ -18,8 +18,9 @@ function SinglePlayerGame:create_new_cubes_event()
           self.cubes[self.cubes.height][x] = c
           
           local self_cubes = self.cubes -- avoid "self" clashes.
-          c.event_handler.touch = function(self, event)
+          c.event_handler.touch = function(self, event)            
             if event.phase == "began" then
+              if not c:is_dropping() and not c:is_waiting() then return false end 
               self.owner:remove_body()
               self_cubes[self.owner.y][self.owner.x] = nil
               return true
