@@ -41,6 +41,11 @@ function Cube:wait()
   self.need_check = true
 end
 
+function Cube:drop()
+  self.state = "dropping"
+  self.need_check = false
+end
+
 function Cube:arrived_at_logical_position()
   return self.body.y >= 730 - self.y*68
 end

@@ -24,14 +24,11 @@ function Game:is_below_empty(c)
   return c.y > 1 and not self.cubes[c.y-1][c.x]
 end
 
--- CODE BELOW NEED FIX --
-
-local function drop_cube_logical(c, cubes)
+function Game:drop_the_cube(c)
   c:set_pos(c.x, c.y - 1)
-  c.need_check = false
-  c.state = "dropping"
-  cubes[c.y][c.x] = c     -- this is actually quite dangerous. we can only do this
-  cubes[c.y+1][c.x] = nil -- when we are sure "below_is_empty."
+  c:drop()
+  self.cubes[c.y][c.x] = c     -- this is actually quite dangerous. we can only do this
+  self.cubes[c.y+1][c.x] = nil -- when we are sure "below_is_empty."
 end
 
 -- let's keep this simple and stupid for now. it's a lot easier to understand the flow.
@@ -39,14 +36,13 @@ function Game:next_state(now_t, last_t)
   self.cubes:for2d(function(c)        
     if c:is_waiting() then
       if self:is_below_empty(c) then 
-        drop_cube_logical(c, self.cubes)
-        c:drop_a_frame(now_t, last_t)
+        self:drop_the_cube(c)
       end
     elseif c:is_dropping() then
       c:drop_a_frame(now_t, last_t)
       if c:arrived_at_logical_position() then
         if self:is_below_empty(c) then
-          drop_cube_logical(c, self.cubes)
+          self:drop_the_cube(c)
         else
           c:wait()
           c:update_real_pos() 
