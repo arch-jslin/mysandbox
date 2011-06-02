@@ -54,6 +54,8 @@ function Game:next_state(now_t, last_t)
   end)
 end
 
+-- CODE BELOW NEED FIX --
+
 local function do_check_chain_h(row, x)
   local right = x + 1
   while row[right] and 
