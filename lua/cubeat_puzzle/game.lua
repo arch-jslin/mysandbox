@@ -85,13 +85,17 @@ end
 
 local function mark_for_delete_h(map, y, leftbound, rightbound)
   for i = leftbound, rightbound do
-    map[y][i].need_delete = true
+    if not map[y][i]:is_fading() then -- we might count redundantly here, so don't fade the fading.
+      map[y][i]:fade(500)
+    end
   end
 end
 
 local function mark_for_delete_v(map, x, bottombound, topbound)
   for i = bottombound, topbound do
-    map[i][x].need_delete = true
+    if not map[i][x]:is_fading() then -- we might count redundantly here, so don't fade the fading.
+      map[i][x]:fade(500)
+    end
   end
 end
 
@@ -112,17 +116,6 @@ function Game:process_chaining()
       c.need_check = false
     end
   end)
-  
-  if chained then
-    local delay_deletion = 500
-    self.cubes:for2d(function(c)
-      if c.need_delete then
-        c:fade(delay_deletion)
-        c.need_delete = false
-        count = count + 1
-      end
-    end)
-  end
   return chained, count
 end
 
