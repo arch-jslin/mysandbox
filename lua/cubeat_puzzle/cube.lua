@@ -27,9 +27,7 @@ function Cube:init(color_idx, x, y)
   
   self:set_pos(x, y)
   self:update_real_pos()
-  
-  self.state = "waiting"
-  self.need_check = false
+  self:drop()
 end
 
 function Cube:drop_a_frame(now_t, last_t)
@@ -43,6 +41,11 @@ end
 
 function Cube:drop()
   self.state = "dropping"
+  self.need_check = false
+end
+
+function Cube:fade()
+  self.state = "fading"
   self.need_check = false
 end
 
@@ -65,6 +68,7 @@ function Cube:setY(y) self.y = y; self:update_real_pos() end
 function Cube:remove_body() self.body:removeSelf() end
 function Cube:is_dropping() return self.state == "dropping" end
 function Cube:is_waiting() return self.state == "waiting" end
+function Cube:is_fading() return self.state == "fading" end
 
 -------------------------------------------------------------------
 
