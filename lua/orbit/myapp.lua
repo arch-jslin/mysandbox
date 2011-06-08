@@ -46,8 +46,8 @@ myapp:dispatch_get(myapp.index, "/")
 
 function myapp.render_page(inner_html)
   return html{
-    head{ title "Song List" },
-    body{ inner_html }
+    head( title "Song List" ),
+    body( inner_html )
   }
 end
 
