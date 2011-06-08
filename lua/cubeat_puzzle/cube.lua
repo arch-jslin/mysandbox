@@ -47,6 +47,7 @@ end
 function Cube:die()
   self.state = "dead"
   self.need_check = false
+  self.body:removeSelf() 
 end
 
 function Cube:fade(duration)
@@ -55,10 +56,7 @@ function Cube:fade(duration)
   transition.to(self.body, {
     alpha = 0, 
     time = duration, 
-    onComplete = function() 
-      self.body:removeSelf() 
-      self:die() 
-    end
+    onComplete = function() self:die() end
   })
 end
 
