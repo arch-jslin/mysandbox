@@ -18,7 +18,25 @@ function view.htable(structure)
   return H'table'(res)
 end
 
+function view.info(t)
+  local info = {}
+  for _,v in ipairs(t) do
+    table.insert(info, tr{ td(v[1]), td(v[2]) } )
+  end  
+  return H'table'(info)
+end
+
+function view.members(t)
+  local res = {}
+  table.insert(res, tr{ td "Name", td "Info" })
+  for _,v in ipairs(t) do
+    table.insert(res, tr{ td(v.name), td( view.info(v.info) ) } )
+  end
+  return H'table'(res)
+end
+
 orbit.htmlify(view, '.+')
+
 ---------------------
 
 local myapp = orbit.new()
@@ -39,7 +57,27 @@ function myapp.index(web)
     "Sgt. Pepper's Lonely Hearts Club Band (Reprise)",
     "A Day in the Life"
   }
-  return myapp.render_index(songlist)
+  
+  local members = {
+    { name = 'AAA', 
+      info = { 
+        {'email', 'AAA@mail.hahaha.org'},
+        {'公司', 'This is a bullshit company'},
+        {'msn', 'AAA_msn@mail.hahaha.org'},
+        {'blog', 'http://hahaha.org'}
+      } 
+    },
+    { name = 'BBB', 
+      info = { 
+        {'email', 'BBB@hehehe.org'},
+        {'公司', 'This is a fucking-stupid company'},
+        {'FB', 'http://www.facebook.com/user/hehehe'},
+        {'site', 'http://hehehe.org'}
+      } 
+    },
+  }
+  
+  return myapp.render_index(songlist, members)
 end
 
 myapp:dispatch_get(myapp.index, "/")
@@ -51,7 +89,7 @@ function myapp.render_page(inner_html)
   }
 end
 
-function myapp.render_index(list)
+function myapp.render_index(list, members)
   local res = {}
   local songlist_view = {}
   for _, entry in ipairs(list) do 
@@ -65,6 +103,9 @@ function myapp.render_index(list)
       { view.submit "Submit!", view.submit "Cancel" }
     }
   })
+  
+  table.insert(res, view.members(members))
+  
   return myapp.render_page(res)
 end
 
