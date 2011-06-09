@@ -10,6 +10,14 @@ function view.submit(caption)
   return td( input{type='submit', value=caption} )
 end
 
+function view.columnify(r)
+  local res = {}
+  for i = 1, #r do
+    res[i] = td(r[i])
+  end
+  return res
+end
+
 function view.htable(structure)
   local res = {}
   for _, v in ipairs(structure) do
@@ -18,21 +26,19 @@ function view.htable(structure)
   return H'table'(res)
 end
 
-function view.info(t)
-  local info = {}
-  for _,v in ipairs(t) do
-    table.insert(info, tr{ td(v[1]), td(v[2]) } )
-  end  
-  return H'table'(info)
+function view.htable2d(t)
+  for i = 1, #t do
+    t[i] = view.columnify( t[i] )
+  end
+  return view.htable(t)
 end
 
 function view.members(t)
-  local res = {}
-  table.insert(res, tr{ td "Name", td "Info" })
+  local res = { {td"Name", td"Info"} }
   for _,v in ipairs(t) do
-    table.insert(res, tr{ td(v.name), td( view.info(v.info) ) } )
+    table.insert(res, { td(v.name), td(view.htable2d(v.info)) } )
   end
-  return H'table'(res)
+  return view.htable(res)
 end
 
 orbit.htmlify(view, '.+')
