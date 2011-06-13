@@ -12,24 +12,33 @@ end
 function layout.columnify(r)
   local res = {}
   for i = 1, #r do
-    res[i] = td(r[i])
+    if i == 1 then
+      res[i] = td{class = "item", r[i]}
+    else
+      res[i] = td(r[i])
+    end
   end
   return res
 end
 
-function layout.htable(structure)
+function layout.htable(structure, id, row_style)
   local res = {}
+  local count = 0
   for _, v in ipairs(structure) do
-    table.insert(res, tr(v))
+    if row_style == "odd_even" then
+      table.insert(res, tr{
+        class = count % 2 == 0 and "odd" or "even", v})    
+    else table.insert(res, tr(v)) end
+    count = count + 1
   end
-  return H'table'(res)
+  return H'table'{ id = id, res }
 end
 
-function layout.htable2d(t)
+function layout.htable2d(t, id, row_style)
   for i = 1, #t do
     t[i] = layout.columnify( t[i] )
   end
-  return layout.htable(t)
+  return layout.htable(t, id, row_style)
 end
 
 orbit.htmlify(layout, '.+')

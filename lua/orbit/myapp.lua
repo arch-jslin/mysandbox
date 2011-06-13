@@ -2,23 +2,23 @@ local orbit = require "orbit"
 local view  = require "myapp_view"
 local myapp = orbit.new()
 
+local function substitute_links(t)
+  for i = 1, #t do
+    if t[i].link then
+      t[i][2] = '<a href="'..t[i].link..'" target="_blank">'..t[i][2]..'</a>'
+    elseif string.sub(t[i][2], 1, 7) == 'http://' then
+      t[i][2] = '<a href="'..t[i][2]..'" target="_blank">'..t[i][2]..'</a>'
+    end
+  end
+end
+
+local function add_href(t)
+  for i = 1, #t do
+    substitute_links(t[i].info)
+  end
+end
+
 function myapp.index(web)
-  local songlist = {
-    "Sgt. Pepper's Lonely Hearts Club Band",
-    "With a Little Help from My Friends",
-    "Lucy in the Sky with Diamonds",
-    "Getting Better",
-    "Fixing a Hole",
-    "She's Leaving Home",
-    "Being for the Benefit of Mr. Kite!",
-    "Within You Without You",
-    "When I'm Sixty-Four",
-    "Lovely Rita",
-    "Good Morning Good Morning",
-    "Sgt. Pepper's Lonely Hearts Club Band (Reprise)",
-    "A Day in the Life"
-  }
-  
   local members = {
     { name = 'AAA', 
       info = { 
@@ -37,8 +37,11 @@ function myapp.index(web)
       } 
     },
   }
-  
-  return view.render_index(songlist, members)
+  add_href(members)
+  return view.render_page(    
+    { title = "Test"}, 
+    { view.render_member( members, "Test" ) } 
+  )
 end
 
 myapp:dispatch_get(myapp.index, "/")
