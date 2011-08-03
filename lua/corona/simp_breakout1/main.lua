@@ -1,38 +1,43 @@
-
-hitTest = require 'helper'.hitTest
---1
-pad = display.newImage('pad.png')
+helper    = require 'helper'
+hitTest   = helper.hitTest
+new_image = helper.image
+remove    = helper.remove
+touch_do  = helper.touch_do
+frame_do  = helper.frame_do
+----------------------------------------------------
+pad = new_image('pad.png')
 pad.x = 400
 pad.y = 460
 
-brick=display.newImage('brick.png')
+brick=new_image('brick.png')
 brick.x = 400
 brick.y = 200
 
-ball= display.newImage('ball_white.png')
+ball= new_image('ball_white.png')
 ball.x = 400
 ball.y = 435
 
 speedx = 0
 speedy = -2
 
-Runtime:addEventListener('enterFrame', function(e)
+moveball = function(e)
   ball.x = ball.x + speedx
   ball.y = ball.y + speedy
   if hitTest(ball, brick) then
     ball.y = ball.y + 5
     speedy = -speedy
-    --brick:removeSelf()
-    --brick = nil
+    remove(brick)
   end
   if hitTest(ball, pad) then
     ball.y = ball.y - 5
     speedy = -speedy
   end
-end)
+end
 
---2
-Runtime:addEventListener('touch', function(e)
+movepad = function(e)
   pad.x = e.x
-end)
+end
+
+touch_do(movepad)
+frame_do(moveball)
 

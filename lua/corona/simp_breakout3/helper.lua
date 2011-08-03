@@ -1,5 +1,5 @@
 local function hitTest(obj1, obj2)
-  if obj1 == nil or obj2 == nil then
+  if obj1.contentBounds == nil or obj2.contentBounds == nil then
     return false
   end
   local left = obj1.contentBounds.xMin < obj2.contentBounds.xMin and obj1.contentBounds.xMax > obj2.contentBounds.xMin
@@ -18,6 +18,50 @@ local function hitTest(obj1, obj2)
   end
 end
 
+local function remove(o)
+  o:removeSelf()
+end
+
+local function image(file)
+  local o = display.newImage(file)
+  o.tap_do = function(f)
+    o:addEventListener('tap', function(e)
+      f(o, e)
+    end)
+  end
+  return o
+end
+
+local function text(s)
+  local t = display.newText( s, 0, 0, native.systemFont, 54 )
+  t:setTextColor( 255,255,255 )
+  return t
+end
+
+local function random(n)
+  return math.random()*n
+end
+
+local function frame_do(f)
+  Runtime:addEventListener('enterFrame', f)
+end
+
+local function touch_do(f)
+  Runtime:addEventListener('touch', f)
+end
+
+local function timer_do(t, f, loop)
+  t = (t or 1) * 1000
+  return timer.performWithDelay(t, f, loop)
+end
+
 return {
-  hitTest = hitTest
+  hitTest = hitTest,
+  image   = image,
+  text    = text,
+  random  = random,
+  remove  = remove,
+  frame_do= frame_do,
+  touch_do= touch_do,
+  timer_do= timer_do
 }

@@ -1,7 +1,12 @@
-
-hitTest = require 'helper'.hitTest
---1
-pad = display.newImage('pad.png')
+helper   = require 'helper'
+hitTest  = helper.hitTest
+new_image= helper.image
+random   = helper.random
+remove   = helper.remove
+frame_do = helper.frame_do
+touch_do = helper.touch_do
+------------------------------------------------------------------
+pad = new_image('pad.png')
 pad.x = 400
 pad.y = 460
 
@@ -9,22 +14,23 @@ bricks = {}
 for a = 1, 10 do 
   for b = 1, 10 do
     i = a*10 + b
-    bricks[i] = display.newImage('brick.png')
-    bricks[i].x = a * bricks[i].width  + bricks[i].width
-    bricks[i].y = b * bricks[i].height + bricks[i].height
+    bricks[i] = new_image('brick.png')
+    bricks[i].x = a * bricks[i].width  + bricks[i].width*2
+    bricks[i].y = b * bricks[i].height + bricks[i].height*2
   end
 end
 
-ball= display.newImage('ball_white.png')
+ball = new_image('ball_white.png')
 ball.x = 400
 ball.y = 435
 
-speedx = math.random()*4 - 2
+speedx = random(4) - 2
 speedy = -4
 
-Runtime:addEventListener('enterFrame', function(e)
+moveball = function(e)
   ball.x = ball.x + speedx
   ball.y = ball.y + speedy
+  
   for a = 1, 10 do 
     for b = 1, 10 do
       i = a*10 + b
@@ -45,8 +51,7 @@ Runtime:addEventListener('enterFrame', function(e)
           end
           speedx = -speedx
         end
-        bricks[i]:removeSelf()
-        bricks[i] = nil
+        remove(bricks[i])
       end
     end
   end
@@ -61,12 +66,19 @@ Runtime:addEventListener('enterFrame', function(e)
     end 
   end
   
-  if ball.x < 20 or ball.x > 780 then speedx = -speedx end
-  if ball.y < 20 then speedy = -speedy end
-end)
+  if ball.x < 20 or ball.x > 780 then 
+    speedx = -speedx 
+  end
+  
+  if ball.y < 20 then 
+    speedy = -speedy 
+  end
+end
 
---2
-Runtime:addEventListener('touch', function(e)
+movepad = function(e)
   pad.x = e.x
-end)
+end
+
+frame_do(moveball)
+touch_do(movepad)
 

@@ -1,18 +1,31 @@
-
---1
-pad = display.newImage('pad.png')
+helper = require 'helper'
+new_image = helper.image
+touch_do  = helper.touch_do
+frame_do  = helper.frame_do
+------------------------------------------------------------
+pad = new_image('pad.png')
 pad.x = 400
 pad.y = 460
 
-ball= display.newImage('ball_white.png')
+ball= new_image('ball_white.png')
 ball.x = 400
 ball.y = 435
 
-Runtime:addEventListener('enterFrame', function(e)
-end)
-
---2
-Runtime:addEventListener('touch', function(e)
+move = function(e)
   pad.x = e.x
-end)
+end
 
+v = 3
+
+moveball = function(e)
+  if ball.x > 800 then
+    v = -v
+  end
+  if ball.x < 0 then
+    v = -v
+  end
+  ball.x = ball.x + v
+end
+
+touch_do(move)
+frame_do(moveball)
