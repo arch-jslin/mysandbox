@@ -1,4 +1,5 @@
 helper = require 'helper'
+hitTest  = helper.hitTest
 new_image= helper.image
 new_text = helper.text
 random   = helper.random
@@ -13,10 +14,23 @@ answer = 1
 numbers = {}
 covers  = {}
 
+do_not_touch_anyone = function(i)
+  for n = 1, i-1 do
+    if numbers[i].x > numbers[n].x - 40 and numbers[i].x < numbers[n].x + 40 and 
+       numbers[i].y > numbers[n].y - 40 and numbers[i].y < numbers[n].y + 40 then
+      return false
+    end
+  end
+  return true
+end
+
 for i = 1, 8 do
   numbers[i] = new_text(i)
-  numbers[i].x = random(600) + 100
-  numbers[i].y = random(350) + 50
+  repeat
+    numbers[i].x = random(600) + 100
+    numbers[i].y = random(350) + 50
+    print(i)
+  until do_not_touch_anyone(i) 
 end
 
 t1 = new_text(count)
@@ -47,3 +61,5 @@ update = function(e)
 end
 
 timer_do(1, update, -1)
+
+-- must remember to tell them how to make a proper cleanup and game restart.
