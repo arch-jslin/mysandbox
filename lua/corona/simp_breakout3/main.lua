@@ -6,26 +6,29 @@ remove   = helper.remove
 frame_do = helper.frame_do
 touch_do = helper.touch_do
 ------------------------------------------------------------------
-pad = new_image('pad.png')
-pad.x = 400
-pad.y = 460
-
+pad =  new_image('pad.png')
+ball = new_image('ball_white.png')
 bricks = {}
-for a = 1, 10 do 
-  for b = 1, 10 do
-    i = a*10 + b
-    bricks[i] = new_image('brick.png')
-    bricks[i].x = a * bricks[i].width  + bricks[i].width*2
-    bricks[i].y = b * bricks[i].height + bricks[i].height*2
+
+new_bricks_game = function()
+  pad.x = 400
+  pad.y = 460
+  ball.x = 400
+  ball.y = 435
+  speedx = random(4) - 2
+  speedy = -4
+
+  for a = 1, 10 do 
+    for b = 1, 10 do
+      i = a*10 + b
+      bricks[i] = new_image('brick.png')
+      bricks[i].x = a * bricks[i].width  + bricks[i].width*2
+      bricks[i].y = b * bricks[i].height + bricks[i].height*2
+    end
   end
 end
 
-ball = new_image('ball_white.png')
-ball.x = 400
-ball.y = 435
-
-speedx = random(4) - 2
-speedy = -4
+new_bricks_game()
 
 moveball = function(e)
   ball.x = ball.x + speedx
@@ -56,7 +59,7 @@ moveball = function(e)
     end
   end
   
-  if hitTest(ball, pad) then
+  if hitTest(ball, pad) and speedy > 0 then
     ball.y = ball.y - 5
     speedy = -speedy
     if ball.x < pad.x - pad.width/4 then 
@@ -72,6 +75,17 @@ moveball = function(e)
   
   if ball.y < 20 then 
     speedy = -speedy 
+  end
+  
+  if ball.y > 500 then
+    for a = 1, 10 do 
+      for b = 1, 10 do
+        i = a*10 + b
+        remove(bricks[i])
+      end
+    end
+    bricks = {}
+    new_bricks_game()
   end
 end
 

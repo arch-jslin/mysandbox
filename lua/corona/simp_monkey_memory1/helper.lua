@@ -19,7 +19,9 @@ local function hitTest(obj1, obj2)
 end
 
 local function remove(o)
-  o:removeSelf()
+  if o.contentBounds then
+    o:removeSelf()
+  end
 end
 
 local function image(file)
