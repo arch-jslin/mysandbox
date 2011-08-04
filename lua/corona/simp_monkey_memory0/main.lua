@@ -31,7 +31,6 @@ end
 
 update = function(e)
   count = count + 1
-  systime = os.date("*t")
   t1.text = count
   
   if count == 0 then

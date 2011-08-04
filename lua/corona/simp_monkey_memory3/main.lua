@@ -1,7 +1,9 @@
 helper = require 'helper'
+hitTest  = helper.hitTest
 new_image= helper.image
 new_text = helper.text
 random   = helper.random
+floor    = math.floor
 remove   = helper.remove
 touch_do = helper.touch_do
 timer_do = helper.timer_do
@@ -16,16 +18,42 @@ t1.y = 440
 
 numbers = {}
 covers  = {}
-for i = 1, 8 do
-  numbers[i] = new_text(i)
-  numbers[i].x = random(600) + 100
-  numbers[i].y = random(350) + 50
+order   = {}
+for i = 1, 40 do
+  order[i] = i
 end
+
+new_numbers = function()
+  for i = 1, 40 do
+    j = floor(random(40)) + 1
+    temp = order[i]
+    order[i] = order[j]
+    order[j] = temp
+  end
+
+  for i = 1, 8 do
+    numbers[i] = new_text(i)
+    numbers[i].x =      (order[i] % 8) * 70 + 100
+    numbers[i].y = floor(order[i] / 8) * 70 + 50
+  end
+end
+
+new_numbers()
 
 uncover = function(o, e)
   if o.number == answer then
     remove(o)
     answer = answer + 1
+  else
+    count = -4
+    answer = 1
+    for i = 1, 8 do
+      remove(numbers[i])
+      remove(covers[i])
+    end
+    numbers = {}
+    covers  = {}
+    new_numbers()
   end
 end
 

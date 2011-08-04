@@ -3,6 +3,7 @@ hitTest  = helper.hitTest
 new_image= helper.image
 new_text = helper.text
 random   = helper.random
+floor    = math.floor
 remove   = helper.remove
 touch_do = helper.touch_do
 timer_do = helper.timer_do
@@ -11,31 +12,29 @@ timer_do = helper.timer_do
 count = -3
 answer = 1
 
+t1 = new_text(count)
+t1.x = 750
+t1.y = 440
+
 numbers = {}
 covers  = {}
+order   = {}
+for i = 1, 40 do
+  order[i] = i
+end
 
-do_not_touch_anyone = function(i)
-  for n = 1, i-1 do
-    if numbers[i].x > numbers[n].x - 40 and numbers[i].x < numbers[n].x + 40 and 
-       numbers[i].y > numbers[n].y - 40 and numbers[i].y < numbers[n].y + 40 then
-      return false
-    end
-  end
-  return true
+for i = 1, 40 do
+  j = floor(random(40)) + 1
+  temp = order[i]
+  order[i] = order[j]
+  order[j] = temp
 end
 
 for i = 1, 8 do
   numbers[i] = new_text(i)
-  repeat
-    numbers[i].x = random(600) + 100
-    numbers[i].y = random(350) + 50
-    print(i)
-  until do_not_touch_anyone(i) 
+  numbers[i].x =      (order[i] % 8) * 70 + 100
+  numbers[i].y = floor(order[i] / 8) * 70 + 50
 end
-
-t1 = new_text(count)
-t1.x = 750
-t1.y = 440
 
 uncover = function(o, e)
   if o.number == answer then
@@ -46,7 +45,6 @@ end
 
 update = function(e)
   count = count + 1
-  systime = os.date("*t")
   t1.text = count
   
   if count == 0 then
@@ -61,5 +59,3 @@ update = function(e)
 end
 
 timer_do(1, update, -1)
-
--- must remember to tell them how to make a proper cleanup and game restart.
