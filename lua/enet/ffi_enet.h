@@ -15344,8 +15344,7 @@ typedef struct _ENetEvent
    enet_uint32 data;
    ENetPacket * packet;
 } ENetEvent;
-//extern int enet_initialize (void);
-extern int initialize(void) asm("enet_initialize");
+extern int enet_initialize (void);
 extern int enet_initialize_with_callbacks (ENetVersion version, const ENetCallbacks * inits);
 
 
