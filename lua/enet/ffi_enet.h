@@ -444,10 +444,14 @@ typedef DWORD FLONG;
 
 
        
+typedef signed char INT8;
+typedef signed short INT16;
 typedef int LONG32, *PLONG32;
 
 typedef int INT32, *PINT32;
 
+typedef unsigned char UINT8;
+typedef unsigned short UINT16;
 typedef unsigned int ULONG32, *PULONG32;
 typedef unsigned int DWORD32, *PDWORD32;
 typedef unsigned int UINT32, *PUINT32;
@@ -1807,7 +1811,8 @@ typedef struct _SYSTEM_POWER_CAPABILITIES {
  BOOLEAN ProcessorThrottle;
  UCHAR ProcessorMinThrottle;
  UCHAR ProcessorMaxThrottle;
- UCHAR spare2[4];
+ BOOLEAN FastSystemS4;
+ UCHAR spare2[3];
  BOOLEAN DiskSpinDown;
  UCHAR spare3[8];
  BOOLEAN SystemBatteriesPresent;
@@ -2319,8 +2324,8 @@ typedef struct _DEBUG_EVENT {
 typedef struct _OVERLAPPED {
  ULONG_PTR Internal;
  ULONG_PTR InternalHigh;
- union {
-  struct {
+ __extension__ union {
+  __extension__ struct {
  DWORD Offset;
  DWORD OffsetHigh;
  };
@@ -2803,11 +2808,11 @@ int __attribute__((__stdcall__)) wWinMain(HINSTANCE,HINSTANCE,LPWSTR,int);
  BOOL __attribute__((__stdcall__)) EndUpdateResourceW(HANDLE,BOOL);
  void __attribute__((__stdcall__)) EnterCriticalSection(LPCRITICAL_SECTION);
  BOOL __attribute__((__stdcall__)) EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,ENUMRESLANGPROCA,LONG_PTR);
- BOOL __attribute__((__stdcall__)) EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,ENUMRESLANGPROCA,LONG_PTR);
+ BOOL __attribute__((__stdcall__)) EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,ENUMRESLANGPROCW,LONG_PTR);
  BOOL __attribute__((__stdcall__)) EnumResourceNamesA(HMODULE,LPCSTR,ENUMRESNAMEPROCA,LONG_PTR);
- BOOL __attribute__((__stdcall__)) EnumResourceNamesW(HMODULE,LPCWSTR,ENUMRESNAMEPROCA,LONG_PTR);
+ BOOL __attribute__((__stdcall__)) EnumResourceNamesW(HMODULE,LPCWSTR,ENUMRESNAMEPROCW,LONG_PTR);
  BOOL __attribute__((__stdcall__)) EnumResourceTypesA(HMODULE,ENUMRESTYPEPROCA,LONG_PTR);
- BOOL __attribute__((__stdcall__)) EnumResourceTypesW(HMODULE,ENUMRESTYPEPROCA,LONG_PTR);
+ BOOL __attribute__((__stdcall__)) EnumResourceTypesW(HMODULE,ENUMRESTYPEPROCW,LONG_PTR);
  BOOL __attribute__((__stdcall__)) EqualPrefixSid(PSID,PSID);
  BOOL __attribute__((__stdcall__)) EqualSid(PSID,PSID);
  DWORD __attribute__((__stdcall__)) EraseTape(HANDLE,DWORD,BOOL);
@@ -3445,6 +3450,9 @@ LONG __attribute__((__stdcall__)) InterlockedIncrement(LONG volatile *);
  void __attribute__((__stdcall__)) SwitchToFiber(PVOID);
  BOOL __attribute__((__stdcall__)) SwitchToThread(void);
  BOOL __attribute__((__stdcall__)) SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
+
+
+
  BOOL __attribute__((__stdcall__)) SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION,LPSYSTEMTIME,LPSYSTEMTIME);
  BOOL __attribute__((__stdcall__)) TerminateProcess(HANDLE,UINT);
  BOOL __attribute__((__stdcall__)) TerminateThread(HANDLE,DWORD);
@@ -11673,8 +11681,8 @@ typedef struct IExternalConnection { struct IExternalConnectionVtbl *lpVtbl; } I
  HRESULT(__attribute__((__stdcall__)) *QueryInterface)(IExternalConnection *, const IID* const,PVOID*) ;
  ULONG(__attribute__((__stdcall__)) *AddRef)(IExternalConnection *) ;
  ULONG(__attribute__((__stdcall__)) *Release)(IExternalConnection *) ;
- HRESULT(__attribute__((__stdcall__)) *AddConnection)(IExternalConnection *, DWORD,DWORD) ;
- HRESULT(__attribute__((__stdcall__)) *ReleaseConnection)(IExternalConnection *, DWORD,DWORD,BOOL) ;
+ DWORD(__attribute__((__stdcall__)) *AddConnection)(IExternalConnection *, DWORD,DWORD) ;
+ DWORD(__attribute__((__stdcall__)) *ReleaseConnection)(IExternalConnection *, DWORD,DWORD,BOOL) ;
 };
 
 
@@ -13091,7 +13099,7 @@ typedef struct ITypeLib { struct ITypeLibVtbl *lpVtbl; } ITypeLib; typedef struc
  HRESULT(__attribute__((__stdcall__)) *GetTypeInfoType)(ITypeLib *, UINT,TYPEKIND*) ;
  HRESULT(__attribute__((__stdcall__)) *GetTypeInfoOfGuid)(ITypeLib *, const GUID* const,ITypeInfo**) ;
  HRESULT(__attribute__((__stdcall__)) *GetLibAttr)(ITypeLib *, TLIBATTR**) ;
- HRESULT(__attribute__((__stdcall__)) *GetTypeComp)(ITypeLib *, ITypeComp*) ;
+ HRESULT(__attribute__((__stdcall__)) *GetTypeComp)(ITypeLib *, ITypeComp**) ;
  HRESULT(__attribute__((__stdcall__)) *GetDocumentation)(ITypeLib *, INT,BSTR*,BSTR*,DWORD*,BSTR*) ;
  HRESULT(__attribute__((__stdcall__)) *IsName)(ITypeLib *, LPOLESTR,ULONG,BOOL*) ;
  HRESULT(__attribute__((__stdcall__)) *FindName)(ITypeLib *, LPOLESTR,ULONG,ITypeInfo**,MEMBERID*,USHORT*) ;
@@ -13110,7 +13118,7 @@ typedef struct ITypeLib2 { struct ITypeLib2Vtbl *lpVtbl; } ITypeLib2; typedef st
  HRESULT(__attribute__((__stdcall__)) *GetTypeInfoType)(ITypeLib2 *, UINT,TYPEKIND*) ;
  HRESULT(__attribute__((__stdcall__)) *GetTypeInfoOfGuid)(ITypeLib2 *, const GUID* const,ITypeInfo**) ;
  HRESULT(__attribute__((__stdcall__)) *GetLibAttr)(ITypeLib2 *, TLIBATTR**) ;
- HRESULT(__attribute__((__stdcall__)) *GetTypeComp)(ITypeLib2 *, ITypeComp*) ;
+ HRESULT(__attribute__((__stdcall__)) *GetTypeComp)(ITypeLib2 *, ITypeComp**) ;
  HRESULT(__attribute__((__stdcall__)) *GetDocumentation)(ITypeLib2 *, INT,BSTR*,BSTR*,DWORD*,BSTR*) ;
  HRESULT(__attribute__((__stdcall__)) *IsName)(ITypeLib2 *, LPOLESTR,ULONG,BOOL*) ;
  HRESULT(__attribute__((__stdcall__)) *FindName)(ITypeLib2 *, LPOLESTR,ULONG,ITypeInfo**,MEMBERID*,USHORT*) ;
@@ -13180,7 +13188,7 @@ typedef struct IRecordInfo { struct IRecordInfoVtbl *lpVtbl; } IRecordInfo; type
  HRESULT(__attribute__((__stdcall__)) *PutField)(IRecordInfo *, ULONG,PVOID,LPCOLESTR, VARIANT*) ;
  HRESULT(__attribute__((__stdcall__)) *PutFieldNoCopy)(IRecordInfo *, ULONG,PVOID,LPCOLESTR,VARIANT*) ;
  HRESULT(__attribute__((__stdcall__)) *GetFieldNames)(IRecordInfo *, ULONG*,BSTR*) ;
- BOOL(__attribute__((__stdcall__)) *IsMatchingType)(IRecordInfo *, IRecordInfo *) ;
+ BOOL(__attribute__((__stdcall__)) *IsMatchingType)(IRecordInfo *, IRecordInfo*) ;
  PVOID(__attribute__((__stdcall__)) *RecordCreate)(IRecordInfo *) ;
  HRESULT(__attribute__((__stdcall__)) *RecordCreateCopy)(IRecordInfo *, PVOID,PVOID*) ;
  HRESULT(__attribute__((__stdcall__)) *RecordDestroy)(IRecordInfo *, PVOID) ;
@@ -14845,7 +14853,8 @@ typedef enum _ENetProtocolCommand
    ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED = 9,
    ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT = 10,
    ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE = 11,
-   ENET_PROTOCOL_COMMAND_COUNT = 12,
+   ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT = 12,
+   ENET_PROTOCOL_COMMAND_COUNT = 13,
 
    ENET_PROTOCOL_COMMAND_MASK = 0x0F
 } ENetProtocolCommand;
@@ -15075,7 +15084,10 @@ typedef enum _ENetPacketFlag
 
    ENET_PACKET_FLAG_UNSEQUENCED = (1 << 1),
 
-   ENET_PACKET_FLAG_NO_ALLOCATE = (1 << 2)
+   ENET_PACKET_FLAG_NO_ALLOCATE = (1 << 2),
+
+
+   ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT = (1 << 3)
 } ENetPacketFlag;
 
 struct _ENetPacket;
@@ -15177,6 +15189,7 @@ typedef struct _ENetChannel
    enet_uint16 usedReliableWindows;
    enet_uint16 reliableWindows [ENET_PEER_RELIABLE_WINDOWS];
    enet_uint16 incomingReliableSequenceNumber;
+   enet_uint16 incomingUnreliableSequenceNumber;
    ENetList incomingReliableCommands;
    ENetList incomingUnreliableCommands;
 } ENetChannel;
@@ -15331,7 +15344,8 @@ typedef struct _ENetEvent
    enet_uint32 data;
    ENetPacket * packet;
 } ENetEvent;
-extern int enet_initialize (void);
+//extern int enet_initialize (void);
+extern int initialize(void) asm("enet_initialize");
 extern int enet_initialize_with_callbacks (ENetVersion version, const ENetCallbacks * inits);
 
 

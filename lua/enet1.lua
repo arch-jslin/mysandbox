@@ -3,7 +3,7 @@ local ffi = require 'ffi'
 local enet = ffi.load[[enet\libenet]]
 ffi.cdef( io.open([[enet\ffi_enet.h]]):read('*a') )
 
-if enet.enet_initialize () ~= 0 then
+if enet.initialize () ~= 0 then
   io.stderr("An error occurred while initializing ENet.\n")
   os.exit(1)
 end
