@@ -62,7 +62,7 @@ local function main()
           enet.enet_packet_destroy(event[0].packet) -- done using it, kill it.
                
         elseif event[0].type == enet.ENET_EVENT_TYPE_DISCONNECT then
-          io.write(("Disconnected: %s\n"):format(event[0].peer.data))
+          io.write(("Disconnected: %s\n"):format(ffi.string(event[0].peer.data)))
           event[0].peer.data = ffi_helper.NULL -- drop it.
         end
       end
@@ -75,6 +75,7 @@ local function main()
     enet.enet_peer_reset(peer)
     print("Connection to 127.0.0.1:12345 failed.")
   end
+  enet.enet_peer_disconnect(peer, 0)
   ffi.C.atexit (enet.enet_deinitialize);
 end
 
