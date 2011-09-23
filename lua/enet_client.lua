@@ -76,6 +76,7 @@ local function main()
     print("Connection to 127.0.0.1:12345 failed.")
   end
   enet.enet_peer_disconnect(peer, 0)
+  enet.enet_host_flush(client)
   ffi.C.atexit (enet.enet_deinitialize);
 end
 
