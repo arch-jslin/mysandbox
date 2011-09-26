@@ -1,11 +1,11 @@
 require "enet"
-local host = enet.host_create("localhost:"..arg[1])
-local farside
-if arg[2] then
-  farside = host:connect("localhost:"..arg[2])
-end
 
 local t = 0
+local host = enet.host_create(arg[1])
+local farside
+if arg[2] then
+  farside = host:connect(arg[2])
+end
 
 while true do
   local event = host:service(100)
