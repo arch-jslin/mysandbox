@@ -4,7 +4,7 @@ local server = host:connect("localhost:6789")
 
 local done = false
 while not done do
-  local event = host:service(100)
+  local event = host:service(5000)
   if event then
     if event.type == "connect" then
       print("Connected to", event.peer)
