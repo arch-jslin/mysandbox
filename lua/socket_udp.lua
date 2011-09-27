@@ -5,20 +5,24 @@ local t = 0
 local farside
 local host = socket.udp()
 
-host:settimeout(0.01)
+host:settimeout(0.1)
 host:setsockname(arg[1], tonumber(arg[2]))
 if arg[3] and arg[4] then
   local stat, msg = host:setpeername(arg[3], tonumber(arg[4]))
-  farside = arg[3]..":"..arg[4]
-  print( "connection success? "..tostring(stat)..msg )
+  print( "connection success? "..tostring(stat)..tostring(msg) )
+  if stat then
+    farside = arg[3]..":"..arg[4]
+  end
 end
+
+print( host:getsockname() )
 
 local data = nil
 while true do
   if farside then
-    if os.clock() - t > 1 then
-      t = os.clock()
-      host:sendto("Hello world.", arg[3], tonumber(arg[4]))
+    if socket.gettime() - t > 1 then
+      t = socket.gettime()
+      host:send("Hello world.")
     end
     data = host:receive()
   else
