@@ -1,4 +1,6 @@
-require "enet"
+require "luarocks.loader"
+local enet    = require "enet"
+local gettime = require "socket".gettime
 
 local t = 0
 local host = enet.host_create(arg[1])
@@ -21,8 +23,8 @@ while true do
     end
   end
  
-  if farside and os.clock() - t > 1 then
-    t = os.clock()
+  if farside and gettime() - t > 1 then
+    t = gettime()
     farside:send "Jejeje."
   end    
 end
