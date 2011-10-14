@@ -1,6 +1,6 @@
 require "luarocks.loader"
-local socket = require "socket"
-local enet = require "enet"
+local enet    = require "enet"
+local gettime = require "socket".gettime
 
 -- get self ip
 local self_ip = socket.dns.toip( socket.dns.gethostname() )
@@ -28,8 +28,8 @@ while true do
     end
   end
  
-  if farside and os.clock() - t > 1 then
-    t = os.clock()
+  if farside and gettime() - t > 1 then
+    t = gettime()
     farside:send "Jejeje."
   end    
 end
