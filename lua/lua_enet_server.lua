@@ -1,5 +1,12 @@
-require "enet"
+require "luarocks.loader"
+local socket = require "socket"
+local enet = require "enet"
 
+-- get self ip
+local self_ip = socket.dns.toip( socket.dns.gethostname() )
+print( "Self IP: "..self_ip )
+
+-- now we start talking to server using enet
 local t = 0
 local host = enet.host_create(arg[1])
 local farside
