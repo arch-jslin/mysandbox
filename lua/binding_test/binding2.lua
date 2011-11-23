@@ -1,5 +1,7 @@
 -- test function binding 2, make functions to be called from C/C++
 
+print("jit: "..tostring(jit.status()))
+
 config = {key = 123}
 
 function method1(a, b)

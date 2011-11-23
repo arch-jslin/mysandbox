@@ -43,7 +43,7 @@ inline void get_results_(lua_State* L, ReturnObject& res){}
 
 template<typename... Rets, typename... Args>
 tuple<Rets...>
-call_lua_function(lua_State* L, char const* funcname, Args const&... args)
+call_lua_function_R(lua_State* L, char const* funcname, Args const&... args)
 {
     lua_getglobal(L, funcname); //tell lua to push the function into stack
     int const nargs = sizeof...(args), nrets = sizeof...(Rets);
@@ -57,6 +57,19 @@ call_lua_function(lua_State* L, char const* funcname, Args const&... args)
     tuple<Rets...> results;
     get_results_<sizeof...(Rets), 0, Rets...>(L, results);
     return results;
+}
+
+template<typename... Args>
+void call_lua_function(lua_State* L, char const* funcname, Args const&... args)
+{
+    lua_getglobal(L, funcname); //tell lua to push the function into stack
+    int const nargs = sizeof...(args);
+    luaL_checkstack(L, nargs, "Too many arguments.");
+
+    push_args_to_stack_(L, args...);
+
+    if( lua_pcall(L, nargs, 0, 0) )
+        error(L, "error calling '%s': %s", funcname, lua_tostring(L, -1));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -176,14 +189,14 @@ int binding2(lua_State* L)
     lua_pop(L, 1); //pop the retrieved result
     printf("config.key = %lf\n", ck);
 
-    tuple<int> r = call_lua_function<int>(L, "method1", 3, 4);
+    tuple<int> r = call_lua_function_R<int>(L, "method1", 3, 4);
     printf("%d\n", get<0>(r));
 
     tuple<int, double, char const*> r2 =
-        call_lua_function<int, double, char const*>(L, "identity", 1, 2.0, "3");
+        call_lua_function_R<int, double, char const*>(L, "identity", 1, 2.0, "3");
     printf("%d, %lf, %s\n", get<0>(r2), get<1>(r2), get<2>(r2));
 
-    tuple<double> r3= call_lua_function<double>(L, "call_c", 2.0, 1.14);
+    tuple<double> r3= call_lua_function_R<double>(L, "call_c", 2.0, 1.14);
     printf("%lf\n", get<0>(r3));
 
     lua_settop(L, 0);

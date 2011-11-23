@@ -28,11 +28,18 @@
 		</Compiler>
 		<Unit filename="basic_type_binding.cpp" />
 		<Unit filename="binding1.cpp" />
-		<Unit filename="binding2.cpp" />
+		<Unit filename="binding2.cpp">
+			<Option link="0" />
+		</Unit>
 		<Unit filename="binding_test.hpp" />
-		<Unit filename="main.cpp" />
+		<Unit filename="main.cpp">
+			<Option link="0" />
+		</Unit>
+		<Unit filename="main2.cpp" />
 		<Unit filename="minimal_interpreter.cpp" />
-		<Unit filename="stack.cpp" />
+		<Unit filename="stack.cpp">
+			<Option link="0" />
+		</Unit>
 		<Unit filename="storing_state.cpp" />
 		<Extensions>
 			<code_completion />
