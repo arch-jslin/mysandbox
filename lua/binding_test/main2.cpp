@@ -10,6 +10,7 @@
 #endif
 
 #include "Lua.hpp"
+#include "lua_glue.h"
 
 using namespace lua;
 
@@ -168,6 +169,71 @@ int start_lua_sequence(lua_State* L)
     return 1;
 }
 
+// ------------------- lua_glue_test ------------------------
+
+template<> const char * Glue<SimpleBase>::usr_name() { return SimpleBase::classname; }
+template<> const char * Glue<Simple>    ::usr_name() { return Simple::classname; }
+
+static int lua_simplebase_getID(lua_State * L) {
+    SimpleBase * self = Glue<SimpleBase>::checkto(L, 1);
+    lua_pushstring(L, self->getName().c_str());
+    return 1;
+}
+
+template<> void Glue<SimpleBase> :: usr_mt(lua_State * L) {
+    lua_pushcfunction(L, lua_simplebase_getID); lua_setfield(L, -2, "getName");
+}
+
+template<> Simple * Glue<Simple>::usr_new(lua_State * L) {
+    return new Simple(luaL_checknumber(L, 1));
+}
+
+static int lua_simple_getID(lua_State * L) {
+    Simple * self = Glue<Simple>::checkto(L, 1);
+    lua::push(L, self->getID());
+    return 1;
+}
+
+static int lua_simple_setID(lua_State * L) {
+    Simple * self = Glue<Simple>::checkto(L, 1);
+    self->setID( lua::to<int>(L, 2) );
+    return 0;
+}
+
+template<> void Glue<Simple> :: usr_mt(lua_State * L) {
+    lua_pushcfunction(L, lua_simple_getID); lua_setfield(L, -2, "getID");
+    lua_pushcfunction(L, lua_simple_setID); lua_setfield(L, -2, "setID");
+}
+
+template<> void Glue<Simple>::usr_gc(lua_State * L, Simple* u) {
+    delete u;
+}
+
+template<> const char * Glue<Simple>::usr_supername() { return Glue<SimpleBase>::usr_name(); }
+
+int test_lua_glue(lua_State* L)
+{
+    char const* str = lua::to<char const*>(L, -1);
+    printf("running file: %s\n", str);
+    lua_pop(L, 1); //get rid of the file name string from the stack
+
+    static const luaL_reg empty[] = {
+        {NULL, NULL}
+    };
+
+    luaL_register(L, "SimpleBase", empty);
+    Glue<SimpleBase>::define(L);
+    Glue<SimpleBase>::register_ctor(L);
+    luaL_register(L, "Simple", empty);
+	Glue<Simple>::define(L);
+	Glue<Simple>::register_ctor(L);
+    Lua lua(L);
+    lua.run_script( str ); //get script name from lua stack
+    return 1;
+}
+
+// ----------------------------------------------------------------
+
 void test_simple_cpp_obj() {
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
@@ -204,6 +270,15 @@ void test_simple_cpp_obj4() {
     lua_close(L);
 }
 
+void test_simple_cpp_obj5() {
+    lua_State* L = luaL_newstate();
+    luaL_openlibs(L);
+    lua_pushcfunction(L, &test_lua_glue);
+    lua_pushstring(L, "simple_cpp_obj4.lua");
+    lua_call(L, 1, 1);
+    lua_close(L);
+}
+
 int main()
 {
     test_jit_ffi();
@@ -215,5 +290,7 @@ int main()
     test_simple_cpp_obj3();
     printf("--------------------------------------\n");
     test_simple_cpp_obj4();
+    printf("--------------------------------------\n");
+    test_simple_cpp_obj5();
     return 0;
 }
