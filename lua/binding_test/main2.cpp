@@ -16,10 +16,29 @@ using namespace lua;
 
 // ------------- dummy class ---------------
 
-class SimpleBase {
+class Someotherclass {
+private:
+    std::string somedata_;
 public:
+    Someotherclass():somedata_("blah"){}
+    std::string getData() { return somedata_; }
+    void setData(char const* in) { somedata_ = in; }
+};
+
+class SimpleBase {
+protected:
+    Someotherclass* some_;
+    int id_;
+public:
+    SimpleBase(int id):id_(id) {
+        some_ = new Someotherclass;
+    }
+    ~SimpleBase() { delete some_; }
     void setName(std::string const& s) {}
-    std::string getName() { return "hello"; }
+    std::string getName() { return some_->getData(); }
+    void change_somedata(Someotherclass* other) {
+        some_ = other;
+    }
 
     static char const* classname;
     static char const* basename;
@@ -28,8 +47,7 @@ public:
 char const* SimpleBase::classname = "SimpleBase";
 char const* SimpleBase::basename  = 0;
 
-class Simple {
-    int id_;
+class Simple : public SimpleBase {
 public:
     Simple(int id);
     ~Simple();
@@ -43,9 +61,7 @@ public:
 char const* Simple::classname = "Simple";
 char const* Simple::basename  = "SimpleBase";
 
-// ------ LuaJIT FFI direct binding --------
-
-Simple::Simple(int id) : id_(id) {
+Simple::Simple(int id) : SimpleBase(id) {
     printf("[%p:%i] Simple()\n", this, id_);
 }
 
@@ -61,9 +77,30 @@ void Simple::setID(int id) {
     id_ = id;
 }
 
+// ------ LuaJIT FFI direct binding --------
 // --- dummy interface to C and LuaJIT FFI can call directly ---
 
 extern "C" {
+    APIEXPORT Someotherclass* new_Someotherclass() {
+        return new Someotherclass;
+    }
+
+    APIEXPORT char const* Someotherclass_getData(Someotherclass* this_) {
+        return this_->getData().c_str();
+    }
+
+    APIEXPORT void Someotherclass_setData(Someotherclass* this_, char const* str) {
+        this_->setData(str);
+    }
+
+    APIEXPORT void Someotherclass__gc(Someotherclass* this_) {
+        delete this_;
+    }
+
+    APIEXPORT char const* Simple_getName(Simple *this_) {
+        return this_->getName().c_str();
+    }
+
     APIEXPORT void Simple__gc(Simple *this_) {
         delete this_;
     }
@@ -74,6 +111,10 @@ extern "C" {
 
     APIEXPORT void Simple_setID(Simple* this_, int id) {
         this_->setID(id);
+    }
+
+    APIEXPORT void Simple_change_somedata(Simple* this_, Someotherclass* data) {
+        this_->change_somedata(data);
     }
 
     APIEXPORT Simple *new_Simple(int id) {

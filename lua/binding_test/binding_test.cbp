@@ -13,12 +13,14 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-std=c++0x" />
+					<Add option="-Wall" />
 					<Add directory="C:\lang\luarocks\2.0\include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add library="lua" />
-					<Add directory="C:\lang\lua-5.1.4\lib\" />
+					<Add library="..\..\..\..\lang\luarocks\2.0\lua5.1.lib" />
+					<Add directory="C:\lang\luarocks\2.0" />
 				</Linker>
 			</Target>
 		</Build>
@@ -26,12 +28,15 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="Lua.hpp" />
 		<Unit filename="basic_type_binding.cpp" />
 		<Unit filename="binding1.cpp" />
 		<Unit filename="binding2.cpp">
 			<Option link="0" />
 		</Unit>
 		<Unit filename="binding_test.hpp" />
+		<Unit filename="lua_glue.h" />
+		<Unit filename="lua_utility.h" />
 		<Unit filename="main.cpp">
 			<Option link="0" />
 		</Unit>
