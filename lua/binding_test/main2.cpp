@@ -20,7 +20,12 @@ class Someotherclass {
 private:
     std::string somedata_;
 public:
-    Someotherclass():somedata_("blah"){}
+    Someotherclass():somedata_("blah") {
+        printf("[%p:%s] Someotherclass()\n", this, somedata_.c_str());
+    }
+    ~Someotherclass() {
+        printf("[%p:%s] Someotherclass()\n", this, somedata_.c_str());
+    }
     std::string getData() { return somedata_; }
     void setData(char const* in) { somedata_ = in; }
 };
@@ -32,8 +37,12 @@ protected:
 public:
     SimpleBase(int id):id_(id) {
         some_ = new Someotherclass;
+        printf("[%p:%i] SimpleBase()\n", this, id_);
     }
-    ~SimpleBase() { delete some_; }
+    ~SimpleBase() {
+        delete some_;
+        printf("[%p:%i] SimpleBase()\n", this, id_);
+    }
     void setName(std::string const& s) {}
     std::string getName() { return some_->getData(); }
     void change_somedata(Someotherclass* other) {
