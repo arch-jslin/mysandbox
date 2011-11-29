@@ -24,7 +24,7 @@ public:
         printf("[%p:%s] Someotherclass()\n", this, somedata_.c_str());
     }
     ~Someotherclass() {
-        printf("[%p:%s] Someotherclass()\n", this, somedata_.c_str());
+        printf("[%p:%s] ~Someotherclass()\n", this, somedata_.c_str());
     }
     std::string getData() { return somedata_; }
     void setData(char const* in) { somedata_ = in; }
@@ -41,11 +41,12 @@ public:
     }
     ~SimpleBase() {
         delete some_;
-        printf("[%p:%i] SimpleBase()\n", this, id_);
+        printf("[%p:%i] ~SimpleBase()\n", this, id_);
     }
     void setName(std::string const& s) {}
     std::string getName() { return some_->getData(); }
     void change_somedata(Someotherclass* other) {
+        delete some_; //very awkward, but, anyway.
         some_ = other;
     }
 
