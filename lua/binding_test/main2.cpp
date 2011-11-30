@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <tr1/memory>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #define APIEXPORT __declspec(dllexport)
@@ -67,6 +68,8 @@ public:
     static char const* classname;
     static char const* basename;
 };
+
+typedef std::tr1::shared_ptr<Simple> pSimplePtr;
 
 char const* Simple::classname = "Simple";
 char const* Simple::basename  = "SimpleBase";

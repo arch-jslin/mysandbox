@@ -5,11 +5,14 @@ local C = ffi.C
 ffi.cdef[[
 typedef struct Simple Simple;
 typedef struct Someotherclass Someotherclass;
+typedef struct pSimplePtr pSimplePtr;
 
 Someotherclass* new_Someotherclass();
 char const* Someotherclass_getData(Someotherclass*);
 char const* Someotherclass_setData(Someotherclass*, char const*);
 void Someotherclass__gc(Someotherclass*);
+
+pSimplePtr *get_SimplePtr(int);
 
 Simple *new_Simple(int);
 char const* Simple_getName(Simple*);
