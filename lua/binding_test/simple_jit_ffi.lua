@@ -3,25 +3,20 @@ local ffi = require 'ffi'
 local C = ffi.C
 
 ffi.cdef[[
-typedef struct Simple Simple;
 typedef struct Someotherclass Someotherclass;
-
-typedef struct BoxSimple BoxSimple;
+typedef struct pSimple pSimple;
 
 Someotherclass* new_Someotherclass();
 char const* Someotherclass_getData(Someotherclass*);
 char const* Someotherclass_setData(Someotherclass*, char const*);
 void Someotherclass__gc(Someotherclass*);
 
-BoxSimple* get_Simple(int);
-void Simple__reset(BoxSimple*);
-
-Simple *new_Simple(int);
-char const* Simple_getName(Simple*);
-void Simple__gc(Simple*);
-int Simple_getID(Simple*);
-void Simple_setID(Simple*, int);
-void Simple_change_somedata(Simple*, Someotherclass*);
+pSimple* new_Simple(int);
+char const* Simple_getName(pSimple*);
+void Simple__gc(pSimple*);
+int Simple_getID(pSimple*);
+void Simple_setID(pSimple*, int);
+void Simple_change_somedata(pSimple*, Someotherclass*);
 ]]
 
 -- wrap into class like behavior
@@ -42,7 +37,7 @@ end
 mt.getID = C.Simple_getID
 mt.setID = C.Simple_setID
 mt.change_somedata = C.Simple_change_somedata
-ffi.metatype("Simple", mt)
+ffi.metatype("pSimple", mt)
 
 --[[
 local function Simple(...)
@@ -50,9 +45,6 @@ local function Simple(...)
   ffi.gc(self.super, C.Simple__gc)
   return setmetatable(self, mt)
 end --]]
-
-local p = ffi.gc(C.get_Simple(8), C.Simple__reset)
-p = nil
 
 local d = ffi.gc(C.new_Someotherclass(), C.Someotherclass__gc)
 d:setData("hahahaha")

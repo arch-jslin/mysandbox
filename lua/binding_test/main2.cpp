@@ -69,15 +69,7 @@ public:
     static char const* basename;
 };
 
-typedef std::tr1::shared_ptr<void> pvoid;
-typedef std::tr1::shared_ptr<Simple> pSimplePtr;
-
-template <typename T>
-struct Box {
-    std::tr1::shared_ptr<T> p;
-};
-
-typedef Box<Simple> BoxSimple;
+typedef std::tr1::shared_ptr<Simple> pSimple;
 
 char const* Simple::classname = "Simple";
 char const* Simple::basename  = "SimpleBase";
@@ -102,22 +94,6 @@ void Simple::setID(int id) {
 // --- dummy interface to C and LuaJIT FFI can call directly ---
 
 extern "C" {
-    APIEXPORT BoxSimple* get_Simple(int id) {
-        BoxSimple* p = new BoxSimple;
-        p->p = pSimplePtr(new Simple(id));
-        printf("use_count: %ld\n", p->p.use_count());
-        return p;
-    }
-
-    APIEXPORT void Simple__reset(BoxSimple* p) {
-        printf("data: %d\n", p->p->getID());
-        printf("name: %s\n", p->p->getName().c_str());
-        printf("use_count: %ld\n", p->p.use_count());
-        p->p.reset();
-        delete p;
-        printf("-------------------\n");
-    }
-
     APIEXPORT Someotherclass* new_Someotherclass() {
         return new Someotherclass;
     }
@@ -134,28 +110,30 @@ extern "C" {
         delete this_;
     }
 
-    APIEXPORT char const* Simple_getName(Simple *this_) {
-        return this_->getName().c_str();
-    }
-
-    APIEXPORT void Simple__gc(Simple *this_) {
+    APIEXPORT void Simple__gc(pSimple *this_) {
         delete this_;
     }
 
-    APIEXPORT int Simple_getID(Simple *this_) {
-        return this_->getID();
+    APIEXPORT char const* Simple_getName(pSimple *this_) {
+        return (*this_)->getName().c_str();
     }
 
-    APIEXPORT void Simple_setID(Simple* this_, int id) {
-        this_->setID(id);
+    APIEXPORT int Simple_getID(pSimple *this_) {
+        return (*this_)->getID();
     }
 
-    APIEXPORT void Simple_change_somedata(Simple* this_, Someotherclass* data) {
-        this_->change_somedata(data);
+    APIEXPORT void Simple_setID(pSimple* this_, int id) {
+        (*this_)->setID(id);
     }
 
-    APIEXPORT Simple *new_Simple(int id) {
-        return new Simple(id);
+    APIEXPORT void Simple_change_somedata(pSimple* this_, Someotherclass* data) {
+        (*this_)->change_somedata(data);
+    }
+
+    APIEXPORT pSimple* new_Simple(int id) {
+        pSimple* p = new pSimple;
+        *p = pSimple(new Simple(id));
+        return p;
     }
 }
 
