@@ -339,14 +339,14 @@ int main()
 {
     test_jit_ffi();
     printf("--------------------------------------\n");
-//    test_simple_cpp_obj();
-//    printf("--------------------------------------\n");
-//    test_simple_cpp_obj2();
-//    printf("--------------------------------------\n");
-//    test_simple_cpp_obj3();
-//    printf("--------------------------------------\n");
-//    test_simple_cpp_obj4();
-//    printf("--------------------------------------\n");
-//    test_simple_cpp_obj5();
+    test_simple_cpp_obj();
+    printf("--------------------------------------\n");
+    test_simple_cpp_obj2();
+    printf("--------------------------------------\n");
+    test_simple_cpp_obj3();
+    printf("--------------------------------------\n");
+    test_simple_cpp_obj4();
+    printf("--------------------------------------\n");
+    test_simple_cpp_obj5();
     return 0;
 }
