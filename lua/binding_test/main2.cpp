@@ -41,7 +41,7 @@ public:
         printf("[%p:%i] SimpleBase()\n", this, id_);
     }
     ~SimpleBase() {
-        delete some_;
+        //delete some_;
         printf("[%p:%i] ~SimpleBase()\n", this, id_);
     }
     void setName(std::string const& s) {}
@@ -69,7 +69,15 @@ public:
     static char const* basename;
 };
 
+typedef std::tr1::shared_ptr<void> pvoid;
 typedef std::tr1::shared_ptr<Simple> pSimplePtr;
+
+template <typename T>
+struct Box {
+    std::tr1::shared_ptr<T> p;
+};
+
+typedef Box<Simple> BoxSimple;
 
 char const* Simple::classname = "Simple";
 char const* Simple::basename  = "SimpleBase";
@@ -94,6 +102,22 @@ void Simple::setID(int id) {
 // --- dummy interface to C and LuaJIT FFI can call directly ---
 
 extern "C" {
+    APIEXPORT BoxSimple* get_Simple(int id) {
+        BoxSimple* p = new BoxSimple;
+        p->p = pSimplePtr(new Simple(id));
+        printf("use_count: %ld\n", p->p.use_count());
+        return p;
+    }
+
+    APIEXPORT void Simple__reset(BoxSimple* p) {
+        printf("data: %d\n", p->p->getID());
+        printf("name: %s\n", p->p->getName().c_str());
+        printf("use_count: %ld\n", p->p.use_count());
+        p->p.reset();
+        delete p;
+        printf("-------------------\n");
+    }
+
     APIEXPORT Someotherclass* new_Someotherclass() {
         return new Someotherclass;
     }
@@ -337,14 +361,14 @@ int main()
 {
     test_jit_ffi();
     printf("--------------------------------------\n");
-    test_simple_cpp_obj();
-    printf("--------------------------------------\n");
-    test_simple_cpp_obj2();
-    printf("--------------------------------------\n");
-    test_simple_cpp_obj3();
-    printf("--------------------------------------\n");
-    test_simple_cpp_obj4();
-    printf("--------------------------------------\n");
-    test_simple_cpp_obj5();
+//    test_simple_cpp_obj();
+//    printf("--------------------------------------\n");
+//    test_simple_cpp_obj2();
+//    printf("--------------------------------------\n");
+//    test_simple_cpp_obj3();
+//    printf("--------------------------------------\n");
+//    test_simple_cpp_obj4();
+//    printf("--------------------------------------\n");
+//    test_simple_cpp_obj5();
     return 0;
 }

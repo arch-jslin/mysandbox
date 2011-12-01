@@ -5,14 +5,16 @@ local C = ffi.C
 ffi.cdef[[
 typedef struct Simple Simple;
 typedef struct Someotherclass Someotherclass;
-typedef struct pSimplePtr pSimplePtr;
+
+typedef struct BoxSimple BoxSimple;
 
 Someotherclass* new_Someotherclass();
 char const* Someotherclass_getData(Someotherclass*);
 char const* Someotherclass_setData(Someotherclass*, char const*);
 void Someotherclass__gc(Someotherclass*);
 
-pSimplePtr *get_SimplePtr(int);
+BoxSimple* get_Simple(int);
+void Simple__reset(BoxSimple*);
 
 Simple *new_Simple(int);
 char const* Simple_getName(Simple*);
@@ -48,6 +50,10 @@ local function Simple(...)
   ffi.gc(self.super, C.Simple__gc)
   return setmetatable(self, mt)
 end --]]
+
+local p = ffi.gc(C.get_Simple(8), C.Simple__reset)
+p = nil
+
 local d = ffi.gc(C.new_Someotherclass(), C.Someotherclass__gc)
 d:setData("hahahaha")
 
