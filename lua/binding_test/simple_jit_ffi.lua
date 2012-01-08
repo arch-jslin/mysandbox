@@ -6,6 +6,15 @@ ffi.cdef[[
 typedef struct Someotherclass Someotherclass;
 typedef struct pSimple pSimple;
 
+typedef struct {
+  enum { PSC_AI_NONE = 0, PSC_AI_SHOOT, PSC_AI_HASTE };
+  int x, y;
+  int delay;
+  unsigned int type; //enum
+} Data;
+
+void verify_data(Data*);
+
 Someotherclass* new_Someotherclass();
 char const* Someotherclass_getData(Someotherclass*);
 char const* Someotherclass_setData(Someotherclass*, char const*);
@@ -14,9 +23,12 @@ void Someotherclass__gc(Someotherclass*);
 pSimple* new_Simple(int);
 char const* Simple_getName(pSimple*);
 void Simple__gc(pSimple*);
-int Simple_getID(pSimple*);
+int  Simple_getID(pSimple*);
 void Simple_setID(pSimple*, int);
 void Simple_change_somedata(pSimple*, Someotherclass*);
+
+pSimple** create_a_list(int n);
+void      simple_list__gc(pSimple**, int);
 ]]
 
 -- wrap into class like behavior
@@ -37,6 +49,7 @@ end
 mt.getID = C.Simple_getID
 mt.setID = C.Simple_setID
 mt.change_somedata = C.Simple_change_somedata
+mt.__gc  = C.Simple__gc
 ffi.metatype("pSimple", mt)
 
 --[[
@@ -46,10 +59,25 @@ local function Simple(...)
   return setmetatable(self, mt)
 end --]]
 
+print "testing compatible structure (pointers) accessing speed when passed to C functions.."
+local data = ffi.new("Data", {1, 2, 3, C.PSC_AI_SHOOT})
+local t = os.clock()
+for i = 1, 500000000 do 
+  data.x = i
+  data.y = i*2
+  C.verify_data(data)
+end
+print( os.clock() - t )
+
+local l = ffi.gc(C.create_a_list(2), function(list) C.simple_list__gc(list, 2) end)
+for i = 0, 1 do 
+  print(l[i]:getID())
+end
+
 local d = ffi.gc(C.new_Someotherclass(), C.Someotherclass__gc)
 d:setData("hahahaha")
 
-local s = ffi.gc(C.new_Simple(6), C.Simple__gc)
+local s = C.new_Simple(6)
 
 s:change_somedata(d)
 

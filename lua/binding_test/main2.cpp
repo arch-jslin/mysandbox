@@ -93,7 +93,19 @@ void Simple::setID(int id) {
 // ------ LuaJIT FFI direct binding --------
 // --- dummy interface to C and LuaJIT FFI can call directly ---
 
+struct Data {
+    enum { PSC_AI_NONE = 0, PSC_AI_SHOOT, PSC_AI_HASTE };
+    int x, y;
+    int delay;
+    unsigned int type; //enum
+};
+
 extern "C" {
+    APIEXPORT void verify_data(Data* d) {
+        //printf("%d, %d, %d, %d\n", d->x, d->y, d->delay, d->type);
+        //printf("%d, %d, %d, %d\n", d.x, d.y, d.delay, d.type);
+    }
+
     APIEXPORT Someotherclass* new_Someotherclass() {
         return new Someotherclass;
     }
@@ -111,6 +123,7 @@ extern "C" {
     }
 
     APIEXPORT void Simple__gc(pSimple *this_) {
+        printf("Hello...?\n");
         delete this_;
     }
 
@@ -134,6 +147,21 @@ extern "C" {
         pSimple* p = new pSimple;
         *p = pSimple(new Simple(id));
         return p;
+    }
+
+    APIEXPORT pSimple** create_a_list(int n) {
+        pSimple** list = new pSimple*[n];
+        for( int i = 0; i < n; ++i ) {
+            list[i] = new pSimple(new Simple(i));
+        }
+        return list;
+    }
+
+    APIEXPORT void simple_list__gc(pSimple** list, int n) {
+        for( int i = 0; i < n; ++i ) {
+            delete list[i];
+        }
+        delete[] list;
     }
 }
 
@@ -339,14 +367,14 @@ int main()
 {
     test_jit_ffi();
     printf("--------------------------------------\n");
-    test_simple_cpp_obj();
-    printf("--------------------------------------\n");
-    test_simple_cpp_obj2();
-    printf("--------------------------------------\n");
-    test_simple_cpp_obj3();
-    printf("--------------------------------------\n");
-    test_simple_cpp_obj4();
-    printf("--------------------------------------\n");
-    test_simple_cpp_obj5();
+//    test_simple_cpp_obj();
+//    printf("--------------------------------------\n");
+//    test_simple_cpp_obj2();
+//    printf("--------------------------------------\n");
+//    test_simple_cpp_obj3();
+//    printf("--------------------------------------\n");
+//    test_simple_cpp_obj4();
+//    printf("--------------------------------------\n");
+//    test_simple_cpp_obj5();
     return 0;
 }
