@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="fficb_vs_coro" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Release">
+				<Option output="bin\Release\fficb_vs_coro" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Release\" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add directory="C:\lang\luarocks\2.0\include" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="C:\lang\luarocks\2.0\lua5.1.lib" />
+					<Add directory="C:\lang\luarocks\2.0" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="386-ucontext.h" />
+		<Unit filename="Base.h" />
+		<Unit filename="Common.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Common.h" />
+		<Unit filename="Coro.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Coro.h" />
+		<Unit filename="amd64-ucontext.h" />
+		<Unit filename="asm.S" />
+		<Unit filename="context.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="lua_utils.cpp" />
+		<Unit filename="lua_utils.hpp" />
+		<Unit filename="main.cpp" />
+		<Unit filename="power-ucontext.h" />
+		<Unit filename="taskimpl.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
