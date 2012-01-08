@@ -44,6 +44,7 @@ public:
         //delete some_;
         printf("[%p:%i] ~SimpleBase()\n", this, id_);
     }
+    void setID(int);
     void setName(std::string const& s) {}
     std::string getName() { return some_->getData(); }
     void change_somedata(Someotherclass* other) {
@@ -63,13 +64,13 @@ public:
     Simple(int id);
     ~Simple();
     int getID();
-    void setID(int);
 
     static char const* classname;
     static char const* basename;
 };
 
-typedef std::tr1::shared_ptr<Simple> pSimple;
+typedef std::tr1::shared_ptr<SimpleBase> pSimpleBase;
+typedef std::tr1::shared_ptr<Simple>     pSimple;
 
 char const* Simple::classname = "Simple";
 char const* Simple::basename  = "SimpleBase";
@@ -86,7 +87,7 @@ int Simple::getID() {
     return id_;
 }
 
-void Simple::setID(int id) {
+void SimpleBase::setID(int id) {
     id_ = id;
 }
 
@@ -127,7 +128,7 @@ extern "C" {
         delete this_;
     }
 
-    APIEXPORT char const* Simple_getName(pSimple *this_) {
+    APIEXPORT char const* SimpleBase_getName(pSimpleBase *this_) {
         return (*this_)->getName().c_str();
     }
 
@@ -135,7 +136,7 @@ extern "C" {
         return (*this_)->getID();
     }
 
-    APIEXPORT void Simple_setID(pSimple* this_, int id) {
+    APIEXPORT void SimpleBase_setID(pSimpleBase* this_, int id) {
         (*this_)->setID(id);
     }
 
