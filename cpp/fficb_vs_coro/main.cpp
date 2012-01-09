@@ -1,5 +1,5 @@
 #include <cstdio>
-#include <boost/tr1/functional.hpp>
+#include <tr1/functional>
 #include "lua_utils.hpp"
 #include "Coro.h"
 
@@ -9,6 +9,7 @@ using namespace std::tr1::placeholders;
 
 std::tr1::function<void(int)> THE_CALLBACK = 0;
 Coro *mainCoro, *firstCoro;
+int dummy = 0;
 
 extern "C" {
     typedef struct {
@@ -31,9 +32,9 @@ void start_lua(void* context)
     Lua::call(L, "start_loop");
 }
 
-void blah(volatile int a)
+void blah(int a)
 {
-    a = a + 1298346712;
+    dummy = a + 1298346712;
 }
 
 void call_lua_directly(lua_State* L, int n)
