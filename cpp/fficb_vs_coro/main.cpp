@@ -26,7 +26,7 @@ extern "C" {
 void start_lua(void* context)
 {
     lua_State* L = static_cast<lua_State*>(context);
-    Lua::call(L, "start_cycle");
+    Lua::call(L, "start_loop");
 }
 
 void blah(volatile int a)
@@ -48,27 +48,27 @@ int main()
     for( int i = 0; i < 10000000; ++i ) {
         THE_CALLBACK(100);
     }
-    printf("%ld\n", clock() - t);
+    printf("LuaJIT FFI Callback 10M times: %ld\n", clock() - t);
 
     t = clock();
 
     for( int i = 0; i < 10000000; ++i ) {
         blah(100);
     }
-    printf("%ld\n", clock() - t);
+    printf("C direct call 10M times: %ld\n", clock() - t);
 
     t = clock();
     for( int i = 0; i < 10000000; ++i ) {
         Lua::call(L, "func2", 100);
     }
-    printf("%ld\n", clock() - t);
+    printf("C call Lua through Lua/C API directly 10M times: %ld\n", clock() - t);
 
     t = clock();
     Coro_startCoro_(mainCoro, firstCoro, (void *)L, start_lua);
     for( int i = 0; i < 10000000; ++i ) {
         Coro_switchTo_(mainCoro, firstCoro);
     }
-    printf("%ld", clock() - t);
+    printf("Coroutine switch and only let LuaJIT FFI call C 10M times: %ld", clock() - t);
 
     return 0;
 }

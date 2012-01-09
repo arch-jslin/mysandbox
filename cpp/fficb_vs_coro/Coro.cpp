@@ -39,7 +39,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#if !defined(__MINGW32__) && !defined(WIN32)
 #include "taskimpl.h"
+#endif
 
 #ifdef USE_VALGRIND
 #include <valgrind/valgrind.h>

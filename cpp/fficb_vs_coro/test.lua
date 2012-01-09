@@ -102,10 +102,6 @@ __declspec(dllexport) void set_callback(void (*cb)(int));
 __declspec(dllexport) int poll();
 ]]
 
-for k,v in pairs(jit.util) do
-  print(k, v)
-end
-
 local function func(value)
   --print(value)
   value = value + 19286418
@@ -115,8 +111,8 @@ function func2(value)
   value = value + 19286418
 end
 
-function start_cycle()
-  print "lua cycle triggered"
+function start_loop()
+  print "lua tight loop triggered"
   while true do
     local sum = ffi.C.poll() + 129379128
   end
