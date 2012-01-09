@@ -103,12 +103,11 @@ __declspec(dllexport) int poll();
 ]]
 
 local function func(value)
-  --print(value)
-  value = value + 19286418
+  value = value + 123894729
 end
 
 function func2(value)
-  value = value + 19286418
+  value = value + 129286418
 end
 
 function start_loop()

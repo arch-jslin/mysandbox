@@ -5,6 +5,8 @@
 
 #include <ctime>
 
+using namespace std::tr1::placeholders;
+
 std::tr1::function<void(int)> THE_CALLBACK = 0;
 Coro *mainCoro, *firstCoro;
 
@@ -34,6 +36,11 @@ void blah(volatile int a)
     a = a + 1298346712;
 }
 
+void call_lua_directly(lua_State* L, int n)
+{
+    Lua::call(L, "func2", n);
+}
+
 int main()
 {
     mainCoro = Coro_new();
@@ -48,20 +55,21 @@ int main()
     for( int i = 0; i < 10000000; ++i ) {
         THE_CALLBACK(100);
     }
-    printf("LuaJIT FFI Callback 10M times: %ld\n", clock() - t);
+    printf("LuaJIT FFI callback 10M times: %ld\n", clock() - t);
 
     t = clock();
-
+    std::tr1::function<void(int)> func1 = bind(blah, _1);
     for( int i = 0; i < 10000000; ++i ) {
-        blah(100);
+        func1(100);
     }
-    printf("C direct call 10M times: %ld\n", clock() - t);
+    printf("C++ call a wrapper callback 10M times: %ld\n", clock() - t);
 
     t = clock();
+    std::tr1::function<void(int)> func2 = bind(call_lua_directly, L, _1);
     for( int i = 0; i < 10000000; ++i ) {
-        Lua::call(L, "func2", 100);
+        func2(100);
     }
-    printf("C call Lua through Lua/C API directly 10M times: %ld\n", clock() - t);
+    printf("C++ call Lua through a wrapper callback 10M times: %ld\n", clock() - t);
 
     t = clock();
     Coro_startCoro_(mainCoro, firstCoro, (void *)L, start_lua);
