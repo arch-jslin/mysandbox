@@ -52,17 +52,17 @@ int main()
     Lua::run_script(L, "test.lua");
 
     std::time_t t = clock();
-    for( int i = 0; i < 10000000; ++i ) {
-        THE_CALLBACK(100);
-    }
-    printf("LuaJIT FFI callback 10M times: %ld\n", clock() - t);
-
-    t = clock();
     std::tr1::function<void(int)> func1 = bind(blah, _1);
     for( int i = 0; i < 10000000; ++i ) {
         func1(100);
     }
     printf("C++ call a wrapper callback 10M times: %ld\n", clock() - t);
+
+    t = clock();
+    for( int i = 0; i < 10000000; ++i ) {
+        THE_CALLBACK(100);
+    }
+    printf("LuaJIT FFI callback 10M times: %ld\n", clock() - t);
 
     t = clock();
     std::tr1::function<void(int)> func2 = bind(call_lua_directly, L, _1);
