@@ -16,11 +16,17 @@ extern "C" {
         int type;
     } Event;
 
-    __declspec(dllexport) void set_callback(void (*cb)(int)) {
+#ifdef WIN32
+#define APIEXPORT __declspec(dllexport)
+#else
+#define APIEXPORT
+#endif
+
+    APIEXPORT void set_callback(void (*cb)(int)) {
         THE_CALLBACK = cb;
     }
 
-    __declspec(dllexport) int poll() {
+    APIEXPORT int poll() {
         Coro_switchTo_(firstCoro, mainCoro);
         return 100;
     }

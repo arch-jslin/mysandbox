@@ -3,8 +3,8 @@ ffi.cdef[[
 typedef struct {
     int type;
 } Event;
-__declspec(dllexport) void set_callback(void (*cb)(int));
-__declspec(dllexport) int poll();
+void set_callback(void (*cb)(int));
+int poll();
 ]]
 
 local function func(value)
