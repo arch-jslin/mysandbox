@@ -1,46 +1,32 @@
 helper = require 'helper'
-hitTest  = helper.hitTest
 new_image= helper.image
 new_text = helper.text
 random   = helper.random
-floor    = math.floor
 remove   = helper.remove
 touch_do = helper.touch_do
 timer_do = helper.timer_do
 ------------------------------------------------------------
 
 count = -3
-answer = 1
+
+number1 = new_text(1)
+number1.x = random(600) + 100
+number1.y = random(350) + 50
+
+number2 = new_text(2)
+number2.x = random(600) + 100
+number2.y = random(350) + 50
+
+number3 = new_text(3)
+number3.x = random(600) + 100
+number3.y = random(350) + 50
 
 t1 = new_text(count)
 t1.x = 750
 t1.y = 440
 
-numbers = {}
-covers  = {}
-order   = {}
-for i = 1, 40 do
-  order[i] = i
-end
-
-for i = 1, 40 do
-  j = floor(random(40)) + 1
-  temp = order[i]
-  order[i] = order[j]
-  order[j] = temp
-end
-
-for i = 1, 8 do
-  numbers[i] = new_text(i)
-  numbers[i].x =      (order[i] % 8) * 70 + 100
-  numbers[i].y = floor(order[i] / 8) * 70 + 50
-end
-
 uncover = function(o, e)
-  if o.number == answer then
-    remove(o)
-    answer = answer + 1
-  end
+  remove(o)
 end
 
 update = function(e)
@@ -48,13 +34,20 @@ update = function(e)
   t1.text = count
   
   if count == 0 then
-    for i = 1, 8 do
-      covers[i]        = new_image('square.png')
-      covers[i].x      = numbers[i].x
-      covers[i].y      = numbers[i].y
-      covers[i].number = i
-      covers[i].tap_do(uncover)
-    end
+    cover1 = new_image('square.png')
+    cover1.x = number1.x
+    cover1.y = number1.y
+    cover1.tap_do(uncover)
+
+    cover2 = new_image('square.png')
+    cover2.x = number2.x
+    cover2.y = number2.y
+    cover2.tap_do(uncover)
+    
+    cover3 = new_image('square.png')
+    cover3.x = number3.x
+    cover3.y = number3.y
+    cover3.tap_do(uncover)
   end  
 end
 
