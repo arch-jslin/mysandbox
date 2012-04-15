@@ -31,19 +31,19 @@
 
 #include <errno.h>
 #include <cstdlib>
-//#include <unistd.h>
+#include <unistd.h>
 #include <cstring>
 #include <cassert>
 #include <ctime>
 #include <sys/time.h>
 #include <sys/types.h>
-//#include <sys/wait.h>
-//#include <sched.h>
-//#include <signal.h>
+#include <sys/wait.h>
+#include <sched.h>
+#include <signal.h>
 #if USE_UCONTEXT
 #include <ucontext.h>
 #endif
-//#include <sys/utsname.h>
+#include <sys/utsname.h>
 #include <inttypes.h>
 //#include "task.h"
 

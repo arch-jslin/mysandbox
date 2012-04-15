@@ -6,7 +6,9 @@
 
 #include "Common.h"
 //#include "PortableUContext.h"
+#if !defined(__MINGW32__) && !defined(WIN32)
 #include "taskimpl.h"
+#endif
 
 #if defined(__SYMBIAN32__)
 	#define CORO_STACK_SIZE     8192

@@ -1,10 +1,16 @@
 
-#ifndef __SHOOTING_CUBES_LUA_UTILITY__
-#define __SHOOTING_CUBES_LUA_UTILITY__
+#ifndef __LUA_UTILITY__
+#define __LUA_UTILITY__
 
 #include <cstdio>
 #include <cstdlib>
-#include <lua.hpp>
+
+extern "C" {
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+#include "luajit.h"
+}
 
 struct Lua
 {
@@ -31,7 +37,7 @@ struct Lua
     template<typename T>
     static inline T fetch_(lua_State* L, int n);
 
-#ifdef __SHOOTING_CUBES_CPP0X__
+#ifdef __CPP0X__
     static inline void push_args_(){}
 
     template<typename Head, typename... Tail>
@@ -85,7 +91,7 @@ struct Lua
             error(L, "error calling '%s': %s", funcname, lua_tostring(L, -1));
     }
 
-#else // __SHOOTING_CUBES_CPP0X__
+#else // __CPP0X__
 
     template<typename Ret> // Return 1 value with no args
     static Ret call_R(lua_State* L, char const* funcname)
@@ -251,7 +257,7 @@ struct Lua
             error(L, "error calling '%s': %s", funcname, lua_tostring(L, -1));
     }
 
-#endif // __SHOOTING_CUBES_CPP0X__
+#endif // __CPP0X__
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -261,4 +267,4 @@ template<> inline double      Lua::fetch_(lua_State* L, int n) { return luaL_che
 template<> inline    int      Lua::fetch_(lua_State* L, int n) { return luaL_checkint(L, n); }
 template<> inline char const* Lua::fetch_(lua_State* L, int n) { return luaL_checkstring(L, n); }
 
-#endif// __SHOOTING_CUBES_LUA_UTILITY__
+#endif// __LUA_UTILITY__
