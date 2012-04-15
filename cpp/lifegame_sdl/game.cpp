@@ -48,7 +48,7 @@ void setupARBAPI()
 Game::Game(int const& argc, char* argv[])
   :RENDER_OPT( argc > 1 ? atoi(argv[1]) : 2 ),
    csize(2), model_w(120), model_h(90), WIDTH(csize * model_w), HEIGHT(csize * model_h),
-   t(clock()), iter(1), vboID1(0), pboID1(0), texID1(0), vertices(0), bitmap(0), screen(0)
+   t(clock()), iter(1), vboID1(0), pboID1(0), texID1(0), count(0), vertices(0), bitmap(0), screen(0)
 {
     srand(time(0)); // randomize at game initialization
     if ( argc > 2 ) csize = static_cast<size_t>(atoi(argv[2]));
@@ -137,13 +137,16 @@ bool Game::run()
 
 void Game::update(time_t const& time)
 {
-    printf("Millisecs between updates: %ld\n", (time - t));
-    //if (time - t > 1000) {
+    //printf("Millisecs between updates: %ld\n", (time - t));
+    ++count;
+    if (time - t > 1000) {
         t = time;
-        iter = (iter+1) % 256;
-        int index = iter % 2;
-        grid_iteration(grids[index], grids[index^1], model_w, model_h);
-    //}
+        printf("Frames completed per second: %d\n", count);
+        count = 0;
+    }
+    iter = (iter+1) % 256;
+    int index = iter % 2;
+    grid_iteration(grids[index], grids[index^1], model_w, model_h);
 }
 
 void Game::render(std::tr1::function<void()> render_)

@@ -25,6 +25,7 @@ struct Game {
     time_t t;
     int iter;
     unsigned int vboID1, pboID1, texID1;
+    int count;
 
     struct SVertex{ float x, y, z; };
     char** grids[2];        //these will be allocated, have to free them in d'tor

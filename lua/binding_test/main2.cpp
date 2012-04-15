@@ -38,11 +38,11 @@ protected:
 public:
     SimpleBase(int id):id_(id) {
         some_ = new Someotherclass;
-        printf("[%p:%i] SimpleBase()\n", this, id_);
+        printf("[%p:%d] SimpleBase()\n", this, id_);
     }
     ~SimpleBase() {
-        //delete some_;
-        printf("[%p:%i] ~SimpleBase()\n", this, id_);
+        delete some_;
+        printf("[%p:%d] ~SimpleBase()\n", this, id_);
     }
     void setID(int);
     void setName(std::string const& s) {}
@@ -76,11 +76,11 @@ char const* Simple::classname = "Simple";
 char const* Simple::basename  = "SimpleBase";
 
 Simple::Simple(int id) : SimpleBase(id) {
-    printf("[%p:%i] Simple()\n", this, id_);
+    printf("[%p:%d] Simple()\n", this, id_);
 }
 
 Simple::~Simple() {
-    printf("[%p:%i] ~Simple()\n", this, id_);
+    printf("[%p:%d] ~Simple()\n", this, id_);
 }
 
 int Simple::getID() {

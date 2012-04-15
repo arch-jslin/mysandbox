@@ -78,10 +78,10 @@ for i = 0, 1 do
   print(l[i]:getID())
 end
 
-local d = ffi.gc(C.new_Someotherclass(), C.Someotherclass__gc)
+local d = C.new_Someotherclass()
 d:setData("hahahaha")
 
-local s = C.new_Simple(6)
+local s = ffi.gc(C.new_Simple(6), C.Simple__gc)
 
 s:change_somedata(d)
 
@@ -90,17 +90,16 @@ print(s:getID())
 
 local counter = 0
 local t = os.clock()
-for i = 1, 50000 do
-  for j = 1, 10000 do  
-    s:setID(s:getID()+1) -- fine
-  end
+for i = 1, 500000000 do  
+  s:setID(s:getID()+1) -- fine
 end
 print( os.clock() - t )
 print( s:getID() )
 
 t = os.clock()
 for i = 1, 500000000 do
-  C.SimpleBase_setID(ffi.cast("pSimpleBase*", s), 12) -- best
+  -- C.SimpleBase_setID(ffi.cast("pSimpleBase*", s), 12) -- best
+  s:setID(12)
 end
 print( os.clock() - t )
 

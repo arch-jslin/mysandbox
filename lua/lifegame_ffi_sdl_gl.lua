@@ -174,6 +174,7 @@ function game:init()
   self.HEIGHT       = self.model_h * self.csize
   self.t            = os.clock()
   self.iter         = 1
+  self.count        = 0
   
   if self.RENDER_OPT > 4 or self.RENDER_OPT < 1 then 
     print("This rendering method is not supported. Please choose from 1~4.")
@@ -241,13 +242,18 @@ function game:run(event)
 end
 
 function game:update(t)
-  print("Secs between updates: "..(t - self.t)..", mem-usage: "..collectgarbage("count"))
+  --print("Secs between updates: "..(t - self.t)..", mem-usage: "..collectgarbage("count"))
   --if t - self.t > 0.1 then
+  self.count = self.count + 1
+  if t - self.t > 1 then
     self.t = t
-    self.iter = (self.iter+1) % 256
-    local old_index = self.iter % 2
-    local new_index = bit.bxor(old_index, 1)
-    grid_iteration(self.grids[old_index], self.grids[new_index], self.model_w, self.model_h, self.NO_MODEL_JIT)
+    io.write(string.format("Frames completed per second: %d\n", self.count))
+    self.count = 0
+  end
+  self.iter = (self.iter+1) % 256
+  local old_index = self.iter % 2
+  local new_index = bit.bxor(old_index, 1)
+  grid_iteration(self.grids[old_index], self.grids[new_index], self.model_w, self.model_h, self.NO_MODEL_JIT)
   --end
 end
 

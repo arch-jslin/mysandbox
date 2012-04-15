@@ -219,13 +219,6 @@ public:
         }
     }
 
-//    template<typename T>
-//    inline T* fetchUD_(int n) {
-//        void** box = (void**) luaL_checkudata(L, n, T::classname);
-//        if( box == NULL )
-//            luaL_typerror(L, n, T::classname);
-//        return static_cast<T*>(*box);    //unbox it, it's still a pointer.
-//    }
     template<typename T>
     inline T* fetchUD_(int n) {
         lua_getfield(L, LUA_REGISTRYINDEX, T::classname); // get libtable by name
@@ -262,6 +255,14 @@ public:
         lua_pushnil(L);
         lua_settable(L, LUA_ENVIRONINDEX); // envtable[address] = nil
     }
+
+//    template<typename T>
+//    inline T* fetchUD_(int n) {
+//        void** box = (void**) luaL_checkudata(L, n, T::classname);
+//        if( box == NULL )
+//            luaL_typerror(L, n, T::classname);
+//        return static_cast<T*>(*box);    //unbox it, it's still a pointer.
+//    }
 };
 
 class Lua4 : public StackUtils {
