@@ -3,33 +3,6 @@
 #include <functional>
 #include <cmath>
 
-#define F std::function
-
-template <typename R, typename... Args>
-struct Untyped {
-    Untyped( F< F<R(Args...)>(Untyped<R, Args...>) > lamb )
-        :lamb_(lamb){}
-
-    F<R(Args...)> operator()(Untyped<R, Args...> xprime) const {
-        return lamb_(xprime);
-    }
-
-    F< F<R(Args...)>(Untyped<R, Args...>) > lamb_;
-};
-
-template <typename R, typename... Args>
-F<R(Args...)> Z(F< F<R(Args...)> (F<R(Args...)>) > f) {
-    Untyped<R, Args...> temp(
-        [f](Untyped<R, Args...> x) -> F<R(Args...)> {
-            return f(
-                [x](Args... args) -> R {
-                    return x(x)(args...);
-                }
-            );
-        });
-    return temp(temp);
-}
-
 struct InnerLayer;
 struct ActualFun;
 struct Untype;
@@ -71,9 +44,97 @@ int factorialB(int n) {
     return n*factorialA(n-1);
 }
 
+#define F std::function
+
+template <typename R, typename... Args>
+struct Untyped {
+    Untyped( F< F<R(Args...)>(Untyped<R, Args...>) > lamb )
+        :lamb_(lamb){}
+
+    F<R(Args...)> operator()(Untyped<R, Args...> xprime) const {
+        return lamb_(xprime);
+    }
+
+    F< F<R(Args...)>(Untyped<R, Args...>) > lamb_;
+};
+
+template <typename R, typename... Args>
+F<R(Args...)> Z(F< F<R(Args...)> (F<R(Args...)>) > f) {
+    Untyped<R, Args...> temp(
+        [f](Untyped<R, Args...> x) -> F<R(Args...)> {
+            return f(
+                [x](Args... args) -> R {
+                    return x(x)(args...);
+                }
+            );
+        });
+    return temp(temp);
+}
+
+template <typename R, typename... Args>
+struct Z1 {
+    typedef std::function< R(Args...) >     func_t;
+    typedef std::function< func_t(func_t) > xfunc_t;
+
+    struct RecFun {
+        typedef std::function< func_t(RecFun) > rec_func_t;
+        RecFun( rec_func_t f ) :f_(f){}
+        func_t operator()(RecFun xprime) const {
+            return f_(xprime);
+        }
+        rec_func_t f_;
+    };
+
+    static func_t Fix(xfunc_t f) {
+        RecFun rf( [f](RecFun x) -> func_t {
+            return f( [x](Args... args) -> R {
+                return x(x)(args...);
+            });
+        });
+        return rf(rf);
+    }
+};
+
+template <typename Lambda>
+struct infer {
+    //forcing to know the return function type, hence the real recursive function
+    typedef typename infer<decltype(&Lambda::operator())>::fp fp;
+};
+
+//not used?
+template <typename R, typename Lambda, typename... Args>
+struct infer< F<R(Args...)> (Lambda::*)( F<R(Args...)> ) > {
+    typedef Z1<R, Args...> fp;
+};
+
+//literal lambda objects adapter
+template <typename R, typename Lambda, typename... Args>
+struct infer< F<R(Args...)> (Lambda::*)( F<R(Args...)> ) const > {
+    typedef Z1<R, Args...> fp;
+};
+
+//literal function adapter
+template <typename R, typename... Args>
+struct infer< F<R(Args...)> (*)( F<R(Args...)> ) > {
+    typedef Z1<R, Args...> fp;
+};
+
+template <typename Lambda>
+auto Z2(Lambda f) -> typename infer<Lambda>::fp::func_t {
+    return infer<Lambda>::fp::Fix(f);
+}
+
+auto almost_fac2(F<int(int)> f) -> F<int(int)> {
+    return [f](int n) -> int {
+        if( n == 0 ) return 1;
+        return n*f(n-1);
+    };
+}
+
 int main()
 {
-    F< F<int(int)>(F<int(int)>) > almost_factorial =
+    auto almost_factorial =
+    //F< F<int(int)>(F<int(int)>) > almost_factorial =
         [](F<int(int)> f) -> F<int(int)> {
             return [f](int n) -> int {
                 if( n == 0 ) return 1;
@@ -81,7 +142,7 @@ int main()
             };
         };
 
-    std::cout << Z(almost_factorial)(10) << std::endl;
+    std::cout << Z2(almost_fac2)(10) << std::endl;
 
     F< F<int(int)> (F<int(int)>) > almost_fibonacci =
         [](F<int(int)> f) -> F<int(int)> {
@@ -107,7 +168,7 @@ int main()
     std::cout << Z(almost_ackermann)(3, 3) << std::endl;
 
     std::cout << Untype()(Untype())(10) << std::endl;
-    std::cout << Factorial(InnerLayer(&Untype()))(12) << std::endl;
+    //std::cout << Factorial(InnerLayer(&Untype()))(12) << std::endl;
     std::cout << factorialA(10) << std::endl;
 
     return 0;
