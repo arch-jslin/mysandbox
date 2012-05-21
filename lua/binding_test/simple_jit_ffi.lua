@@ -43,6 +43,7 @@ mt2.setData = C.Someotherclass_setData
 ffi.metatype("Someotherclass", mt2)
 
 local mt = {}
+--mt.__index = mt
 mt.__index = mt
 mt.getName = function(self) 
   return ffi.string(C.SimpleBase_getName(ffi.cast("pSimpleBase*", self)))
@@ -52,9 +53,31 @@ mt.setID = function(self, n)
   C.SimpleBase_setID(ffi.cast("pSimpleBase*", self), n)
 end
 mt.change_somedata = C.Simple_change_somedata
-
-mt.__gc  = C.Simple__gc
+-- mt.__gc  = C.Simple__gc this should not be useful under this use case
 ffi.metatype("pSimple", mt)
+
+local function gen_proxy(meta)
+  return function(t, k)
+    local p = function(self, ...) return meta[k](self._cdata, ...) end 
+    t[k] = p
+    return p
+  end
+end
+
+-- the problem is, originally all meta functions are just normal functions
+-- not closures. but now, everytime we find out we lack a proxy to a meta function,
+-- we generate a new closure, and assign on the actual table object t.
+-- this is just so bloatful...... 
+
+local function new_simple(o)
+  o._cdata = ffi.gc(C.new_Simple(o[1]), C.Simple__gc)
+  o = setmetatable(o, {__index = gen_proxy(mt)})
+  return o
+end
+
+local test = new_simple {2} 
+print(test)
+print(test:getID())
 
 --[[
 local function Simple(...)
@@ -81,7 +104,8 @@ end
 local d = C.new_Someotherclass()
 d:setData("hahahaha")
 
-local s = ffi.gc(C.new_Simple(6), C.Simple__gc)
+--local s = ffi.gc(C.new_Simple(6), C.Simple__gc)
+local s = new_simple {6}
 
 s:change_somedata(d)
 
@@ -106,7 +130,8 @@ print( os.clock() - t )
 local test = C.SimpleBase_setID  
 t = os.clock()
 for i = 1, 500000000 do 
-  test(ffi.cast("pSimpleBase*", s), 18) -- NOT GOOD!
+  --test(ffi.cast("pSimpleBase*", s), 18) -- NOT GOOD!
+  test(ffi.cast("pSimpleBase*", s._cdata), 18) -- NOT GOOD!
 end
 print( os.clock() - t )
 
