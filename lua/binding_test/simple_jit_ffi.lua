@@ -56,35 +56,26 @@ mt.change_somedata = C.Simple_change_somedata
 -- mt.__gc  = C.Simple__gc this should not be useful under this use case
 ffi.metatype("pSimple", mt)
 
-local function gen_proxy(meta)
-  return function(t, k)
-    local p = function(self, ...) return meta[k](self._cdata, ...) end 
-    t[k] = p
-    return p
+local function dupe_cdata_mt(meta)
+  local t = {} 
+  for k, v in pairs(meta) do
+    t[k] = function(self, ...) return meta[k](self._cdata, ...) end
   end
+  t.__index = t
+  return t
 end
 
--- the problem is, originally all meta functions are just normal functions
--- not closures. but now, everytime we find out we lack a proxy to a meta function,
--- we generate a new closure, and assign on the actual table object t.
--- this is just so bloatful...... 
+local wrapped_mt = dupe_cdata_mt(mt)
+
+-- now this wrapped_mt only happens per "inheritance" or per "composition"
+-- speed-wise it makes no difference and memory-wise it's cool now
+-- other inheritance impl in Lua involve table caching as well. So it's the same.
 
 local function new_simple(o)
   o._cdata = ffi.gc(C.new_Simple(o[1]), C.Simple__gc)
-  o = setmetatable(o, {__index = gen_proxy(mt)})
+  o = setmetatable(o, wrapped_mt)
   return o
 end
-
-local test = new_simple {2} 
-print(test)
-print(test:getID())
-
---[[
-local function Simple(...)
-  local self = {super = C.new_Simple(...)}
-  ffi.gc(self.super, C.Simple__gc)
-  return setmetatable(self, mt)
-end --]]
 
 print "testing compatible structure (pointers) accessing speed when passed to C functions.."
 local data = ffi.new("Data", {1, 2, 3, C.PSC_AI_SHOOT})
@@ -104,7 +95,6 @@ end
 local d = C.new_Someotherclass()
 d:setData("hahahaha")
 
---local s = ffi.gc(C.new_Simple(6), C.Simple__gc)
 local s = new_simple {6}
 
 s:change_somedata(d)
