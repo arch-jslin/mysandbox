@@ -27,11 +27,12 @@ end
 function MapUtils.display(map)
   for y = map.height, 1, -1 do
     for x = 1, map.width do
-      io.write(string.format("%3d", map[y][x]))
+      io.write("  ")
+      io.write(map[y][x])
     end
-    print()
+    io.write("\n")
   end
-  print()
+  io.write("\n")
 end
 
 local function gen_combinationsH_(c, w, h, len, ctor, starters)
