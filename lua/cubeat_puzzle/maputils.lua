@@ -7,9 +7,10 @@ local floor = math.floor
 
 function MapUtils.gen_map_from_exprs(w, h, exprs)
   local map = MapUtils.create_map(w, h)
-  for chain,v in ipairs(exprs) do
+  for chain, v in ipairs(exprs) do
     v:push_up_blocks_of(map)
-    v:put_color_in(map, chain)
+    --v:put_color_in(map, chain)
+    v:put_color_in(map)
   end
   return map
 end
@@ -18,7 +19,7 @@ function MapUtils.create_map(w, h)
   local map = {}
   map.width = w
   map.height = h
-  for y = 1, h do
+  for y = 1, h + 4 do -- height padding
     map[y] = {}; for x = 1, w do map[y][x] = 0 end
   end
   return map
@@ -27,11 +28,12 @@ end
 function MapUtils.display(map)
   for y = map.height, 1, -1 do
     for x = 1, map.width do
-      io.write(string.format("%3d", map[y][x]))
+      io.write("  ")
+      io.write(map[y][x])
     end
-    print()
+    io.write("\n")
   end
-  print()
+  io.write("\n")
 end
 
 local function gen_combinationsH_(c, w, h, len, ctor, starters)
@@ -90,17 +92,27 @@ function MapUtils.create_all_combinations(w, h)
 end
 
 local function do_check_chain_h(row, x)
-  local i = x + 1
-  while row[i] == row[i-1] do i = i + 1 end
-  local len = i - x
-  return (len >= 3), len
+  -- local i = x + 1
+  -- while row[x] == row[i] do i = i + 1 end
+  -- local len = i - x
+  -- return len
+  if row[x] ~= row[x+1] or row[x] ~= row[x+2] then return 0 end
+  if row[x] ~= row[x+3] then return 3 end
+  if row[x] ~= row[x+4] then return 4 end
+  return 5
 end
 
 local function do_check_chain_v(map, x, y)
-  local i = y + 1
-  while map[i] and map[i][x] == map[i-1][x] do i = i + 1 end
-  local len = i - y
-  return (len >= 3), len 
+  -- local i = y + 1
+  -- local orig = map[y][x]
+  -- while map[i] and orig == map[i][x] do i = i + 1 end
+  -- local len = i - y
+  -- return len 
+  local orig = map[y][x]
+  if orig ~= map[y+1][x] or orig ~= map[y+2][x] then return 0 end
+  if orig ~= map[y+3][x] then return 3 end
+  if orig ~= map[y+4][x] then return 4 end
+  return 5
 end
 
 local function mark_for_delete_h(delete_mark, x, y, len)
@@ -120,10 +132,10 @@ function MapUtils.find_chain(map)
   for y = 1, map.height do
     for x = 1, map.width do
       if map[y][x] > 0 then
-        local res, len = do_check_chain_v(map, x, y)
-        if res then chained = true; count = count + len end
-        res, len = do_check_chain_h(map[y], x)
-        if res then chained = true; count = count + len end
+        local len_v = do_check_chain_v(map, x, y)
+        if len_v >= 3 then chained = true; count = count + len_v end
+        local len_h = do_check_chain_h(map[y], x)
+        if len_h >= 3 then chained = true; count = count + len_h end
       end
     end
   end
@@ -137,14 +149,14 @@ function MapUtils.destroy_chain(map)
   for y = 1, map.height do
     for x = 1, map.width do
       if map[y][x] > 0 then
-        local res, len = do_check_chain_v(map, x, y)
-        if res then
-          mark_for_delete_v(delete_mark, x, y, len)
+        local len_v = do_check_chain_v(map, x, y)
+        if len_v >= 3 then
+          mark_for_delete_v(delete_mark, x, y, len_v)
           chained = true
         end
-        res, len = do_check_chain_h(map[y], x)
-        if res then 
-          mark_for_delete_h(delete_mark, x, y, len)
+        local len_h = do_check_chain_h(map[y], x)
+        if len_h >= 3 then 
+          mark_for_delete_h(delete_mark, x, y, len_h)
           chained = true
         end
       end

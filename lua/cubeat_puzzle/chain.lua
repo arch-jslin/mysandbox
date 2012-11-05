@@ -169,7 +169,7 @@ function Answer:push_up_blocks_of(map)
 end
 
 function Answer:put_color_in(map, num)
-  map[self.y][self.x] = self.color == 0 and num or self.color
+  map[self.y][self.x] = self.color
 end
   
 function Chain3H:push_up_blocks_of(map)
@@ -181,7 +181,7 @@ function Chain3H:push_up_blocks_of(map)
 end
 
 function Chain3H:put_color_in(map, num)
-  local color = self.color == 0 and num or self.color
+  local color = self.color
   map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2] = color, color, color
 end
 
@@ -195,7 +195,7 @@ function Chain4H:push_up_blocks_of(map, num)
 end
 
 function Chain4H:put_color_in(map, num)
-  local color = self.color == 0 and num or self.color
+  local color = self.color
   map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2], 
   map[self.y][self.x+3] = color, color, color, color
 end
@@ -211,7 +211,7 @@ function Chain5H:push_up_blocks_of(map, num)
 end
 
 function Chain5H:put_color_in(map, num)
-  local color = self.color == 0 and num or self.color
+  local color = self.color
   map[self.y][ self.x ], map[self.y][self.x+1], map[self.y][self.x+2], 
   map[self.y][self.x+3], map[self.y][self.x+4] = color, color, color, color, color
 end
@@ -223,7 +223,7 @@ function Chain3V:push_up_blocks_of(map, num)
 end
 
 function Chain3V:put_color_in(map, num)
-  local color = self.color == 0 and num or self.color
+  local color = self.color
   map[ self.y ][self.x], map[self.y+1][self.x], map[self.y+2][self.x] = color, color, color
 end
 
@@ -234,7 +234,7 @@ function Chain4V:push_up_blocks_of(map, num)
 end
 
 function Chain4V:put_color_in(map, num)
-  local color = self.color == 0 and num or self.color
+  local color = self.color
   map[ self.y ][self.x], map[self.y+1][self.x], map[self.y+2][self.x], map[self.y+3][self.x] = color, color, color, color
 end
 

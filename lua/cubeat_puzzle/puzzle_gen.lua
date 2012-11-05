@@ -1,4 +1,5 @@
 
+local jit = require 'jit'
 local MapUtils = require 'maputils'
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
@@ -19,6 +20,8 @@ function PuzzleGen:init(chain_limit, w, h)
   self.w = w
   self.h = h
   self.all_combinations, self.starters = MapUtils.create_all_combinations(w, h)
+  
+  jit.flush()
   
   self:reinit(chain_limit)
   
@@ -63,12 +66,12 @@ function PuzzleGen:reinit(chain_limit)
     end
   end
   
-  local t = os.clock()
+  --local t = os.clock()
   for _,v in ipairs(self.all_combinations) do
     v.intersects_ptr = random(#v.intersects) + 1
     v.answers_ptr    = random(#v.answers) + 1
   end
-  self.time_used_by_shuffle = self.time_used_by_shuffle + (os.clock() - t)
+  --self.time_used_by_shuffle = self.time_used_by_shuffle + (os.clock() - t)
   
   local c
   repeat
@@ -138,10 +141,10 @@ function PuzzleGen:next_chain(level)
       self.chains:top():push_up_blocks_of( self.mapcache ) 
       for k = 0, 3 do 
         self.chains:top().color = ((last_color + k) % 4) + 1
-        local t = os.clock()
+        --local t = os.clock()
         self.chains:top():put_color_in( self.mapcache ) -- important, only call this after color is assigned.
         local chained, possible_count = MapUtils.find_chain( self.mapcache )
-        self.time_used_by_find_chain = self.time_used_by_find_chain + (os.clock() - t)
+        --self.time_used_by_find_chain = self.time_used_by_find_chain + (os.clock() - t)
         if possible_count == c.len then
           if self.chains.size >= self.chain_limit then
             if self:add_final_answer( self.mapcache ) then return true end
