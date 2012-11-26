@@ -90,8 +90,8 @@ struct Utils{
     static void clone_a_lot_of_times(pData orig) {
         volatile Data* big_array[100];
         //Data bigarray[1000];
-        Logger::i().endl();
-        Logger::i().buf(" ----------- Start of massive allocation ----------- ").endl();
+        //Logger::i().endl();
+        //Logger::i().buf(" ----------- Start of massive allocation ----------- ").endl();
         for( volatile int i = 0; i < 100; ++i ) {
             //pData clone = pData(new Data(i, orig->pch));
             //pData clone = Data::create(i);
@@ -103,8 +103,8 @@ struct Utils{
             //Data d(i);
             //d.dd[3] = 3.0;
         }
-        Logger::i().endl();
-        Logger::i().buf(" ----------- End of massive allocation ----------- ").endl();
+        //Logger::i().endl();
+        //Logger::i().buf(" ----------- End of massive allocation ----------- ").endl();
         //delete [] big_array;
     }
 };
@@ -180,11 +180,11 @@ public:
         pData a, b, c;
         //Logger::i().buf("   fetching ...").endl();
         a = tc1.fetch(0); b = tc2.fetch(0); c = tc3.fetch(0);
-        if( i%30 == 0 ) {
-            //Logger::i().buf("main thread fetch from thread1: ").buf(a?a->d:-1).endl()
-            //           .buf("main thread fetch from thread2: ").buf(b?b->d:-1).endl()
-            //           .buf("main thread fetch from thread3: ").buf(c?c->d:-1).endl();
-        }
+        //if( i%50 == 0 ) {
+            Logger::i().buf("main thread fetch from thread1: ").buf(a?a->d:-1).endl()
+                       .buf("main thread fetch from thread2: ").buf(b?b->d:-1).endl()
+                       .buf("main thread fetch from thread3: ").buf(c?c->d:-1).endl();
+        //}
         //Logger::i().buf("   popping ...").endl();
         tc1.pop(); tc2.pop(); tc3.pop();
         //Logger::i().buf("  end of probing and popping").endl();
@@ -213,9 +213,9 @@ int main()
 {
     Runner r;
 
-    for( int j = 0; j < 5; ++j ) {
+    for( int j = 0; j < 1; ++j ) {
         r.run_threads();
-        for( int i = 0; i < 10000; ++i )
+        for( int i = 0; i < 2; ++i )
             r.probe_and_pop(i);
         r.join_all();
     }
