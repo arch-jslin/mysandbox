@@ -530,9 +530,10 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
 
     // added by arch.jslin 2012.11
     void clone_to(pool<UserAllocator> & clone) const {
-        if( this->first == 0 ) {
-            printf("pool's free list is currently empty.\n");
-        }
+//        printf("Pool (%d) cloning...\n", requested_size);
+//        if( this->first == 0 ) {
+//            printf("pool's free list is currently empty.\n");
+//        }
         clone.first         = this->first;
         clone.next_size     = next_size;
         clone.start_size    = start_size;
@@ -542,6 +543,12 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
 
         details::PODptr<size_type> iter = list; // start from head and copy it
         if( !iter.valid() ) return; // the original list is just empty.
+
+        // Ok.... verify what we are going to clone....
+//        if( requested_size == 48 ) {
+//            printf("verify what we are going to clone before cloning...\n");
+//            //memory_dump(list);
+//        }
 
         details::PODptr<size_type> last_cloned_ptr;
         do {
@@ -555,13 +562,38 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
             last_cloned_ptr = cloned_ptr;
             iter = iter.next();
         } while( iter.valid() );
+
+        // Ok, let's just try to verfiy what have we cloned here:
+//        if( requested_size == 48 ) {
+//            printf("we cloned cubes, let's check what we cloned..\n");
+//            //memory_dump(clone.list);
+//        }
+//        if( requested_size == 200 ) {
+//            printf("we cloned maps.\n");
+//        }
+    }
+
+    void memory_dump(details::PODptr<size_type> const& head) const {
+        details::PODptr<size_type> iter = head;
+        do {
+            char* ptr = iter.begin();
+            int size  = iter.element_size() / requested_size;
+            printf("Memory block %d: \n", iter.id());
+            for( int i = 0; i < size; ++i, ptr += requested_size ) {
+                printf("%x: x: %2d, color: %2d   ", ptr+20, *(reinterpret_cast<int*>(ptr+32)), *(reinterpret_cast<int*>(ptr+28)));
+                if( i%2 == 1 ) {
+                    printf("\n");
+                }
+            }
+            iter = iter.next();
+        } while( iter.valid() );
     }
 
     // added by arch.jslin 2012.11
     void restore(pool<UserAllocator>& backup) {
-        if( backup.first == 0 ) {
-            printf("backup's free list is currently empty.\n");
-        }
+//        if( backup.first == 0 ) {
+//            printf("backup's free list is currently empty.\n");
+//        }
         this->first   = backup.first;
         next_size     = backup.next_size;
         podptr_count_ = backup.podptr_count_;
@@ -578,6 +610,7 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
 
         do {
             while ( iter.id() != restoring_ptr.id() ) {
+                //printf("retore(): deleting unneeded memory blocks...\n");
                 restoring_ptr_next = restoring_ptr.next();
                 (UserAllocator::free)(restoring_ptr.begin());
                 restoring_ptr = restoring_ptr_next;
@@ -588,6 +621,8 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
             (UserAllocator::free)(iter.begin()); // it's important that after restoring, we clear up the backup memory
             if( last_restored_ptr.valid() ) {
                 last_restored_ptr.next(restoring_ptr);
+            } else { // This should only happen if you found the first valid block to restore to
+                list = restoring_ptr;
             }
             last_restored_ptr = restoring_ptr;
             restoring_ptr = restoring_ptr_next;
@@ -598,6 +633,7 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
         backup.first = 0;
 
         while ( restoring_ptr.valid() ) {
+            //printf("retore(): deleting unneeded memory blocks...\n");
             restoring_ptr_next = restoring_ptr.next();
             (UserAllocator::free)(restoring_ptr.begin());
             restoring_ptr = restoring_ptr_next;
@@ -775,9 +811,9 @@ void * pool<UserAllocator>::malloc_need_resize()
 { //! No memory in any of our storages; make a new storage,
   //!  Allocates chunk in newly malloc aftert resize.
   //! \returns pointer to chunk.
-  printf("malloc: Need resize.\n");
-  system("pause");
   size_type partition_size = alloc_size();
+  //printf("malloc: Need resize. (note, partition_size = %d)\n", partition_size);
+  //system("pause");
   size_type POD_size = static_cast<size_type>(next_size * partition_size +
       math::static_lcm<sizeof(size_type), sizeof(void *)>::value + sizeof(size_type) * 2);
   char * ptr = (UserAllocator::malloc)(POD_size);
@@ -798,7 +834,7 @@ void * pool<UserAllocator>::malloc_need_resize()
   const details::PODptr<size_type> node(ptr, POD_size);
   node.id() = podptr_count_;
 
-  printf("%d, %d, %d, %d\n", node.id(), partition_size, node.element_size(), POD_size);
+  //printf("%d, %d, %d, %d\n", node.id(), partition_size, node.element_size(), POD_size);
 
   BOOST_USING_STD_MIN();
   if(!max_size)
@@ -821,9 +857,9 @@ template <typename UserAllocator>
 void * pool<UserAllocator>::ordered_malloc_need_resize()
 { //! No memory in any of our storages; make a new storage,
   //! \returns pointer to new chunk.
-  printf("ordered_malloc: Need resize.\n");
-  system("pause");
   size_type partition_size = alloc_size();
+  //printf("malloc: Need resize. (note, partition_size = %d)\n", partition_size);
+  //system("pause");
   size_type POD_size = static_cast<size_type>(next_size * partition_size +
       math::static_lcm<sizeof(size_type), sizeof(void *)>::value + sizeof(size_type) * 2);
   char * ptr = (UserAllocator::malloc)(POD_size);
@@ -844,7 +880,7 @@ void * pool<UserAllocator>::ordered_malloc_need_resize()
   const details::PODptr<size_type> node(ptr, POD_size);
   node.id() = podptr_count_;
 
-  printf("%d, %d, %d, %d\n", node.id(), requested_size, node.element_size(), POD_size);
+  //printf("%d, %d, %d, %d\n", node.id(), requested_size, node.element_size(), POD_size);
 
   BOOST_USING_STD_MIN();
   if(!max_size)

@@ -25,24 +25,31 @@ struct Map;
 typedef weak_ptr<Map> wpMap;
 
 const int TOTAL_FRAME_FOR_TEST = 200;
-const int MAX_SIZE = 20;
-const int DEBUG = 1;
+const int MAX_SIZE = 60;
+const int DEBUG = 0;
 const int MANUAL = 0;
+const int PERFORMANCE_TEST = 0;
 
 struct Cube : public std::tr1::enable_shared_from_this<Cube> {
     typedef shared_ptr<Cube> pointer_type;
     typedef weak_ptr<Cube>   wpointer_type;
     int color_;
     int x_;
-    //wpMap owner_;
-    Map* owner_;
-    //Cube(wpMap const& o, int color): color_(color), x_(MAX_SIZE-1), owner_(o) {
-    Cube(Map* const & o, int color): color_(color), x_(MAX_SIZE-1), owner_(o) {
+    wpMap owner_;
+    Cube(wpMap const& o, int color): color_(color), x_(MAX_SIZE-1), owner_(o) {
         total_cube_created += 1;
-        printf("total cube created: %d\n", total_cube_created);
+        if( !PERFORMANCE_TEST ) {
+            printf("total cube created: %d\n", total_cube_created);
+        }
     }
 
-    ~Cube(){ printf("Cube: %x, x = %d, color = %d destructed.\n", this, x_, color_); }
+    ~Cube(){
+        if( !PERFORMANCE_TEST ) {
+            printf("Cube: %x, x = %d, color = %d destructed.\n", this, x_, color_);
+        }
+        color_ = -1;
+        x_ = -1;
+    }
 
     void update(int x);
 
@@ -53,7 +60,7 @@ typedef Cube::wpointer_type wpCube;
 
 int Cube::total_cube_created = 0;
 
-typedef singleton_pool<fast_pool_allocator_tag, sizeof(shared_ptr<void>)> pool_sptr;
+typedef singleton_pool<pool_allocator_tag, sizeof(shared_ptr<void>)> pool_sptr;
 typedef singleton_pool<fast_pool_allocator_tag, sizeof(Cube)+24> pool_cube;
 
 struct Map : public std::tr1::enable_shared_from_this<Map> {
@@ -62,29 +69,27 @@ struct Map : public std::tr1::enable_shared_from_this<Map> {
 
     Map(int i):
         data1(i*10),
-        //data2("name"),
+        data2("name"),
         data3("name")
     {
-        //data2 += (i+48);
-//        for( int i = 0; i < MAX_SIZE; ++i ) {
-//            cubes.push_back(pCube()); //empty
-//        }
+        data2 += (i+48);
+        for( int i = 0; i < MAX_SIZE; ++i ) {
+            cubes.push_back(pCube()); //empty
+        }
     }
 
     void init() {
         for( int i = 0; i < 10; ++i ) {
-            //cubes[i] = ObjectPool<Cube>::create(this, (i%4+1));
-            cubes[i] = allocate_shared<Cube>(fast_pool_allocator<Cube>(), this, (i%4+1));
-            //cubes[i] = allocate_shared<Cube>(fast_pool_allocator<Cube>(), shared_from_this(), (i%4+1));
+            //cubes[i] = ObjectPool<Cube>::create(shared_from_this(), (i%4+1));
+            cubes[i] = allocate_shared<Cube>(fast_pool_allocator<Cube>(), shared_from_this(), (i%4+1));
             cubes[i]->x_ = i;
         }
     }
 
     void new_cube() {
         if( !cubes[MAX_SIZE-1] ) {
-            //cubes[MAX_SIZE-1] = ObjectPool<Cube>::create(this, clock()%4+1);
-            cubes[MAX_SIZE-1] = allocate_shared<Cube>(fast_pool_allocator<Cube>(), this, clock()%4+1);
-            //cubes[MAX_SIZE-1] = allocate_shared<Cube>(fast_pool_allocator<Cube>(), shared_from_this(), clock()%4+1);
+            //cubes[MAX_SIZE-1] = ObjectPool<Cube>::create(shared_from_this(), clock()%4+1);
+            cubes[MAX_SIZE-1] = allocate_shared<Cube>(fast_pool_allocator<Cube>(), shared_from_this(), clock()%4+1);
             if( DEBUG ) {
                 printf("new cube..%x\n", cubes[MAX_SIZE-1].get());
             }
@@ -106,8 +111,6 @@ struct Map : public std::tr1::enable_shared_from_this<Map> {
         if( frame % 3 == 1 ) new_cube();
         for( int i = 0; i < MAX_SIZE; ++i ) {
             if( cubes[i] ) {
-                printf("addr: %x, i: %d, cubes[%d]->x_: %d, color_: %d\n", cubes[i].get(), i, i, cubes[i]->x_, cubes[i]->color_);
-                BOOST_ASSERT(cubes[i]->x_ == i);
                 cubes[i]->update(i);
             }
         }
@@ -121,13 +124,9 @@ struct Map : public std::tr1::enable_shared_from_this<Map> {
         }
     }
 
-    //void update_cube(pCube c, int oldx) {
-    void update_cube(Cube const& c, int oldx) {
-//        cubes[c->x_] = cubes[oldx];
-//        cubes[oldx].reset();
-        pCube temp = cubes[oldx];
-        cubes[oldx] = cubes[c.x_];
-        cubes[c.x_] = temp;
+    void update_cube(pCube c, int oldx) {
+        cubes[c->x_] = cubes[oldx];
+        cubes[oldx].reset();
     }
 
     bool below_empty(int x) {
@@ -137,15 +136,16 @@ struct Map : public std::tr1::enable_shared_from_this<Map> {
     }
 
     ~Map() {
-        printf("Map destructed: %d\n", data1);
+        if( !PERFORMANCE_TEST ) {
+            printf("Map destructed: %s\n", data2.c_str());
+        }
         data1 = 0;
     }
 //////////////////////////
     int         data1;
-    //string      data2;
+    string      data2;
     const char* data3;
-    //std::vector< pCube, fast_pool_allocator<pCube> > cubes;
-    pCube       cubes[MAX_SIZE];
+    std::vector< pCube, pool_allocator<pCube> > cubes;
 };
 typedef Map::pointer_type  pMap;
 typedef Map::wpointer_type wpMap;
@@ -153,13 +153,13 @@ typedef Map::wpointer_type wpMap;
 typedef singleton_pool<fast_pool_allocator_tag, sizeof(Map)+24> pool_map;
 
 void Cube::update(int x) {
-//    if( owner_.lock()->below_empty(x_) ) {
-//        x_ -= 1;
-//        owner_.lock()->update_cube(shared_from_this(), x);
-//    }
-    if( owner_->below_empty(x_) ) {
+    if( DEBUG ) {
+        printf("addr: %x, i: %d, cubes[%d]->x_: %d, color_: %d\n", this, x, x, x_, color_);
+    }
+    BOOST_ASSERT(x_ == x);
+    if( owner_.lock()->below_empty(x_) ) {
         x_ -= 1;
-        owner_->update_cube(*this, x);
+        owner_.lock()->update_cube(shared_from_this(), x);
     }
 }
 
@@ -174,10 +174,10 @@ void placement_new_fun()
 
 int main()
 {
-    //pMap m1 = ObjectPool<Map>::create(1);
-    //pMap m2 = ObjectPool<Map>::create(2);
     printf("Size of Map: %d\n", sizeof(Map));
     printf("Size of Cube: %d\n", sizeof(Cube));
+    //pMap m1 = ObjectPool<Map>::create(1);
+    //pMap m2 = ObjectPool<Map>::create(2);
     pMap m1 = allocate_shared<Map>(fast_pool_allocator<Map>(), 1);
     pMap m2 = allocate_shared<Map>(fast_pool_allocator<Map>(), 2);
     m1->init();
@@ -189,9 +189,9 @@ int main()
     printf("%d, %d, %d, %d\n", sizeof(shared_ptr<void>), sizeof(shared_ptr<int>), sizeof(pMap), sizeof(pCube));
 
     for( int frame = 0; frame < TOTAL_FRAME_FOR_TEST; ++frame ) {
-        //if( DEBUG ) {
+        if( !PERFORMANCE_TEST ) {
             printf("Frame %d:\n", frame);
-        //}
+        }
 
         // input should be here
 
@@ -274,7 +274,7 @@ int main()
     //pool_map::purge_memory(); // 2012.11.26 -- WHY I CAN'T PURGE IT HERE?
     //pool_cube::purge_memory();
     //pool_char::purge_memory(); // Of course, allocators using singleton_pool should be destroyed only at the end of all program.
-    pool_sptr::purge_memory();
+    //pool_sptr::purge_memory();
     printf("program ends\n");
     system("pause");
     return 0;

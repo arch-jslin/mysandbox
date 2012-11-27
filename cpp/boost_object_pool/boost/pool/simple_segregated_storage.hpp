@@ -161,9 +161,11 @@ class simple_segregated_storage
     { //! Free a chunk.
       //! \pre chunk was previously returned from a malloc() referring to the same free list.
       //! \post !empty()
-       BOOST_POOL_VALIDATE_INTERNALS
+      BOOST_POOL_VALIDATE_INTERNALS
+      //printf("freeing.. no prev, 1st: %x, chunk: %x, ", first+20, chunk+20);
       nextof(chunk) = first;
       first = chunk;
+      //printf("after.. 1st: %x, 2nd: %x\n", first+20, nextof(first)+20);
       BOOST_POOL_VALIDATE_INTERNALS
     }
 
@@ -178,16 +180,14 @@ class simple_segregated_storage
       void * const loc = find_prev(chunk);
       // Place either at beginning or in middle/end.
       if (loc == 0) {
-        printf("ordered_freeing.. no prev, 1st: %x, chunk: %x, ", first, chunk);
         (free)(chunk);
-        printf("after.. 1st: %x, 2nd: %x\n", first, nextof(first));
       }
       else
       {
-        printf("ordered_freeing.. prev: %x, chunk: %x, nextof(loc): %x, ", loc, chunk, nextof(loc));
+        //printf("ordered_freeing.. prev: %x, chunk: %x, nextof(loc): %x, ", loc+20, chunk+20, nextof(loc)+20);
         nextof(chunk) = nextof(loc);
         nextof(loc) = chunk;
-        printf("after.. 1st: %x, 2nd: %x, nextofchunk: %x\n", first, nextof(first), nextof(chunk));
+        //printf("after.. 1st: %x, 2nd: %x, nextofchunk: %x\n", first+20, nextof(first)+20, nextof(chunk)+20);
       }
       BOOST_POOL_VALIDATE_INTERNALS
     }

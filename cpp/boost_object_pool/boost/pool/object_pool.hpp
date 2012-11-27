@@ -96,7 +96,7 @@ class object_pool: protected pool<UserAllocator>
     }
 
   public:
-    explicit object_pool(const size_type arg_next_size = 64, const size_type arg_max_size = 0)
+    explicit object_pool(const size_type arg_next_size = 32, const size_type arg_max_size = 0)
     :
     pool<UserAllocator>(sizeof(T), arg_next_size, arg_max_size)
     { //! Constructs a new (empty by default) ObjectPool.
@@ -271,7 +271,6 @@ object_pool<T, UserAllocator>::~object_pool()
 
     // free storage.
     (UserAllocator::free)(iter.begin());
-    printf("OP: some block freed.\n");
 
     // increment iter.
     iter = next;
