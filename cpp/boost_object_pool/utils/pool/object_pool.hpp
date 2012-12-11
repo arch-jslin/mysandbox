@@ -15,10 +15,10 @@ that can be used for fast and efficient memory allocation of objects of type T.
 It also provides automatic destruction of non-deallocated objects.
 */
 
-#include <boost/pool/poolfwd.hpp>
+#include "utils/pool/poolfwd.hpp"
 
 // boost::pool
-#include <boost/pool/pool.hpp>
+#include "utils/pool/pool.hpp"
 
 // The following code will be put into Boost.Config in a later revision
 #if defined(BOOST_MSVC) || defined(__KCC)
@@ -228,7 +228,6 @@ class object_pool: protected pool<UserAllocator>
 template <typename T, typename UserAllocator>
 object_pool<T, UserAllocator>::~object_pool()
 {
-  printf("deallocating object_pool...\n");
 #ifndef BOOST_POOL_VALGRIND
   // handle trivial case of invalid list.
   if (!this->list.valid())

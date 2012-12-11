@@ -14,6 +14,12 @@
   \brief Forward declarations of all public (non-implemention) classes.
 */
 
+/* 2012.12 WTF NOTE arch.jslin:
+
+    Added OriginalType to pool_alloc forward declarations. For details please see pool_alloc.
+
+*/
+
 
 #include <boost/config.hpp> // for workarounds
 
@@ -21,7 +27,7 @@
 #include <cstddef>
 
 // boost::details::pool::default_mutex
-#include <boost/pool/detail/mutex.hpp>
+#include "utils/pool/detail/mutex.hpp"
 
 namespace boost {
 
@@ -62,6 +68,7 @@ class singleton_pool;
 struct pool_allocator_tag;
 
 template <typename T,
+    typename OriginalType = T,
     typename UserAllocator = default_user_allocator_new_delete,
     typename Mutex = details::pool::default_mutex,
     unsigned NextSize = 32,
@@ -71,6 +78,7 @@ class pool_allocator;
 struct fast_pool_allocator_tag;
 
 template <typename T,
+    typename OriginalType = T,
     typename UserAllocator = default_user_allocator_new_delete,
     typename Mutex = details::pool::default_mutex,
     unsigned NextSize = 32,

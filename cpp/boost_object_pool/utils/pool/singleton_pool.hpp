@@ -19,12 +19,23 @@
 
 */
 
-#include <boost/pool/poolfwd.hpp>
+/* 2012.12 WTF NOTE arch.jslin:
+
+    In the end I actually changed almost nothing about singleton_pool, other than revised
+    the include paths to underlying pools to utils, not boost. but namespace remained the same
+    for the sake of the convenience of porting.
+
+    backup of singleton_pool is actually fetching it's underlying pool, so I made pool_type available,
+    but now backup is not a part of this class.
+
+*/
+
+#include "utils/pool/poolfwd.hpp"
 
 // boost::pool
-#include <boost/pool/pool.hpp>
+#include "utils/pool/pool.hpp"
 // boost::details::pool::guard
-#include <boost/pool/detail/guard.hpp>
+#include "utils/pool/detail/guard.hpp"
 
 #include <boost/type_traits/aligned_storage.hpp>
 
@@ -37,7 +48,7 @@ namespace boost {
 
  <b>Tag</b> User-specified type to uniquely identify this pool: allows different unbounded sets of singleton pools to exist.
 
- <b>RequestedSize</b> The size of each chunk returned by member function <tt>malloc()</tt>.
+ <b>RequestedSize</b> *** IMPORTANT, This is replaced with T information *** The size of each chunk returned by member function <tt>malloc() </tt>.
 
  <B>UserAllocator</b> User allocator, default = default_user_allocator_new_delete.
 
@@ -114,17 +125,18 @@ class singleton_pool
 private:
     singleton_pool();
 
+public:
+
 #ifndef BOOST_DOXYGEN
+    // for outside usage, let others know what's the underlying pool type
     struct pool_type: public Mutex, public pool<UserAllocator>
     {
       pool_type() : pool<UserAllocator>(RequestedSize, NextSize, MaxSize) {}
     }; //  struct pool_type: Mutex
-
 #else
     //
     // This is invoked when we build with Doxygen only:
     //
-public:
     static pool<UserAllocator> p; //!< For exposition only!
 #endif
 
@@ -191,22 +203,18 @@ public:
       details::pool::guard<Mutex> g(p);
       return p.purge_memory();
     }
-    static void purge_backup()
-    {
-        backup_.purge_memory();
+
+    // Added for restorable pools
+    static void clone_to(pool_type & backup) {
+        get_pool().clone_to(backup);
     }
-    static void backup() {
-        backup_.purge_memory();
-        get_pool().clone_to(backup_);
-    }
-    static void restore() {
-        get_pool().restore(backup_);
+    static void restore(pool_type & backup) {
+        get_pool().restore(backup);
     }
 
 private:
    typedef boost::aligned_storage<sizeof(pool_type), boost::alignment_of<pool_type>::value> storage_type;
    static storage_type storage;
-   static pool_type backup_;
 
    static pool_type& get_pool()
    {
@@ -257,14 +265,6 @@ template <typename Tag,
     unsigned NextSize,
     unsigned MaxSize >
 typename singleton_pool<Tag, RequestedSize, UserAllocator, Mutex, NextSize, MaxSize>::object_creator singleton_pool<Tag, RequestedSize, UserAllocator, Mutex, NextSize, MaxSize>::create_object;
-
-template <typename Tag,
-    unsigned RequestedSize,
-    typename UserAllocator,
-    typename Mutex,
-    unsigned NextSize,
-    unsigned MaxSize >
-typename singleton_pool<Tag, RequestedSize, UserAllocator, Mutex, NextSize, MaxSize>::pool_type singleton_pool<Tag, RequestedSize, UserAllocator, Mutex, NextSize, MaxSize>::backup_;
 
 } // namespace boost
 

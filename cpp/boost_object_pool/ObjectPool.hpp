@@ -1,11 +1,21 @@
 #ifndef _CUBEAT_UTILS_OBJECTPOOL_
 #define _CUBEAT_UTILS_OBJECTPOOL_
 
-#include <boost/pool/object_pool.hpp>
+// Note: By the usage of this, we actually stucked with boost's implementation.
+#include <boost/smart_ptr/make_shared.hpp>
 #include <boost/thread/mutex.hpp>
+
+// Note: we are using our own implementation of boost.pool, in a sense,
+//       so don't make the include path fool you. changed to utils.pool.
+//       However, for convenience of porting, the namespace in the file remained boost::.
+#include "utils/pool/object_pool.hpp"
+#include "utils/pool/singleton_pool.hpp"
+#include "utils/pool/pool_alloc.hpp"
 
 #define LOKI_CLASS_LEVEL_THREADING
 #include "loki/Singleton.h"
+
+typedef std::tr1::shared_ptr<void> pvoid;
 
 namespace psc{ namespace utils{
 
@@ -676,6 +686,7 @@ private:
     boost::object_pool<T, UserAllocator> pool_;
 };
 
+
 template <class T>
 class ObjectPool{
 public:
@@ -683,45 +694,37 @@ public:
 
 public:
     static element_type create(){
-        return element_type(SPool::Instance().construct(), Deleter(), boost::fast_pool_allocator<element_type>());
-    }
-
-    static void backup() {
-        SPool::Instance().clone_to(backup_);
-    }
-
-    static void restore() {
-        SPool::Instance().restore(backup_);
+        return element_type(SPool::Instance().construct(), Deleter());
     }
 
     template <class T0>
     static element_type create(T0 & a){
-        return element_type(SPool::Instance().construct(a), Deleter(), boost::fast_pool_allocator<element_type>());
+        return element_type(SPool::Instance().construct(a), Deleter());
     }
 
     template <class T0>
     static element_type create(T0 const& a){
-        return element_type(SPool::Instance().construct(a), Deleter(), boost::fast_pool_allocator<element_type>());
+        return element_type(SPool::Instance().construct(a), Deleter());
     }
 
     template <class T0, class T1>
     static element_type create(T0 & a, T1 & b){
-        return element_type(SPool::Instance().construct(a, b), Deleter(), boost::fast_pool_allocator<element_type>());
+        return element_type(SPool::Instance().construct(a, b), Deleter());
     }
 
     template <class T0, class T1>
     static element_type create(T0 & a, T1 const& b){
-        return element_type(SPool::Instance().construct(a, b), Deleter(), boost::fast_pool_allocator<element_type>());
+        return element_type(SPool::Instance().construct(a, b), Deleter());
     }
 
     template <class T0, class T1>
     static element_type create(T0 const& a, T1 & b){
-        return element_type(SPool::Instance().construct(a, b), Deleter(), boost::fast_pool_allocator<element_type>());
+        return element_type(SPool::Instance().construct(a, b), Deleter());
     }
 
     template <class T0, class T1>
     static element_type create(T0 const& a, T1 const& b){
-        return element_type(SPool::Instance().construct(a, b), Deleter(), boost::fast_pool_allocator<element_type>());
+        return element_type(SPool::Instance().construct(a, b), Deleter());
     }
 
     template <class T0, class T1, class T2>
@@ -1012,8 +1015,6 @@ private:
     typedef object_pool_mt<T> pool_type;
     typedef Loki::SingletonHolder<pool_type, Loki::CreateUsingNew, Loki::DeletableSingleton> SPool;
 
-    static pool_type backup_;
-
     static void destroy(T* t){
         SPool::Instance().destroy_mt(t);
     }
@@ -1038,9 +1039,119 @@ private:
     };
 };
 
-template<typename T>
-object_pool_mt<T> ObjectPool<T>::backup_;
+/// ******** Add some metadata information for restorable pool here ******** ///
 
-}} // end of namespace
+template<typename T>
+class ObjectPoolRestorable
+{
+    typedef boost::detail::sp_counted_impl_pda<T*, boost::detail::sp_ms_deleter<T> , boost::fast_pool_allocator<T> > FUCK_IT;
+    typedef boost::singleton_pool<T, sizeof(FUCK_IT)> this_pool;
+    typedef typename T::pointer_type element_type;
+
+public:
+
+    typedef typename this_pool::pool_type pool_type;
+
+    static void backup() {
+        backup_.purge_memory(); // This is only temporary.
+        // When backup, we'll have to check if backup buffer is already all used or there's still empty slot.
+        this_pool::clone_to(backup_);
+    }
+
+    static void restore() {
+        // This is only temporary.
+        // When restore, we have to check which frame in the backup we want to rollback to.
+        this_pool::restore(backup_);
+    }
+
+    static element_type create(){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>());
+    }
+
+    template <class T0>
+    static element_type create(T0 & a){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a);
+    }
+
+    template <class T0>
+    static element_type create(T0 const& a){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a);
+    }
+
+    template <class T0, class T1>
+    static element_type create(T0 & a, T1 & b){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b);
+    }
+
+    template <class T0, class T1>
+    static element_type create(T0 & a, T1 const& b){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b);
+    }
+
+    template <class T0, class T1>
+    static element_type create(T0 const& a, T1 & b){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b);
+    }
+
+    template <class T0, class T1>
+    static element_type create(T0 const& a, T1 const& b){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b);
+    }
+
+    template <class T0, class T1, class T2>
+    static element_type create(T0 & a, T1 & b, T2 & c){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b, c);
+    }
+
+    template <class T0, class T1, class T2>
+    static element_type create(T0 & a, T1 & b, T2 const& c){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b, c);
+    }
+
+    template <class T0, class T1, class T2>
+    static element_type create(T0 & a, T1 const& b, T2 & c){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b, c);
+    }
+
+    template <class T0, class T1, class T2>
+    static element_type create(T0 & a, T1 const& b, T2 const& c){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b, c);
+    }
+
+    template <class T0, class T1, class T2>
+    static element_type create(T0 const& a, T1 & b, T2 & c){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b, c);
+    }
+
+    template <class T0, class T1, class T2>
+    static element_type create(T0 const& a, T1 & b, T2 const& c){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b, c);
+    }
+
+    template <class T0, class T1, class T2>
+    static element_type create(T0 const& a, T1 const& b, T2 & c){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b, c);
+    }
+
+    template <class T0, class T1, class T2>
+    static element_type create(T0 const& a, T1 const& b, T2 const& c){
+        return boost::allocate_shared<T>(boost::fast_pool_allocator<T>(), a, b, c);
+    }
+
+    // ... etc generated combinations
+
+private:
+    static pool_type backup_;
+
+};
+
+template<typename T>
+typename ObjectPoolRestorable<T>::pool_type ObjectPoolRestorable<T>::backup_;
+
+void pools_backup();
+void pools_restore();
+
+}
+} // end of namespace
 
 #endif

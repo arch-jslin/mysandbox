@@ -24,12 +24,12 @@
 // std::max
 #include <algorithm>
 
-#include <boost/pool/poolfwd.hpp>
+#include "utils/pool/poolfwd.hpp"
 
 // boost::math::static_lcm
 #include <boost/math/common_factor_ct.hpp>
 // boost::simple_segregated_storage
-#include <boost/pool/simple_segregated_storage.hpp>
+#include "utils/pool/simple_segregated_storage.hpp"
 // boost::alignment_of
 #include <boost/type_traits/alignment_of.hpp>
 // BOOST_ASSERT
@@ -44,6 +44,9 @@
 #include <valgrind/memcheck.h>
 #endif
 
+// 2012.12 WTF NOTE: just for logging and debugging for now
+#include <cstdio>
+
 #ifdef BOOST_NO_STDC_NAMESPACE
  namespace std { using ::malloc; using ::free; }
 #endif
@@ -54,6 +57,23 @@
 //   if "m" is a member of a base class that is dependent on a template
 //   parameter.
 // Thanks to Jens Maurer for pointing this out!
+
+/* 2012.12 WTF NOTE arch.jslin:
+
+    Made boost.pool capable of cloning -- to enable large-scale memory backup/restoration.
+    Three things added:
+
+    1. added an int metadata to PODptr, just in front of next_ptr. That's to ensure
+       no matter the pool is ordered or not, or even mixed, I can clone and restore
+       the memory blocks without any problem. (so the size calculation in need_resize methods
+                                               have slight changes.)
+
+    2. added clone_to method to dump the memory blocks out.
+
+    3. added restore method to overwrite current memory with previously dumped memory blocks.
+
+*/
+
 
 /*!
   \file
@@ -387,6 +407,7 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
       //!   the first time that object needs to allocate system memory.
       //!   The default is 32. This parameter may not be 0.
       //! \param nmax_size is the maximum number of chunks to allocate in one block.
+      // printf("A pool of sizeof %d is created.\n", requested_size);
     }
 
     ~pool()
@@ -530,10 +551,10 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
 
     // added by arch.jslin 2012.11
     void clone_to(pool<UserAllocator> & clone) const {
-//        printf("Pool (%d) cloning...\n", requested_size);
-//        if( this->first == 0 ) {
-//            printf("pool's free list is currently empty.\n");
-//        }
+        //printf("Pool (%d) cloning...\n", requested_size);
+        if( this->first == 0 ) {
+            printf("pool's free list is currently empty.\n");
+        }
         clone.first         = this->first;
         clone.next_size     = next_size;
         clone.start_size    = start_size;
@@ -573,6 +594,7 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
 //        }
     }
 
+    // This inspect method only works on Win32 platforms for now.
     void memory_dump(details::PODptr<size_type> const& head) const {
         details::PODptr<size_type> iter = head;
         do {
@@ -812,8 +834,8 @@ void * pool<UserAllocator>::malloc_need_resize()
   //!  Allocates chunk in newly malloc aftert resize.
   //! \returns pointer to chunk.
   size_type partition_size = alloc_size();
-  //printf("malloc: Need resize. (note, partition_size = %d)\n", partition_size);
-  //system("pause");
+//  printf("malloc: Need resize. (note, partition_size = %d)\n", partition_size);
+//  system("pause");
   size_type POD_size = static_cast<size_type>(next_size * partition_size +
       math::static_lcm<sizeof(size_type), sizeof(void *)>::value + sizeof(size_type) * 2);
   char * ptr = (UserAllocator::malloc)(POD_size);
@@ -858,8 +880,8 @@ void * pool<UserAllocator>::ordered_malloc_need_resize()
 { //! No memory in any of our storages; make a new storage,
   //! \returns pointer to new chunk.
   size_type partition_size = alloc_size();
-  //printf("malloc: Need resize. (note, partition_size = %d)\n", partition_size);
-  //system("pause");
+//  printf("ordered_malloc: Need resize. (note, partition_size = %d)\n", partition_size);
+//  system("pause");
   size_type POD_size = static_cast<size_type>(next_size * partition_size +
       math::static_lcm<sizeof(size_type), sizeof(void *)>::value + sizeof(size_type) * 2);
   char * ptr = (UserAllocator::malloc)(POD_size);
