@@ -11,7 +11,7 @@ local function draw_hp(hp_percent, total_len, x, y)
   love.graphics.line(x, y-5, x+total_len, y-5)
   love.graphics.setColor(100, 255, 100, 255)
   love.graphics.setLine(4)
-  love.graphics.line(x+1, y-5, x+(total_len*hp_percent)-2, y-5)
+  love.graphics.line(x+1, y-5, x+((total_len-2)*hp_percent), y-5)
 end
 
 local function draw_level(level, x, y)
@@ -81,8 +81,9 @@ function yuusha:update(dt)
   end)
 
   if self.state_ == 'normal' then
-    
-        -- special case to trigger rampage state
+    -- special case to trigger rampage state
+    -- NOTE: it still needs some adjustment, for example the 3rd or 4th enemy must 
+    -- be in certain range to trigger
     if #game.mobs >= 4 and game.mobs[1].facing_ == game.mobs[3].facing_ and 
        game.mobs[1].facing_ ~= game.mobs[2].facing_ and game.mobs[2].facing_ == game.mobs[4].facing_ and
        game.mobs[1].facing_ == self.facing_ then
@@ -139,7 +140,7 @@ end
 function yuusha:levelup(n)
   for i = 1, n do 
     self.level_  = self.level_ + 1
-    self.max_hp_ = self.max_hp_ + 15 * (1+self.level_/10)
+    self.max_hp_ = self.max_hp_ + 25 * (1+self.level_/10)
     self.hp_     = self.max_hp_
     self.dmg_    = self.dmg_ + 5 * (1+self.level_/10)
     self.max_exp_= self.max_exp_ + 2
