@@ -1,6 +1,7 @@
 
 local helper = require 'helper'
 local len_sq = helper.len_sq
+local draw_hp = helper.draw_hp
 local draw_level = helper.draw_level
 
 local WIDTH = helper.WIDTH
@@ -64,175 +65,6 @@ function game:init(resources)
   self.yuusha:levelup(10)
 end
 
--- definition of yuusha
-
-function yuusha.new(o)
-  o = o or {} 
-  o.body_   = res.yuusha_fighter_img
-  o.x_      = 30
-  o.y_      = love.graphics.getHeight()/2
-  o.rad_    = 0
-  o.facing_ = o.facing_ or 1
-  o.ox_     = o.body_:getWidth()/2 
-  o.oy_     = o.body_:getHeight()/2 
-  
-  o.color_  = {r=255, g=255, b=255, a=255}
-  
-  o.vx_     = 0
-  o.vy_     = 0
-  o.level_  = 1
-  o.state_  = 'normal'
-  o.timers  = {}
-  
-  setmetatable(o, {__index = yuusha})
-  return o 
-end
-
-function yuusha:add_timer(o)
-  self.timers[#self.timers+1] = timer.new(o)
-end
-
-function yuusha:update(dt)
-  -- timers on itself
-  local delete_timers = {}
-  for _, v in ipairs(self.timers) do 
-    v:update(dt)
-    if v.loop_ < 0 then
-      table.insert(delete_timers, v)
-    end
-  end
-  
-  if self.state_ == 'normal' then
-    
-    -- will this slow down computer? seemed like ok.
-    table.sort(game.mob_bullets, function(a, b)
-      return len_sq(a, self) < len_sq(b, self)
-    end)
-    if #game.mob_bullets > 3 then
-      local avgx = (game.mob_bullets[1].x_ + game.mob_bullets[2].x_ ) / 2
-      local avgy = (game.mob_bullets[1].y_ + game.mob_bullets[2].y_ ) / 2
-      
-      if len_sq(self, {x_ = avgx, y_ = avgy}) < 4900 then -- ok, 70 is fairly close enough
-        -- start to using evasive maneuvers.
-        self.state_ = 'evade'
-        self.color_.r = 0
-        self.incoming_vector_ = {x_ = (self.x_ - avgx), y_ = (self.y_ - avgy)}
-        self:add_timer{ dur_ = 0.5,
-          action_ = function(e)
-            self.state_ = 'normal' -- set timer to set state back to normal
-            self.color_.r = 255
-          end
-        }
-      end
-    end
-  elseif self.state_ == 'evade' then
-    self.vx_ = self.incoming_vector_.x_
-    self.vy_ = self.incoming_vector_.x_ * -1/self.incoming_vector_.y_
-  end
-  
-  self.x_ = self.x_ + self.vx_ * dt
-  self.y_ = self.y_ + self.vy_ * dt
-  
-  -- obj cleanup here
-  for _, v in ipairs(delete_timers) do
-    unordered_remove(self.timers, v)
-  end
-end
-
-function yuusha:draw()
-  draw_level(res.font1, self.level_, self.x_ - self.ox_ +3, self.y_ - self.oy_ +3)
-  love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
-  love.graphics.draw(self.body_, self.x_, self.y_, self.rad_, self.facing_, 1, self.ox_, self.oy_)
-end
-
-function yuusha:levelup(n)
-  for i = 1, n do 
-    self.level_  = self.level_ + 1
-  end
-end
-
--- definition of mob
-
-function mob.new(o)
-  o = o or {}
-  o.body_   = res.fighter1_img
-  o.x_      = o.x_ or 50
-  o.y_      = love.graphics.getHeight()/2 + (math.random() - 0.5)*20
-  o.rad_    = 0
-  o.facing_ = o.facing_ or 1
-  o.ox_     = o.body_:getWidth()/2 
-  o.oy_     = o.body_:getHeight()/2
-  
-  o.color_  = {r=255, g=255, b=255, a=255} 
-  
-  o.vx_     = 0
-  o.vy_     = 0
-  o.state_  = 'move'
-  o.cooldown_ = 1 -- do not shoot for the first second
-  o.ammo_   = o.ammo_ or 3  -- 3 for default
-  
-  setmetatable(o, {__index = mob})
-  return o
-end
-
-function mob:update(dt, target)
-  self:cooldown(dt)
-  if self.state_ == 'move' then 
-    self:move_function(dt)
-      
-    if self:can_fire() then
-      self:fire(target)
-    end
-      
-  elseif self.state_ == 'dying' then
-
-  end
-  -- no, mob movement here isnt' dictated by normal velocity
-end
-
-function mob:draw()
-  love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
-  love.graphics.draw(self.body_,    -- ref to img
-                     self.x_,       -- x
-                     self.y_,       -- y
-                     self.rad_,     -- orientation (radians)
-                     self.facing_,  -- scale x
-                     1,             -- scale y
-                     self.ox_,      -- origin x
-                     self.oy_)      -- origin y
-end
-
-function mob:is_dying()
-  return self.state_ == 'dying'
-end
-
-function mob:cooldown(dt)
-  if self.cooldown_ > 0 then
-    self.cooldown_ = self.cooldown_ - dt -- in seconds 
-    return 
-  end
-  self.cooldown_ = 0
-end
-
-function mob:can_fire()
-  return self.cooldown_ == 0 and self.ammo_ > 0 
-end
-
-function mob:fire(target)
-  local dx = target.x_ - self.x_
-  local dy = target.y_ - self.y_
-  local length = math.sqrt(len_sq(self, target)) 
-  local rad = math.atan2(dy, dx)
-  local nx = dx / length
-  local ny = dy / length
-  
-  local b = bullet.new{ x_ = self.x_, y_ = self.y_, rad_ = rad, vx_ = 100*nx, vy_ = 100*ny }
-  game:add_mob_bullet(b)
-  
-  self.cooldown_ = self.cooldown_ + 0.3
-  self.ammo_ = self.ammo_ - 1
-end
-
 -- definition of bullet below
 
 function bullet.new(o)
@@ -270,6 +102,241 @@ function bullet:draw()
                      self.oy_)      -- origin y
 end
 
+-- definition of yuusha
+
+function yuusha.new(o)
+  o = o or {} 
+  o.body_   = res.yuusha_fighter_img
+  o.x_      = 100
+  o.y_      = HEIGHT/2
+  o.rad_    = 0
+  o.facing_ = o.facing_ or 1
+  o.ox_     = o.body_:getWidth()/2 
+  o.oy_     = o.body_:getHeight()/2 
+  
+  o.radius_sq_ = o.ox_ * o.oy_ / 2 -- it's "radius square", modified by some factor.
+  
+  o.color_  = {r=255, g=255, b=255, a=255}
+  
+  o.vx_     = 0
+  o.vy_     = 0
+  o.level_  = 1
+  o.max_hp_ = 6
+  o.hp_     = o.max_hp_
+  o.state_  = 'normal'
+  o.cooldown_ = 1
+  o.timers  = {}
+  
+  setmetatable(o, {__index = yuusha})
+  return o 
+end
+
+function yuusha:add_timer(o)
+  self.timers[#self.timers+1] = timer.new(o)
+end
+
+function yuusha:update(dt)
+  -- timers on itself
+  local delete_timers = {}
+  for _, v in ipairs(self.timers) do 
+    v:update(dt)
+    if v.loop_ < 0 then
+      table.insert(delete_timers, v)
+    end
+  end
+  self:cooldown(dt)
+  
+  if self.state_ == 'normal' then
+    
+    if #game.mob_bullets > 3 then
+      local avgx = (game.mob_bullets[1].x_)
+      local avgy = (game.mob_bullets[1].y_)
+      local inc_pos = {x_ = avgx, y_ = avgy}
+      if len_sq(self, inc_pos) < 22500 then -- ok, 150 is fairly close enough
+        -- start to using evasive maneuvers.
+        self.state_ = 'evade'
+        self.color_.r = 0
+        local length = math.sqrt(len_sq(self, inc_pos))
+        local inc_nvec = { x_ = ((self.x_ - inc_pos.x_) / length), 
+                           y_ = ((self.y_ - inc_pos.y_) / length) }
+        self.vx_ = inc_nvec.y_ * 200
+        self.vy_ = -inc_nvec.x_  * 200
+        
+        if (self.vx_ < 0 and self.x_ < 30) or (self.vx_ > 0 and self.x_ > WIDTH - 30) then
+          self.vx_ = -self.vx_ 
+        end
+        
+        if (self.vy_ < 0 and self.y_ < 30) or (self.vy_ > 0 and self.y_ > HEIGHT- 30) then 
+          self.vy_ = -self.vy_
+        end
+        
+        self:add_timer{ dur_ = 0.1,
+          action_ = function(e)
+            self.state_ = 'normal' -- set timer to set state back to normal
+            self.color_.r = 255
+            self.vx_ = 0
+            self.vy_ = 0
+          end
+        }
+      end
+    end
+  elseif self.state_ == 'evade' then
+    
+  end
+  
+  if #game.mobs > 0 and self:can_fire() then
+    self:fire()
+  end
+  
+  self.x_ = self.x_ + self.vx_ * dt
+  self.y_ = self.y_ + self.vy_ * dt
+  
+  -- obj cleanup here
+  for _, v in ipairs(delete_timers) do
+    unordered_remove(self.timers, v)
+  end
+end
+
+function yuusha:draw()
+  draw_hp(self.hp_ / self.max_hp_, 
+          self.body_:getWidth(), 
+          self.x_ - self.ox_, 
+          self.y_ - self.oy_)
+  if self.hp_ > 0 then 
+    draw_level(res.font1, self.level_, self.x_ - self.ox_, self.y_ - self.oy_)
+  end
+  love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
+  love.graphics.draw(self.body_, self.x_, self.y_, self.rad_, self.facing_, 1, self.ox_, self.oy_)
+end
+
+function yuusha:can_fire()
+  return self.cooldown_ == 0
+end
+
+function yuusha:cooldown(dt)
+  if self.cooldown_ > 0 then
+    self.cooldown_ = self.cooldown_ - dt -- in seconds 
+    return 
+  end
+  self.cooldown_ = 0
+end
+
+function yuusha:fire()
+  local b1 = bullet.new{ x_ = self.x_, y_ = self.y_ - 16, rad_ = rad, vx_ = 400 }
+  b1.color_.b = 0
+  local b2 = bullet.new{ x_ = self.x_, y_ = self.y_ + 16, rad_ = rad, vx_ = 400 }
+  b2.color_.b = 0
+  game:add_yuu_bullet(b1)
+  game:add_yuu_bullet(b2)
+  
+  self.cooldown_ = self.cooldown_ + 0.16
+end
+
+function yuusha:levelup(n)
+  self.level_  = self.level_ + n
+  self.max_hp_ = self.max_hp_ + n*3
+  self.hp_     = self.max_hp_ 
+end
+
+-- definition of mob
+
+function mob.new(o)
+  o = o or {}
+  o.body_   = res.fighter1_img
+  o.x_      = o.x_ or 50
+  o.y_      = love.graphics.getHeight()/2 + (math.random() - 0.5)*20
+  o.rad_    = 0
+  o.facing_ = o.facing_ or 1
+  o.ox_     = o.body_:getWidth()/2 
+  o.oy_     = o.body_:getHeight()/2
+  
+  o.radius_sq_ = o.ox_ * o.oy_ * 2 -- it's "radius square", modified by some factor.
+  
+  o.color_  = {r=255, g=255, b=255, a=255} 
+  
+  o.hp_     = 1
+  o.vx_     = 0
+  o.vy_     = 0
+  o.state_  = 'move'
+  o.cooldown_ = 1 -- do not shoot for the first second
+  o.ammo_   = o.ammo_ or 3  -- 3 for default
+  
+  setmetatable(o, {__index = mob})
+  return o
+end
+
+function mob:update(dt, target)
+  self:cooldown(dt)
+  if self.state_ == 'move' then 
+    self:move_function(dt)
+      
+    if self:can_fire() then
+      self:fire(target)
+    end
+    
+    if self.hp_ <= 0 then
+      self.state_ = 'dying'
+    end
+      
+  elseif self.state_ == 'dying' then
+    self.state_ = 'dead' -- instant death for now (only 1 frame delay)
+  elseif self.state_ == 'dead' then
+
+  end
+  -- no, mob movement here isnt' dictated by normal velocity
+end
+
+function mob:draw()
+  love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
+  love.graphics.draw(self.body_,    -- ref to img
+                     self.x_,       -- x
+                     self.y_,       -- y
+                     self.rad_,     -- orientation (radians)
+                     self.facing_,  -- scale x
+                     1,             -- scale y
+                     self.ox_,      -- origin x
+                     self.oy_)      -- origin y
+end
+
+function mob:is_dying()
+  return self.state_ == 'dying'
+end
+
+function mob:is_dead()
+  return self.state_ == 'dead'
+end
+
+function mob:is_dying_or_dead()
+  return self:is_dying() or self:is_dead()
+end
+
+function mob:cooldown(dt)
+  if self.cooldown_ > 0 then
+    self.cooldown_ = self.cooldown_ - dt -- in seconds 
+    return 
+  end
+  self.cooldown_ = 0
+end
+
+function mob:can_fire()
+  return self.cooldown_ == 0 and self.ammo_ > 0 
+end
+
+function mob:fire(target)
+  local dx = target.x_ - self.x_
+  local dy = target.y_ - self.y_
+  local length = math.sqrt(len_sq(self, target)) 
+  local rad = math.atan2(dy, dx)
+  local nx = dx / length
+  local ny = dy / length
+  
+  local b = bullet.new{ x_ = self.x_, y_ = self.y_, rad_ = rad, vx_ = 100*nx, vy_ = 100*ny }
+  game:add_mob_bullet(b)
+  
+  self.cooldown_ = self.cooldown_ + 0.3
+  self.ammo_ = self.ammo_ - 1
+end
+
 -- definition of game object below
 
 function game:update(dt)
@@ -286,12 +353,17 @@ function game:update(dt)
     end
   end
   
+  -- will this slow down computer? seemed like ok.
+  table.sort(self.mob_bullets, function(a, b)
+    return len_sq(a, self.yuusha) < len_sq(b, self.yuusha)
+  end)
+  
   self.yuusha:update(dt)
   for _, v in ipairs(self.mobs) do
     v:update(dt, self.yuusha)
     
-    -- remove too far away objects
-    if len_sq(v, CENTER_P) > 500000 then -- approx. distance of 700
+    -- remove too far away objects OR Actually DEAD objects, not dying 
+    if v:is_dead() or len_sq(v, CENTER_P) > 500000 then -- approx. distance of 700
       table.insert(delete_markers1, v) 
     end
   end
@@ -309,6 +381,30 @@ function game:update(dt)
     -- remove too far away objects
     if len_sq(v, CENTER_P) > 500000 then -- approx. distance of 700
       table.insert(delete_markers3, v) 
+    end
+  end
+  
+  -- handle collision test here after everybody updated
+  for _, v in ipairs(self.mob_bullets) do 
+    -- actually it's very dangerious, but I think I can take advantage of sorted bullet list here.
+    if len_sq(self.yuusha, v) > self.yuusha.radius_sq_ then 
+      break -- bullet past this one is all too far, break it 
+    end 
+    table.insert(delete_markers3, v) -- remove bullet and...
+    self.yuusha.hp_ = self.yuusha.hp_ - 1   -- take damage
+  end
+  
+  -- this is really going to be a problem. 
+  for _, u in ipairs(self.mobs) do 
+    if not u:is_dying_or_dead() then 
+      for _, v in ipairs(self.yuu_bullets) do
+        if not v.used_ and len_sq(u, v) < u.radius_sq_ then
+          table.insert(delete_markers2, v)
+          u.hp_ = 0 -- all mobs are 1 shot kill
+          v.used_ = true
+          break
+        end
+      end
     end
   end
   
@@ -351,6 +447,10 @@ end
 
 function game:add_mob_bullet(o)
   self.mob_bullets[#self.mob_bullets+1] = o
+end
+
+function game:add_yuu_bullet(o)
+  self.yuu_bullets[#self.yuu_bullets+1] = o
 end
 
 function game:add_timer(o)
