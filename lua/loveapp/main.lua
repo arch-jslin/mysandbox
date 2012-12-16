@@ -15,6 +15,7 @@ function love.load()
   res.yuusha_fighter_img = love.graphics.newImage("img/yuusha_fighter.png")
   res.fighter1_img = love.graphics.newImage("img/mob_fighter1.png")
   res.bullet1_img = love.graphics.newImage("img/bullet1.png")
+  res.boss_img   = love.graphics.newImage("img/base.png")
   res.mob1_img   = love.graphics.newImage("img/mob1.png")
   res.font1      = love.graphics.newFont("img/Exo-Medium.ttf", 12)
   
@@ -36,3 +37,4 @@ end
 function love.keyreleased(key)
   game:keyreleased(key)
 end
+
