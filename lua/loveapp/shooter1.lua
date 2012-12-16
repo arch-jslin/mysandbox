@@ -9,6 +9,27 @@ local CENTER_P = helper.CENTER_P
 
 local timer = {}
 
+function timer.new(o)
+  o = o or {}
+  
+  o.loop_   = o.loop_ or 0
+  o.dur_    = o.dur_ or 1 -- in seconds
+  o.time_   = 0           -- in seconds
+  o.action_ = o.action_ or nil
+  
+  setmetatable(o, {__index = timer})
+  return o
+end
+
+function timer:update(dt)
+  self.time_ = self.time_ + dt
+  if self.time_ > self.dur_ then
+    self.time_ = 0 
+    self.loop_ = self.loop_ - 1
+    self:action_()
+  end
+end
+
 local res
 local game = {}
 local yuusha = {}
@@ -57,14 +78,65 @@ function yuusha.new(o)
   
   o.color_  = {r=255, g=255, b=255, a=255}
   
+  o.vx_     = 0
+  o.vy_     = 0
   o.level_  = 1
+  o.state_  = 'normal'
+  o.timers  = {}
   
   setmetatable(o, {__index = yuusha})
   return o 
 end
 
-function yuusha:update(dt)
+function yuusha:add_timer(o)
+  self.timers[#self.timers+1] = timer.new(o)
+end
 
+function yuusha:update(dt)
+  -- timers on itself
+  local delete_timers = {}
+  for _, v in ipairs(self.timers) do 
+    v:update(dt)
+    if v.loop_ < 0 then
+      table.insert(delete_timers, v)
+    end
+  end
+  
+  if self.state_ == 'normal' then
+    
+    -- will this slow down computer? seemed like ok.
+    table.sort(game.mob_bullets, function(a, b)
+      return len_sq(a, self) < len_sq(b, self)
+    end)
+    if #game.mob_bullets > 3 then
+      local avgx = (game.mob_bullets[1].x_ + game.mob_bullets[2].x_ ) / 2
+      local avgy = (game.mob_bullets[1].y_ + game.mob_bullets[2].y_ ) / 2
+      
+      if len_sq(self, {x_ = avgx, y_ = avgy}) < 4900 then -- ok, 70 is fairly close enough
+        -- start to using evasive maneuvers.
+        self.state_ = 'evade'
+        self.color_.r = 0
+        self.incoming_vector_ = {x_ = (self.x_ - avgx), y_ = (self.y_ - avgy)}
+        self:add_timer{ dur_ = 0.5,
+          action_ = function(e)
+            self.state_ = 'normal' -- set timer to set state back to normal
+            self.color_.r = 255
+          end
+        }
+      end
+    end
+  elseif self.state_ == 'evade' then
+    self.vx_ = self.incoming_vector_.x_
+    self.vy_ = self.incoming_vector_.x_ * -1/self.incoming_vector_.y_
+  end
+  
+  self.x_ = self.x_ + self.vx_ * dt
+  self.y_ = self.y_ + self.vy_ * dt
+  
+  -- obj cleanup here
+  for _, v in ipairs(delete_timers) do
+    unordered_remove(self.timers, v)
+  end
 end
 
 function yuusha:draw()
@@ -313,6 +385,14 @@ local function mtype2(self, subtype) -- diagonal
     self.x_ = 0; self.y_ = 50; self.vx_ = 200; self.vy_ = 200
   elseif subtype == 4 then
     self.x_ = 0; self.y_ = HEIGHT+50; self.vx_ = 200; self.vy_ = -200
+  elseif subtype == 5 then
+    self.x_ = -50; self.y_ = 100; self.vx_ = 300; self.vy_ = 0
+  elseif subtype == 6 then
+    self.x_ = WIDTH+50; self.y_ = 100; self.vx_ = -300; self.vy_ = 0
+  elseif subtype == 7 then
+    self.x_ = -50; self.y_ = HEIGHT-100; self.vx_ = 300; self.vy_ = 0 
+  elseif subtype == 8 then
+    self.x_ = WIDTH+50; self.y_ = HEIGHT-100; self.vx_ = -300; self.vy_ = 0
   end
 end
 
@@ -321,34 +401,24 @@ local function mtype1_move(self, dt)
   self.y_ = self.y_ + self.vy_ * dt
 end
 
--- We really need a mob factory here
-
-function timer.new(o)
-  o = o or {}
-  
-  o.loop_   = o.loop_ or 0
-  o.dur_    = o.dur_ or 1 -- in seconds
-  o.time_   = 0           -- in seconds
-  o.action_ = o.action_ or nil
-  
-  setmetatable(o, {__index = timer})
-  return o
-end
-
-function timer:update(dt)
-  self.time_ = self.time_ + dt
-  if self.time_ > self.dur_ then
-    self.time_ = 0 
-    self.loop_ = self.loop_ - 1
-    self:action_()
+local function mtype3(self, subtype) 
+  if subtype % 2 == 0 then
+    self.x_ = WIDTH; self.y_ = HEIGHT/2; self.vx_ = -200
+  else
+    self.x_ = 0; self.y_ = HEIGHT/2; self.vx_ = 200
   end
 end
 
---
+local function mtype2_move(mathfun, coef1, coef2, coef3)
+  return function(self, dt)
+    self.x_ = self.x_ + self.vx_ * dt
+    self.y_ = mathfun((self.x_ / WIDTH) * math.pi * coef1 + coef2) * HEIGHT/2 * coef3 + HEIGHT/2
+  end
+end
 
 function game:keyreleased(key)
   if key == 'z' then
-    self:add_timer{ loop_ = 5, dur_ = 0.3,
+    self:add_timer{ loop_ = 5, dur_ = 0.25,
       action_ = function()
         local m = mob.new()
         mtype1(m)
@@ -356,17 +426,31 @@ function game:keyreleased(key)
         self:addmob(m)  
       end
     }
-  end
-  if key == 'x' then
-    local dir = math.floor(math.random()*4)+1
-    self:add_timer{ loop_ = 5, dur_ = 0.3,
+  elseif key == 'x' then
+    local subtype = math.floor(math.random()*8)+1
+    self:add_timer{ loop_ = 5, dur_ = 0.25,
       action_ = function()
         local m = mob.new()
-        mtype2(m, dir)
+        mtype2(m, subtype)
         m.move_function = mtype1_move
         self:addmob(m)  
       end
     }
+  elseif key == 'c' then
+    local subtype = math.floor(math.random()*4)+1
+    self:add_timer{ loop_ = 8, dur_ = 0.25,
+      action_ = function(e)
+        local m = mob.new()
+        mtype3(m, subtype)
+        if subtype <= 2 then
+          m.move_function = mtype2_move(math.cos, 2, 0, 0.8)
+        else
+          m.move_function = mtype2_move(math.cos, 2, math.pi, 0.8)
+        end
+        m.cooldown_ = m.cooldown_ + (8 - e.loop_) * 0.2
+        self:addmob(m) 
+      end
+    }    
   end
 end
 
