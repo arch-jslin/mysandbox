@@ -1,6 +1,6 @@
 
 function love.conf(t)
-  t.title = "Who's the Villain?" -- The title of the window the game is in (string)
+  t.title = "Bullet Hell Reversed" -- The title of the window the game is in (string)
   t.author = "Johnson Lin (arch.jslin@gmail.com)"    -- The author of the game (string)
 --  t.url = nil                 -- The website of the game (string)
 --  t.identity = nil            -- The name of the save directory (string)

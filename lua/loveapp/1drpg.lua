@@ -219,7 +219,7 @@ function mob:levelup(n)
     self.level_  = self.level_ + 1
     self.max_hp_ = self.max_hp_ + 5 * (1+self.level_/10)
     self.hp_     = self.max_hp_
-    self.dmg_    = self.dmg_ + 1 * (1+self.level_/10)
+    self.dmg_    = self.dmg_ + 1 * (1+self.level_/5)
   end
 end
 

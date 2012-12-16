@@ -177,8 +177,8 @@ function game:init(resources)
   self.can_use_formation1 = true
   self.can_use_formation2 = true
   self.can_use_formation3 = true
-  
-  -- TEST:suppose it already leveled up
+
+  -- TEMP
   self.yuusha:levelup(10)
 end
 
@@ -244,6 +244,34 @@ function boss.new(o)
   o.cooldown_wave_   = 1
   o.timers  = {}
   
+  local p1 = love.graphics.newParticleSystem(res.smoke_img, 200)
+	p1:setEmissionRate(50)
+	p1:setSpeed(100, 200)
+	p1:setSizes(1, 1)
+	p1:setColors(255, 255, 255, 255, 255, 255, 255, 0)
+	p1:setPosition(WIDTH-100, HEIGHT/2-150)
+	p1:setLifetime(0.5)
+	p1:setParticleLife(0.5)
+	p1:setDirection(180)
+	p1:setSpread(360)
+	p1:stop()
+  
+  local p2 = love.graphics.newParticleSystem(res.smoke_img, 200)
+	p2:setEmissionRate(50)
+	p2:setSpeed(100, 200)
+	p2:setSizes(1, 1)
+	p2:setColors(255, 255, 255, 255, 255, 255, 255, 0)
+	p2:setPosition(WIDTH-100, HEIGHT/2+150)
+	p2:setLifetime(0.5)
+	p2:setParticleLife(0.5)
+	p2:setDirection(180)
+	p2:setSpread(360)
+	p2:stop()
+  
+  o.systems = {}
+  table.insert(o.systems, p1)
+  table.insert(o.systems, p2)
+  
   setmetatable(o, {__index = boss})
   return o 
 end
@@ -263,9 +291,30 @@ function boss:update(dt)
   end
   self:cooldown(dt)
   
-  if love.mouse.isDown('l') and self:can_fire_normal() then
-    self:fire_normal({x_ = love.mouse.getX(),
-                      y_ = love.mouse.getY()})
+  if self.state_ == 'normal' then  
+    if love.mouse.isDown('l') and self:can_fire_normal() then
+      self:fire_normal({x_ = love.mouse.getX(),
+                        y_ = love.mouse.getY()})
+    end
+  
+    if self.hp_ < 0 then
+      self.state_ = 'dying'
+      for _, v in ipairs(self.systems) do
+        v:start()
+      end
+      self.timers = {} -- JUST DROP IT DAMN
+      self:add_timer{ dur_ = 3, action_ = function() self.state_ = 'dead' end }
+    end
+  elseif self.state_ == 'dying' then
+  elseif self.state_ == 'dead' then
+  end
+
+  for _, v in ipairs(self.systems) do
+    v:update(dt)
+  end
+  
+  for _, v in ipairs(delete_timers) do
+    unordered_remove(self.timers, v)
   end
 end
 
@@ -278,6 +327,10 @@ function boss:draw()
         
   love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
   love.graphics.draw(self.body_, self.x_, self.y_, self.rad_, self.facing_, 1, self.ox_, self.oy_)
+  
+  for _, v in ipairs(self.systems) do
+    love.graphics.draw(v, 0, 0)
+  end
 end
 
 function boss:cooldown(dt)
@@ -374,6 +427,20 @@ function yuusha.new(o)
   o.cooldown_ = 1
   o.timers  = {}
   
+  local p = love.graphics.newParticleSystem(res.smoke_img, 200)
+	p:setEmissionRate(50)
+	p:setSpeed(100, 200)
+	p:setSizes(1, 1)
+	p:setColors(255, 255, 255, 255, 255, 255, 255, 0)
+	p:setPosition(400, 300)
+	p:setLifetime(0.5)
+	p:setParticleLife(0.5)
+	p:setDirection(180)
+	p:setSpread(360)
+	p:stop()
+  
+  o.particle = p
+  
   setmetatable(o, {__index = yuusha})
   return o 
 end
@@ -421,7 +488,6 @@ function yuusha:update(dt)
       until i > #game.mob_bullets or len_sq(self, inc_pos) >= alarm_range_sq or abs_degree < alarm_degree
 
       if len_sq(self, inc_pos) < alarm_range_sq then 
-        game.mob_bullets[i-1].color_.g = 0
         -- start to using evasive maneuvers.
         self.state_ = 'evade'
         self.color_.r = 0
@@ -466,19 +532,37 @@ function yuusha:update(dt)
          
       end
     end
+    
+    if #game.mobs > 0 and self:can_fire() then
+      self:fire()
+    end
+    
+    if self.hp_ <= 0 then
+      self.state_ = 'dying'
+      self.particle:start()
+      self.timers = {} -- JUST DROP IT DAMN
+      self:add_timer{ dur_ = 2, action_ = function() self.state_ = 'dead' end }
+    end
+    
   elseif self.state_ == 'evade' then
+    if #game.mobs > 0 and self:can_fire() then
+      self:fire()
+    end
+    
+  elseif self.state_ == 'dying' then
+    
+  elseif self.state_ == 'dead' then
     
   end
+  
+  self.particle:update(dt)
+  self.particle:setPosition(self.x_, self.y_)
   
   -- this is hack
   if not self.evade_down_ and self.y_ < 100 then
     self.evade_down_ = true
   elseif self.evade_down_ and self.y_ > HEIGHT - 100 then
     self.evade_down_ = false
-  end
-  
-  if #game.mobs > 0 and self:can_fire() then
-    self:fire()
   end
   
   self.x_ = self.x_ + self.vx_ * dt
@@ -495,11 +579,13 @@ function yuusha:draw()
           self.body_:getWidth(), 
           self.x_ - self.ox_, 
           self.y_ - self.oy_)
-  if self.hp_ > 0 then 
-    draw_level(res.font1, self.level_, self.x_ - self.ox_, self.y_ - self.oy_)
-  end
+--  TEMP: done show level for now.... 
+--  if self.hp_ > 0 then 
+--    draw_level(res.font1, self.level_, self.x_ - self.ox_, self.y_ - self.oy_)
+--  end
   love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
   love.graphics.draw(self.body_, self.x_, self.y_, self.rad_, self.facing_, 1, self.ox_, self.oy_)
+  love.graphics.draw(self.particle, 0, 0)
 end
 
 function yuusha:can_fire()
@@ -529,6 +615,14 @@ function yuusha:levelup(n)
   self.level_  = self.level_ + n
   self.max_hp_ = self.max_hp_ + n*3
   self.hp_     = self.max_hp_ 
+end
+
+function yuusha:is_dead()
+  return self.state_ == 'dead'
+end
+
+function yuusha:is_dying()
+  return self.state_ == 'dying'
 end
 
 -- definition of mob
@@ -714,10 +808,16 @@ function game:update(dt)
       unordered_remove(self.mob_bullets, v)
     end
     
+    -- various end conditions
     if self.unit_resource == 0 and 
        #self.mob_bullets == 0 and #self.yuu_bullets == 0 and #self.mobs == 0 then
       self.state = 'cut2'
       self:addmob( boss.new() ) -- add only mob which is boss when change game state
+    
+    elseif self.yuusha:is_dead() then
+      self.state = 'win'
+    elseif game.state == 'phase2' and #self.mobs < 1 then
+      self.state = 'lose'
     end
     
   elseif self.state == 'cut1' then
@@ -738,6 +838,9 @@ function game:update(dt)
       self.state = 'phase2'
       self.keyreleased_impl = phase2_event
     end
+    
+  elseif self.state == 'win' or self.state == 'lose' then
+    
   end -- end of phase condition scope
   
   for _, v in ipairs(delete_timers) do
@@ -751,20 +854,47 @@ function game:update(dt)
 end
 
 function game:draw() 
-  for _, v in ipairs(self.mobs) do
-    v:draw()
+  if self.state == 'win' then
+    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.setFont(res.bigfont)
+    love.graphics.print("Boss Wins!", WIDTH/2-200, HEIGHT/2 - 100)
+  elseif self.state == 'lose' then
+    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.setFont(res.bigfont)
+    love.graphics.print("Hero Wins!", WIDTH/2-200, HEIGHT/2 - 100)
+  else
+    for _, v in ipairs(self.mobs) do
+      v:draw()
+    end
+    for _, v in ipairs(self.yuu_bullets) do
+      v:draw()
+    end
+    for _, v in ipairs(self.mob_bullets) do 
+      v:draw()
+    end
+    self.yuusha:draw() 
+    
+    -- Some info & UI drawing  
+    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.setFont(res.font1)
+    if game.state == 'phase1' then
+      local cond1 = self.can_use_formation1 and 'ready' or 'not ready'
+      local cond2 = self.can_use_formation2 and 'ready' or 'not ready'
+      local cond3 = self.can_use_formation2 and 'ready' or 'not ready'
+      love.graphics.print("Unit Resource: "..self.unit_resource, WIDTH/2-250, HEIGHT-30)
+      love.graphics.print("(z) form1: "..cond1.."\n      cost: 10", WIDTH/2-50,  HEIGHT-50)
+      love.graphics.print("(x) form2: "..cond2.."\n      cost: 5",  WIDTH/2+100, HEIGHT-50)
+      love.graphics.print("(c) form3: "..cond3.."\n      cost: 5",  WIDTH/2+250, HEIGHT-50)
+    elseif game.state == 'phase2' then
+      local cond1 = self.mobs[1]:can_fire_wave() and 'ready' or 'not ready'
+      love.graphics.print("Use mouse to aim and shoot", WIDTH/2-250, HEIGHT-30)
+      love.graphics.print("(z) bullet wave: "..cond1.."\n      cost: 10", WIDTH/2+50,  HEIGHT-50)
+      love.graphics.draw(res.cursor_img, 
+                         love.mouse.getX(),
+                         love.mouse.getY(),
+                         0, 1, 1, 24, 24)
+    end
   end
-  for _, v in ipairs(self.yuu_bullets) do
-    v:draw()
-  end
-  for _, v in ipairs(self.mob_bullets) do 
-    v:draw()
-  end
-  self.yuusha:draw() 
-  
-  -- Some info & UI drawing
-  love.graphics.setColor(255, 255, 255, 255)
-  love.graphics.print("Unit Resource: "..self.unit_resource, WIDTH/2-50, HEIGHT-20)
 end
 
 function game:addmob(o)
@@ -788,7 +918,13 @@ function game:is_finished()
 end
 
 function game:keyreleased(key)
-  self.keyreleased_impl(self, key)
+  if self.state == 'phase1' or self.state == 'phase2' then 
+    self.keyreleased_impl(self, key)
+  end
+end
+
+function game:pass_data(yuusha_level)
+  self.yuusha:levelup(yuusha_level)
 end
 
 return game
