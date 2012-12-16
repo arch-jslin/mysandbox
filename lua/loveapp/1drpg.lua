@@ -1,25 +1,11 @@
 -- 1d role playing game (like)
 
-local len_sq = require 'helper'.len_sq
+local helper = require 'helper'
+local len_sq = helper.len_sq
+local draw_hp = helper.draw_hp
+local draw_level = helper.draw_level
 
-local res = {}
-
-local function draw_hp(hp_percent, total_len, x, y)
-  if hp_percent <= 0 then return end
-  love.graphics.setColor(255, 50, 50, 255)
-  love.graphics.setLine(6)
-  love.graphics.line(x, y-5, x+total_len, y-5)
-  love.graphics.setColor(100, 255, 100, 255)
-  love.graphics.setLine(4)
-  love.graphics.line(x+1, y-5, x+((total_len-2)*hp_percent), y-5)
-end
-
-local function draw_level(level, x, y)
-  love.graphics.setColor(255, 255, 255, 255)
-  love.graphics.setFont(res.font1)
-  love.graphics.print("Lv "..level, x, y - 25)
-end
-
+local res
 local game = {}
 local yuusha = {}
 local mob = {}
@@ -27,14 +13,14 @@ local mob = {}
 -- because some resources are best set here in game:init, so I put it up here to 
 -- see it more clearly
 
-function game:init()
+function game:init(resources)
   self.mobs = {}
   
-  res.yuusha_img = love.graphics.newImage("img/yuusha1.png")
-  res.mob1_img   = love.graphics.newImage("img/mob1.png")
-  res.font1      = love.graphics.newFont("img/Exo-Medium.ttf", 12)
+  res = resources
   
   self.yuusha = yuusha.new() 
+  
+  self.mob_count = 100
 end
 
 -- definition of yuusha
@@ -44,6 +30,7 @@ function yuusha.new(o)
   o.body_   = res.yuusha_img
   o.x_      = love.graphics.getWidth()/2
   o.y_      = love.graphics.getHeight()/2
+  o.rad_    = 0
   o.facing_ = o.facing_ or 1
   o.ox_     = o.body_:getWidth()/2 
   o.oy_     = o.body_:getHeight()/2 
@@ -120,10 +107,10 @@ function yuusha:draw()
           self.x_ - self.ox_, 
           self.y_ - self.oy_)
   if self.hp_ > 0 then
-    draw_level(self.level_, self.x_ - self.ox_, self.y_ - self.oy_)
+    draw_level(res.font1, self.level_, self.x_ - self.ox_, self.y_ - self.oy_)
   end
   love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
-  love.graphics.draw(self.body_, self.x_, self.y_, 0, self.facing_, 1, self.ox_, self.oy_)
+  love.graphics.draw(self.body_, self.x_, self.y_, self.rad_, self.facing_, 1, self.ox_, self.oy_)
 end
 
 function yuusha:attack(o)
@@ -206,7 +193,7 @@ function mob:draw()
           self.x_ - self.ox_, 
           self.y_ - self.oy_)
   if self.hp_ > 0 then
-    draw_level(self.level_, self.x_ - self.ox_, self.y_ - self.oy_)
+    draw_level(res.font1, self.level_, self.x_ - self.ox_, self.y_ - self.oy_)
   end
   love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
   love.graphics.draw(self.body_,    -- ref to img
@@ -285,6 +272,8 @@ function game:draw()
   for _, v in ipairs(self.mobs) do
     v:draw()
   end
+  love.graphics.setColor(255, 255, 255, 255)
+  love.graphics.print("minion count: "..self.mob_count, 50, love.graphics.getHeight() - 50)
 end
 
 function game:addmob(o)
@@ -307,11 +296,17 @@ function game:keyreleased(key)
     local m = mob.new{ x_ = 0 } 
     m:levelup( self.yuusha.level_ - 1 )
     self:addmob(m)
+    self.mob_count = self.mob_count - 1
   elseif key == 'x' then
     local m = mob.new{ x_ = love.graphics.getWidth(), facing_ = -1 } 
     m:levelup( self.yuusha.level_ - 1 )
     self:addmob(m)
+    self.mob_count = self.mob_count - 1
   end
+end
+
+function game:is_finished()
+  return self.mob_count < 1
 end
 
 return game
