@@ -5,13 +5,14 @@ local function len_sq(o1, o2)
   return dx*dx + dy*dy
 end
 
-local function draw_hp(hp_percent, total_len, x, y)
+local function draw_hp(hp_percent, total_len, x, y, thick)
+  thickness = thickness or 6
   if hp_percent <= 0 then return end
   love.graphics.setColor(255, 50, 50, 255)
-  love.graphics.setLine(6)
+  love.graphics.setLine(thickness)
   love.graphics.line(x, y-5, x+total_len, y-5)
   love.graphics.setColor(100, 255, 100, 255)
-  love.graphics.setLine(4)
+  love.graphics.setLine(thickness-2)
   love.graphics.line(x+1, y-5, x+((total_len-2)*hp_percent), y-5)
 end
 

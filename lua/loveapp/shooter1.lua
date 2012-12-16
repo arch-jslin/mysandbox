@@ -102,14 +102,15 @@ end
 
 local function phase1_event(self, key)
   if key == 'z' and self.unit_resource >= 10 and self.can_use_formation1 then
-    self:add_timer{ loop_ = 5, dur_ = 0.25,
-      action_ = function()
-        local m = mob.new()
-        mtype1(m)
-        m.move_function = mtype1_move
-        self:addmob(m)  
-      end
-    }
+    local function formation1()
+      local m = mob.new()
+      mtype1(m)
+      m.move_function = mtype1_move
+      self:addmob(m)
+    end
+    formation1() -- directly call here first
+    self:add_timer{ loop_ = 4, dur_ = 0.25, action_ = formation1 }
+    
     self.can_use_formation1 = false
     self.unit_resource = self.unit_resource - 10
     self:add_timer{ dur_ = 3,
@@ -118,14 +119,15 @@ local function phase1_event(self, key)
     
   elseif key == 'x' and self.unit_resource >= 5 and self.can_use_formation2 then
     local subtype = math.floor(math.random()*4)+1
-    self:add_timer{ loop_ = 5, dur_ = 0.25,
-      action_ = function()
-        local m = mob.new()
-        mtype2(m, subtype)
-        m.move_function = mtype1_move
-        self:addmob(m)  
-      end
-    }
+    local function formation2()
+      local m = mob.new()
+      mtype2(m, subtype)
+      m.move_function = mtype1_move
+      self:addmob(m)  
+    end
+    formation2() -- directly call here first
+    self:add_timer{ loop_ = 4, dur_ = 0.25, action_ = formation2 }
+    
     self.can_use_formation2 = false
     self.unit_resource = self.unit_resource - 5
     self:add_timer{ dur_ = 1.5,
@@ -134,19 +136,20 @@ local function phase1_event(self, key)
     
   elseif key == 'c' and self.unit_resource >= 5 and self.can_use_formation2 then
     local subtype = math.floor(math.random()*2)+1
-    self:add_timer{ loop_ = 8, dur_ = 0.25,
-      action_ = function(e)
-        local m = mob.new()
-        mtype3(m, subtype)
-        if subtype == 1 then
-          m.move_function = mtype2_move(math.cos, 2, 0, 0.8)
-        else
-          m.move_function = mtype2_move(math.cos, 2, math.pi, 0.8)
-        end
-        m.cooldown_ = m.cooldown_ + (8 - e.loop_) * 0.2
-        self:addmob(m) 
+    local function formation3(e)
+      local m = mob.new()
+      mtype3(m, subtype)
+      if subtype == 1 then
+        m.move_function = mtype2_move(math.cos, 2, 0, 0.8)
+      else
+        m.move_function = mtype2_move(math.cos, 2, math.pi, 0.8)
       end
-    }    
+      m.cooldown_ = m.cooldown_ + (8 - e.loop_) * 0.2
+      self:addmob(m)     
+    end
+    formation3({loop_ = 8}) -- directly call here first
+    self:add_timer{ loop_ = 7, dur_ = 0.25, action_ = formation3 }   
+    
     self.can_use_formation2 = false
     self.unit_resource = self.unit_resource - 5
     self:add_timer{ dur_ = 1.5,
@@ -170,7 +173,7 @@ function game:init(resources)
   self.state  = 'cut1'
   self.key_released_impl = nil
   
-  self.unit_resource = 20
+  self.unit_resource = 200
   self.can_use_formation1 = true
   self.can_use_formation2 = true
   self.can_use_formation3 = true
@@ -235,7 +238,7 @@ function boss.new(o)
   o.vx_     = 0
   o.vy_     = 0
   o.max_hp_ = 500
-  o.hp_     = o.max_hp_
+  o.hp_     = 1
   o.state_  = 'normal'
   o.cooldown_normal_ = 0
   o.cooldown_wave_   = 1
@@ -268,9 +271,10 @@ end
 
 function boss:draw()
   draw_hp(self.hp_ / self.max_hp_, 
-          self.body_:getWidth(), 
-          self.x_ - self.ox_, 
-          self.y_ - self.oy_)
+          WIDTH - 40, 
+          20, 
+          20,
+          12)
         
   love.graphics.setColor(self.color_.r, self.color_.g, self.color_.b, self.color_.a)
   love.graphics.draw(self.body_, self.x_, self.y_, self.rad_, self.facing_, 1, self.ox_, self.oy_)
@@ -392,28 +396,53 @@ function yuusha:update(dt)
   if self.state_ == 'normal' then
     
     if #game.mob_bullets > 0 then
-      local avgx = (game.mob_bullets[1].x_)
-      local avgy = (game.mob_bullets[1].y_)
-      local inc_pos = {x_ = avgx, y_ = avgy}
-      if len_sq(self, inc_pos) < 22500 then -- ok, 150 is fairly close enough
+      local avgx, avgy, inc_pos
+      local length
+      local inc_nvec
+      local abs_degree = 999
+      local i = 1
+      
+      local alarm_range_sq = game.state == 'phase2' and 10000 or 22500
+      local alarm_degree = game.state == 'phase2' and 45 or 70
+     
+      repeat
+        avgx = (game.mob_bullets[i].x_)
+        avgy = (game.mob_bullets[i].y_)
+        inc_pos = {x_ = avgx, y_ = avgy}
+        length = math.sqrt(len_sq(self, inc_pos))
+        inc_nvec = { x_ = ((self.x_ - inc_pos.x_) / length), 
+                     y_ = ((self.y_ - inc_pos.y_) / length) }
+
+        local deg_inc = ((math.atan2(self.y_ - inc_pos.y_, self.x_ - inc_pos.x_)) * 180/math.pi) 
+        local deg_vec = ((math.atan2(game.mob_bullets[i].vy_, game.mob_bullets[i].vx_)) * 180/math.pi) 
+        abs_degree = math.abs(deg_inc - deg_vec)
+        if abs_degree > 180 then abs_degree = 360 - abs_degree end -- round the degree
+        i = i + 1
+      until i > #game.mob_bullets or len_sq(self, inc_pos) >= alarm_range_sq or abs_degree < alarm_degree
+
+      if len_sq(self, inc_pos) < alarm_range_sq then 
+        game.mob_bullets[i-1].color_.g = 0
         -- start to using evasive maneuvers.
         self.state_ = 'evade'
         self.color_.r = 0
-        local length = math.sqrt(len_sq(self, inc_pos))
-        local inc_nvec = { x_ = ((self.x_ - inc_pos.x_) / length), 
-                           y_ = ((self.y_ - inc_pos.y_) / length) }
-        
+      
         if game.state == 'phase2' then
-          if math.random() - (self.y_ / HEIGHT) > 0 then 
-            self.vx_ = inc_nvec.y_ * 150   -- (x, y) -> (y, -x) this will go clockwise 
-            self.vy_ = -inc_nvec.x_ * 150  -- suitable when y < HEIGHT/2
+          if self.evade_down_ then 
+--            self.vx_ = inc_nvec.y_ * 140   -- (x, y) -> (y, -x) this will go clockwise 
+--            self.vy_ = -inc_nvec.x_ * 140  -- suitable when y < HEIGHT/2
+            self.vx_ = game.mob_bullets[i-1].vy_ * 1.5
+            self.vy_ = -game.mob_bullets[i-1].vx_ * 1.5
           else
-            self.vx_ = -inc_nvec.y_ * 150   -- (x, y) -> (-y, x) this will go counter clockwise
-            self.vy_ = inc_nvec.x_ * 150
+--            self.vx_ = -inc_nvec.y_ * 140   -- (x, y) -> (-y, x) this will go counter clockwise
+--            self.vy_ = inc_nvec.x_ * 140
+            self.vx_ = -game.mob_bullets[i-1].vy_ * 1.5
+            self.vy_ = game.mob_bullets[i-1].vx_ * 1.5
           end
         elseif game.state == 'phase1' then
-          self.vx_ = inc_nvec.y_ * 200   -- (x, y) -> (y, -x) this will go clockwise 
-          self.vy_ = -inc_nvec.x_ * 200  
+          self.vx_ = inc_nvec.y_ * 150   -- (x, y) -> (y, -x) this will go clockwise 
+          self.vy_ = -inc_nvec.x_ * 150  
+--          self.vx_ = game.mob_bullets[i-1].vy_ * 1.5
+--          self.vy_ = -game.mob_bullets[i-1].vx_ * 1.5
         end
         
         local front_border = game.state == 'phase2' and WIDTH - 250 or WIDTH - 30
@@ -434,10 +463,18 @@ function yuusha:update(dt)
             self.vy_ = 0
           end
         }
+         
       end
     end
   elseif self.state_ == 'evade' then
     
+  end
+  
+  -- this is hack
+  if not self.evade_down_ and self.y_ < 100 then
+    self.evade_down_ = true
+  elseif self.evade_down_ and self.y_ > HEIGHT - 100 then
+    self.evade_down_ = false
   end
   
   if #game.mobs > 0 and self:can_fire() then
@@ -690,6 +727,7 @@ function game:update(dt)
   elseif self.state == 'cut2' then
     local boss = self.mobs[1]
     boss.x_ = boss.x_ - 100 * dt
+    boss.hp_ = boss.hp_ + (boss.max_hp_ - boss.hp_) / 20
     
     local dx = 50 - self.yuusha.x_
     local dy = HEIGHT/2 - self.yuusha.y_
