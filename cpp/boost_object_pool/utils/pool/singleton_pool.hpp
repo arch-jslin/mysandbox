@@ -48,7 +48,7 @@ namespace boost {
 
  <b>Tag</b> User-specified type to uniquely identify this pool: allows different unbounded sets of singleton pools to exist.
 
- <b>RequestedSize</b> *** IMPORTANT, This is replaced with T information *** The size of each chunk returned by member function <tt>malloc() </tt>.
+ <b>RequestedSize</b> The size of each chunk returned by member function <tt>malloc() </tt>.
 
  <B>UserAllocator</b> User allocator, default = default_user_allocator_new_delete.
 
