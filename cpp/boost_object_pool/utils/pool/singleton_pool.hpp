@@ -28,6 +28,10 @@
     backup of singleton_pool is actually fetching it's underlying pool, so I made pool_type available,
     but now backup is not a part of this class.
 
+    **update:
+    Made singleton_pool::pool_type doesn't depend on Mutex type. Favor composition.
+    Of course necessary lock() and unlock() concept is added to it too.
+
 */
 
 #include "utils/pool/poolfwd.hpp"
@@ -129,10 +133,19 @@ public:
 
 #ifndef BOOST_DOXYGEN
     // for outside usage, let others know what's the underlying pool type
-    struct pool_type: public Mutex, public pool<UserAllocator>
+    struct pool_type: public pool<UserAllocator>
     {
       pool_type() : pool<UserAllocator>(RequestedSize, NextSize, MaxSize) {}
-    }; //  struct pool_type: Mutex
+      inline void lock()   { mtx.lock(); }    // 2012.12 arch.jslin: provide Lockable concept
+      inline void unlock() { mtx.unlock(); }  // 2012.12 arch.jslin: provide Lockable concept
+      pool_type(pool_type const& other) : pool<UserAllocator>(other) {}
+      pool_type& operator=(pool_type const& other) {
+          shallow_copy_from(other);
+          return *this;
+      }
+    private:
+      Mutex mtx; // 2012.12 arch.jslin: favor composition over inheritance.
+    };
 #else
     //
     // This is invoked when we build with Doxygen only:
@@ -145,62 +158,62 @@ public:
     static void * malloc BOOST_PREVENT_MACRO_SUBSTITUTION()
     { //! Equivalent to SingletonPool::p.malloc(); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       return (p.malloc)();
     }
     static void * ordered_malloc()
     {  //! Equivalent to SingletonPool::p.ordered_malloc(); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       return p.ordered_malloc();
     }
     static void * ordered_malloc(const size_type n)
     { //! Equivalent to SingletonPool::p.ordered_malloc(n); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       return p.ordered_malloc(n);
     }
     static bool is_from(void * const ptr)
     { //! Equivalent to SingletonPool::p.is_from(chunk); synchronized.
       //! \returns true if chunk is from SingletonPool::is_from(chunk)
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       return p.is_from(ptr);
     }
     static void free BOOST_PREVENT_MACRO_SUBSTITUTION(void * const ptr)
     { //! Equivalent to SingletonPool::p.free(chunk); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       (p.free)(ptr);
     }
     static void ordered_free(void * const ptr)
     { //! Equivalent to SingletonPool::p.ordered_free(chunk); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       p.ordered_free(ptr);
     }
     static void free BOOST_PREVENT_MACRO_SUBSTITUTION(void * const ptr, const size_type n)
     { //! Equivalent to SingletonPool::p.free(chunk, n); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       (p.free)(ptr, n);
     }
     static void ordered_free(void * const ptr, const size_type n)
     { //! Equivalent to SingletonPool::p.ordered_free(chunk, n); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       p.ordered_free(ptr, n);
     }
     static bool release_memory()
     { //! Equivalent to SingletonPool::p.release_memory(); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       return p.release_memory();
     }
     static bool purge_memory()
     { //! Equivalent to SingletonPool::p.purge_memory(); synchronized.
       pool_type & p = get_pool();
-      details::pool::guard<Mutex> g(p);
+      details::pool::guard<pool_type> g(p);
       return p.purge_memory();
     }
 

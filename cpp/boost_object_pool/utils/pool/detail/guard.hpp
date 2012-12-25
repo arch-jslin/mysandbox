@@ -13,9 +13,18 @@
   \file
   \brief Extremely Light-Weight guard class.
   \details Auto-lock/unlock-er
-  detail/guard.hpp provides a type guard<Mutex>
-  that allows scoped access to the Mutex's locking and unlocking operations.
-  It is used to ensure that a Mutex is unlocked, even if an exception is thrown.
+  detail/guard.hpp provides a type guard<Lockable>
+  that allows scoped access to the Lockable's locking and unlocking operations.
+  It is used to ensure that a Lockable is unlocked, even if an exception is thrown.
+*/
+
+/* 2012.12 arch.jslin:
+
+    This totally abstract "guard" doesn't know anything about Mutex. I am tired of fixing the comments though.
+
+    It is just able to guard anything that provide it with lock() and unlock() concept.
+    of course provided that lock() and unlock() of that Lockable is actually implemented.
+
 */
 
 namespace boost {
@@ -23,9 +32,9 @@ namespace boost {
 namespace details {
 namespace pool {
 
-template <typename Mutex> //!< \tparam Mutex (platform-specific) mutex class.
+template <typename Lockable> //!< \tparam Lockable (platform-specific) mutex class.
 class guard
-{ //! Locks the mutex, binding guard<Mutex> to Mutex.
+{ //! Locks the Lockable, binding guard<Lockable> to Lockable.
 	/*! Example:
 	Given a (platform-specific) mutex class, we can wrap code as follows:
 
@@ -43,22 +52,21 @@ class guard
 	} // g's destructor unlocks "global_lock"
 	*/
   private:
-    Mutex & mtx;
+    Lockable & l_;
 
     guard(const guard &); //!< Guards the mutex, ensuring unlocked on destruction, even if exception is thrown.
     void operator=(const guard &);
 
   public:
-    explicit guard(Mutex & nmtx)
-    :mtx(nmtx)
+    explicit guard(Lockable & l) : l_(l)
     { //! Locks the mutex of the guard class.
-			mtx.lock();
-		}
+        l_.lock();
+    }
 
     ~guard()
     { //! destructor unlocks the mutex of the guard class.
-			mtx.unlock();
-		}
+        l_.unlock();
+    }
 }; // class guard
 
 } // namespace pool

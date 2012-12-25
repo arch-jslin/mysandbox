@@ -72,6 +72,8 @@
 
     3. added restore method to overwrite current memory with previously dumped memory blocks.
 
+    4. added shallow_copy ability to pool.
+
 */
 
 
@@ -323,6 +325,16 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
     void * malloc_need_resize(); //! Called if malloc needs to resize the free list.
     void * ordered_malloc_need_resize();  //! Called if ordered_malloc needs to resize the free list.
 
+    inline void shallow_copy_from(pool<UserAllocator> const& other) {
+        this->first   = other.first;
+        list          = other.list;
+        next_size     = other.next_size;
+        start_size    = other.start_size;
+        max_size      = other.max_size;
+        i_am_clone_   = true;
+        podptr_count_ = other.podptr_count_;
+    }
+
   protected:
     details::PODptr<size_type> list; //!< List structure holding ordered blocks.
 
@@ -408,6 +420,17 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
       //!   The default is 32. This parameter may not be 0.
       //! \param nmax_size is the maximum number of chunks to allocate in one block.
       // printf("A pool of sizeof %d is created.\n", requested_size);
+    }
+
+    // 2012.12 arch.jslin: had to provide copy constructor and assignment overloading here.
+    //                     by any means since we made pool clonable, then by concept it should be clonable.
+    pool(pool<UserAllocator> const& other) : requested_size(other.requested_size) {
+        shallow_copy_from(other);
+    }
+
+    pool<UserAllocator>& operator=(pool<UserAllocator> const& other) {
+        shallow_copy_from(other);
+        return *this;
     }
 
     ~pool()
