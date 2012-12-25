@@ -4,6 +4,7 @@
 // Note: By the usage of this, we actually stucked with boost's implementation.
 #include <boost/smart_ptr/make_shared.hpp>
 #include <boost/thread/mutex.hpp>
+#include <deque>
 
 // Note: we are using our own implementation of boost.pool, in a sense,
 //       so don't make the include path fool you. changed to utils.pool.
@@ -1041,6 +1042,8 @@ private:
 
 /// ******** Add some metadata information for restorable pool here ******** ///
 
+const size_t MAX_SIZE_OF_BACKUP = 10;
+
 template<typename T>
 class ObjectPoolRestorable
 {
@@ -1052,16 +1055,46 @@ public:
 
     typedef typename this_pool::pool_type pool_type;
 
-    static void backup() {
-        backup_.purge_memory(); // This is only temporary.
-        // When backup, we'll have to check if backup buffer is already all used or there's still empty slot.
-        this_pool::clone_to(backup_);
+    static void backup(int frame_number) {
+//        if( (tail_ + 1) % MAX_SIZE_OF_BACKUP == head_ ) { // full, only 1 space empty for next tail
+//            backups_[head_].purge_memory();
+//            head_ += 1; // mod MAX_SIZE_OF_BACKUP?
+//            this_pool::clone_to( backups_[tail_] );
+//            tail_ += 1; // mod MAX_SIZE_OF_BACKUP?
+//        }
+//        else if( tail_ < MAX_SIZE_OF_BACKUP /* is this really correct behaviour? */ ) {
+//            this_pool::clone_to( backups_[tail_] );
+//            tail_ += 1; // mod MAX_SIZE_OF_BACKUP?
+//        }
+//        else {
+//            printf("FUUUUUUUUUUUUUUUCK!\n");
+//        }
+//        tracked_frame_number_ = frame_number;
+        backups_.push_back( pool_type() );      // make sure the place holder (tmp pool) is destructed right away
+        this_pool::clone_to( backups_.back() ); // So that it won't call destructor when tmp pool is out of scope.
+        tracked_frame_number_ = frame_number;
+
+        // dump things larger than the backup window:
+        if( backups_.size() > MAX_SIZE_OF_BACKUP ) {
+            printf("Backup window full..\n");
+            backups_.pop_front();
+        }
+
+        printf("tracked_frame_number_ = %d, backup_size = %d\n", tracked_frame_number_, backups_.size());
     }
 
-    static void restore() {
+    static void restore(int frame_number) {
         // This is only temporary.
         // When restore, we have to check which frame in the backup we want to rollback to.
-        this_pool::restore(backup_);
+        // this_pool::restore(backup_);
+        int num_of_frames_to_rollback = tracked_frame_number_ - frame_number + 1;
+        for( ; num_of_frames_to_rollback > 0 ; --num_of_frames_to_rollback ) {
+            if( num_of_frames_to_rollback == 1 ) {
+                pool_type & backup = backups_.back();
+                this_pool::restore(backup);
+            }
+            backups_.pop_back();
+        }
     }
 
     static element_type create(){
@@ -1141,15 +1174,64 @@ public:
     // ... etc generated combinations
 
 private:
-    static pool_type backup_;
-
+    static std::deque<pool_type> backups_;
+    static int tracked_frame_number_;
 };
 
 template<typename T>
-typename ObjectPoolRestorable<T>::pool_type ObjectPoolRestorable<T>::backup_;
+std::deque<typename ObjectPoolRestorable<T>::pool_type> ObjectPoolRestorable<T>::backups_;
 
-void pools_backup();
-void pools_restore();
+template<typename T>
+int ObjectPoolRestorable<T>::tracked_frame_number_ = 0;
+
+namespace details {
+
+template<typename CharOrSPtr>
+class SpecializedPool {
+    typedef boost::singleton_pool<CharOrSPtr, sizeof(CharOrSPtr)> this_pool;
+    typedef typename this_pool::pool_type pool_type;
+
+public:
+    static void backup(int frame_number) {
+        backups_.push_back( pool_type() );      // make sure the place holder (tmp pool) is destructed right away
+        this_pool::clone_to( backups_.back() ); // So that it won't call destructor when tmp pool is out of scope.
+        tracked_frame_number_ = frame_number;
+
+        // dump things larger than the backup window:
+        if( backups_.size() > MAX_SIZE_OF_BACKUP ) {
+            printf("Backup window full.. popping (specialized_pool)\n");
+            backups_.pop_front();
+        }
+
+        printf("tracked_frame_number_ = %d, backup_size = %d (specialized pool)\n", tracked_frame_number_, backups_.size());
+    }
+
+    static void restore(int frame_number) {
+        int num_of_frames_to_rollback = tracked_frame_number_ - frame_number + 1;
+        for( ; num_of_frames_to_rollback > 0 ; --num_of_frames_to_rollback ) {
+            if( num_of_frames_to_rollback == 1 ) {
+                pool_type & backup = backups_.back();
+                this_pool::restore(backup);
+            }
+            backups_.pop_back();
+        }
+    }
+
+private:
+    static std::deque<pool_type> backups_;
+    static int tracked_frame_number_;
+};
+
+template<typename CharOrSPtr>
+std::deque<typename SpecializedPool<CharOrSPtr>::pool_type> SpecializedPool<CharOrSPtr>::backups_;
+
+template<typename CharOrSPtr>
+int SpecializedPool<CharOrSPtr>::tracked_frame_number_ = 0;
+
+} // details
+
+void pools_backup(int frame_number);
+void pools_restore(int frame_number);
 
 }
 } // end of namespace

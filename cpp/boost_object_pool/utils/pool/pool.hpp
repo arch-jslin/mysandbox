@@ -575,9 +575,9 @@ class pool: protected simple_segregated_storage < typename UserAllocator::size_t
     // added by arch.jslin 2012.11
     void clone_to(pool<UserAllocator> & clone) const {
         //printf("Pool (%d) cloning...\n", requested_size);
-        if( this->first == 0 ) {
-            printf("pool's free list is currently empty.\n");
-        }
+//        if( this->first == 0 ) {
+//            printf("pool's free list is currently empty.\n");
+//        }
         clone.first         = this->first;
         clone.next_size     = next_size;
         clone.start_size    = start_size;

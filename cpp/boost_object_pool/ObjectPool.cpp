@@ -10,41 +10,30 @@
 namespace psc {
 namespace utils {
 
-// used for basic_string => pooled string, or other possible uses
-typedef boost::singleton_pool<char, sizeof(char)>
-    pool_char;
-
-// used for shared_ptrs stored in STL containers
-typedef boost::singleton_pool<std::tr1::shared_ptr<void>, sizeof(std::tr1::shared_ptr<void>) >
-    pool_sptr;
-
-// Ok... whatever, singleton_pool is already thread-safe, and it should be invisible outside of this translation unit.
-pool_char::pool_type char_backup_;
-pool_sptr::pool_type sptr_backup_;
-
 // And some unified restore // backup implementation here.
 
-void pools_backup()
+void pools_backup(int frame_number)
 {
-    ObjectPoolRestorable<model::Cube>::backup();
-    ObjectPoolRestorable<model::Map>::backup();
+    ObjectPoolRestorable<model::Cube>::backup(frame_number);
+    ObjectPoolRestorable<model::Map>::backup(frame_number);
 
-    char_backup_.purge_memory(); // This is only temporary.
-    // When backup, we'll have to check if backup buffer is already all used or there's still empty slot.
-    pool_char::clone_to(char_backup_);
+    // used for basic_string => pooled string, or other possible uses
+    details::SpecializedPool<char>::backup(frame_number);
 
-    sptr_backup_.purge_memory();
-    pool_sptr::clone_to(sptr_backup_);
+    // used for shared_ptrs stored in STL containers
+    details::SpecializedPool<std::tr1::shared_ptr<void> >::backup(frame_number);
 }
 
-void pools_restore()
+void pools_restore(int frame_number)
 {
-    ObjectPoolRestorable<model::Cube>::restore();
-    ObjectPoolRestorable<model::Map>::restore();
+    ObjectPoolRestorable<model::Cube>::restore(frame_number);
+    ObjectPoolRestorable<model::Map>::restore(frame_number);
 
-    pool_char::restore(char_backup_);
+    // used for basic_string => pooled string, or other possible uses
+    details::SpecializedPool<char>::restore(frame_number);
 
-    pool_sptr::restore(sptr_backup_);
+    // used for shared_ptrs stored in STL containers
+    details::SpecializedPool<std::tr1::shared_ptr<void> >::restore(frame_number);
 }
 
 } // utils

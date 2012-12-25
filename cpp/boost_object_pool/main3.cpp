@@ -59,7 +59,7 @@ int main()
     // deprecated, kept only for reference.
     //printf("%d, %d, %d, %d, %d\n", sizeof(shared_ptr<void>), sizeof(shared_ptr<int>), sizeof(pMap), sizeof(boost::detail::sp_counted_impl_pda<Map*, boost::detail::sp_ms_deleter<Map> , fast_pool_allocator<Map> >));
 
-    for( int frame = 0; frame < TOTAL_FRAME_FOR_TEST; ++frame ) {
+    for( int frame = 1; frame < TOTAL_FRAME_FOR_TEST; ++frame ) {
         if( !PERFORMANCE_TEST ) {
             printf("Frame %d:\n", frame);
         }
@@ -78,7 +78,7 @@ int main()
             //pool_char::restore();
             //pool_spcb::restore();
             //pool_sptr::restore();
-            utils::pools_restore();
+            utils::pools_restore(frame - 3); // we test this first.. arbitrary rollback for 4 frames.
             if( DEBUG ) {
                 printf("Something happened! rollback!\n");
                 printf("checking memory....\n");
@@ -115,20 +115,11 @@ int main()
         m1->update(frame);
         m2->update(frame);
 
-        // backup after model update
-        if( frame % 4 == 0 ) { // snapshot every 4 frames
-            if( DEBUG ) {
-                printf("Backup...\n");
-            }
-            //pool_sptr::backup();
-            //pool_spcb::backup();
-            //ObjectPool<Map>::backup();
-            //ObjectPool<Cube>::backup();
-            //pool_cube::backup();
-            //pool_map::backup();
-            //pool_char::backup();
-            utils::pools_backup();
+        // backup after model update EVERY FRAME.
+        if( DEBUG ) {
+            printf("Backup...\n");
         }
+        utils::pools_backup(frame);
 
         // render
         if( DEBUG ) {
