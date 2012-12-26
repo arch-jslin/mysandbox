@@ -1076,11 +1076,11 @@ public:
 
         // dump things larger than the backup window:
         if( backups_.size() > MAX_SIZE_OF_BACKUP ) {
-            printf("Backup window full..\n");
+            //printf("Backup window full.. popping \n");
             backups_.pop_front();
         }
 
-        printf("tracked_frame_number_ = %d, backup_size = %d\n", tracked_frame_number_, backups_.size());
+        //printf("tracked_frame_number_ = %d, backup_size = %d\n", tracked_frame_number_, backups_.size());
     }
 
     static void restore(int frame_number) {
@@ -1199,11 +1199,13 @@ public:
 
         // dump things larger than the backup window:
         if( backups_.size() > MAX_SIZE_OF_BACKUP ) {
-            printf("Backup window full.. popping (specialized_pool)\n");
+            //if( !PERFORMANCE_TEST ) {
+            //printf("Backup window full.. popping (specialized_pool)\n");
+            //}
             backups_.pop_front();
         }
 
-        printf("tracked_frame_number_ = %d, backup_size = %d (specialized pool)\n", tracked_frame_number_, backups_.size());
+        //printf("tracked_frame_number_ = %d, backup_size = %d (specialized pool)\n", tracked_frame_number_, backups_.size());
     }
 
     static void restore(int frame_number) {

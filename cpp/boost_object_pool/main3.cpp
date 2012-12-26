@@ -78,7 +78,7 @@ int main()
             //pool_char::restore();
             //pool_spcb::restore();
             //pool_sptr::restore();
-            utils::pools_restore(frame - 3); // we test this first.. arbitrary rollback for 4 frames.
+            utils::pools_restore(frame - (frame%4)-1 /* serve as random */ ); // we test this first.. arbitrary rollback for 4 frames.
             if( DEBUG ) {
                 printf("Something happened! rollback!\n");
                 printf("checking memory....\n");
