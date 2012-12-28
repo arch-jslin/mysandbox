@@ -61,7 +61,7 @@
 /* 2012.12 WTF NOTE arch.jslin:
 
     Made boost.pool capable of cloning -- to enable large-scale memory backup/restoration.
-    Three things added:
+    Four things added:
 
     1. added an int metadata to PODptr, just in front of next_ptr. That's to ensure
        no matter the pool is ordered or not, or even mixed, I can clone and restore

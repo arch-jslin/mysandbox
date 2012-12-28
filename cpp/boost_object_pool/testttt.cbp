@@ -39,16 +39,13 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Conf.hpp" />
+		<Unit filename="Cube.cpp" />
+		<Unit filename="Cube.hpp" />
 		<Unit filename="Logger.hpp" />
+		<Unit filename="Map.hpp" />
+		<Unit filename="ObjectPool.cpp" />
 		<Unit filename="ObjectPool.hpp" />
-		<Unit filename="boost\pool\detail\guard.hpp" />
-		<Unit filename="boost\pool\detail\mutex.hpp" />
-		<Unit filename="boost\pool\object_pool.hpp" />
-		<Unit filename="boost\pool\pool.hpp" />
-		<Unit filename="boost\pool\pool_alloc.hpp" />
-		<Unit filename="boost\pool\poolfwd.hpp" />
-		<Unit filename="boost\pool\simple_segregated_storage.hpp" />
-		<Unit filename="boost\pool\singleton_pool.hpp" />
 		<Unit filename="loki\Singleton.h" />
 		<Unit filename="main.cpp">
 			<Option compile="0" />
@@ -61,6 +58,14 @@
 			<Option target="Release" />
 		</Unit>
 		<Unit filename="main3.cpp" />
+		<Unit filename="utils\pool\detail\guard.hpp" />
+		<Unit filename="utils\pool\detail\mutex.hpp" />
+		<Unit filename="utils\pool\object_pool.hpp" />
+		<Unit filename="utils\pool\pool.hpp" />
+		<Unit filename="utils\pool\pool_alloc.hpp" />
+		<Unit filename="utils\pool\poolfwd.hpp" />
+		<Unit filename="utils\pool\simple_segregated_storage.hpp" />
+		<Unit filename="utils\pool\singleton_pool.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
