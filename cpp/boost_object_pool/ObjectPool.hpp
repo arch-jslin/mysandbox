@@ -3,7 +3,11 @@
 
 // Note: By the usage of this, we actually stucked with boost's implementation.
 #include <boost/smart_ptr/make_shared.hpp>
+
+// For thread-safe pool
 #include <boost/thread/mutex.hpp>
+
+// For backup frame window implemented with std::deque
 #include <deque>
 
 // Note: we are using our own implementation of boost.pool, in a sense,
