@@ -19,6 +19,7 @@
 *.swf
 *.mingw
 *.redcar
+*.ttf
 
 bin
 bin/Release
