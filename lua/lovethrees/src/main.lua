@@ -79,6 +79,17 @@ local function can_add(a, b)
   return (a + b == 3) or (a == 0)
 end
 
+local function check_identical(sa, sb)
+  for y = 1, 4 do
+    for x = 1, 4 do
+      if sa[y][x] >= 0 and sa[y][x] ~= sb[y][x] then -- discard predictions negative number
+        return false
+      end
+    end
+  end
+  return true
+end
+
 local update_prediction = nil
 
 local function move_tiles(stage, dx, dy, simulate)
@@ -99,12 +110,17 @@ local function move_tiles(stage, dx, dy, simulate)
       end
       if moved then 
         stage[1][ empty_side[urandom(#empty_side) + 1] ] = next_number_
-      else
+      elseif simulate then
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
-        for i = 1, 4 do
-          if stage[1][i] == 0 then
-            stage[1][i] = - next_number_ -- hackery, using negative number to fill out possible positions
+        if #empty_side == 1 then 
+          -- hackery, if only 1 possible position, then it's no longer a prediction
+          stage[ 1 ][ empty_side[1] ] = next_number_
+        elseif #empty_side > 1 then    
+          for i = 1, 4 do
+            if stage[1][i] == 0 then
+              stage[1][i] = - next_number_ -- hackery, using negative number to fill out possible positions
+            end
           end
         end
       end
@@ -121,12 +137,17 @@ local function move_tiles(stage, dx, dy, simulate)
       end
       if moved then
         stage[4][ empty_side[urandom(#empty_side) + 1] ] = next_number_
-      else
+      elseif simulate then
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
-        for i = 1, 4 do 
-          if stage[4][i] == 0 then
-            stage[4][i] = - next_number_ -- hackery, using negative number to fill out possible positions
+        if #empty_side == 1 then 
+          -- hackery, if only 1 possible position, then it's no longer a prediction
+          stage[ 4 ][ empty_side[1] ] = next_number_
+        elseif #empty_side > 1 then        
+          for i = 1, 4 do 
+            if stage[4][i] == 0 then
+              stage[4][i] = - next_number_ -- hackery, using negative number to fill out possible positions
+            end
           end
         end
       end
@@ -145,12 +166,17 @@ local function move_tiles(stage, dx, dy, simulate)
       end
       if moved then
         stage[ empty_side[urandom(#empty_side) + 1] ][1] = next_number_
-      else
+      elseif simulate then
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
-        for i = 1, 4 do 
-          if stage[i][1] == 0 then
-            stage[i][1] = - next_number_ -- hackery, using negative number to fill out possible positions
+        if #empty_side == 1 then 
+          -- hackery, if only 1 possible position, then it's no longer a prediction
+          stage[ empty_side[1] ][1] = next_number_
+        elseif #empty_side > 1 then
+          for i = 1, 4 do 
+            if stage[i][1] == 0 then
+              stage[i][1] = - next_number_ -- hackery, using negative number to fill out possible positions
+            end
           end
         end
       end
@@ -167,12 +193,17 @@ local function move_tiles(stage, dx, dy, simulate)
       end
       if moved then
         stage[ empty_side[urandom(#empty_side) + 1] ][4] = next_number_
-      else
+      elseif simulate then
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
-        for i = 1, 4 do 
-          if stage[i][4] == 0 then
-            stage[i][4] = - next_number_ -- hackery, using negative number to fill out possible positions
+        if #empty_side == 1 then 
+          -- hackery, if only 1 possible position, then it's no longer a prediction
+          stage[ empty_side[1] ][4] = next_number_
+        elseif #empty_side > 1 then        
+          for i = 1, 4 do 
+            if stage[i][4] == 0 then
+              stage[i][4] = - next_number_ -- hackery, using negative number to fill out possible positions
+            end
           end
         end
       end
@@ -190,24 +221,48 @@ local function clone_stage(orig)
   local res = { {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} } 
   for y = 1, 4 do
     for x = 1, 4 do
-      res[y][x] = orig[y][x]
+      if orig[y][x] > 0 then    -- only clone positive numbers
+        res[y][x] = orig[y][x]
+      end
     end
   end
   return res
 end
 
+local function deadlock_prediction(stage) 
+  local tmp = {}
+  tmp[1] = clone_stage(stage)
+  tmp[2] = clone_stage(stage)
+  tmp[3] = clone_stage(stage)
+  tmp[4] = clone_stage(stage)
+  move_tiles(tmp[1], 0, -1, true)
+  move_tiles(tmp[2], 0, 1,  true)
+  move_tiles(tmp[3], -1, 0, true)
+  move_tiles(tmp[4], 1, 0,  true)  
+  for i = 1, 4 do
+    if not check_identical(tmp[i], stage) then
+      return false
+    end
+  end
+  return true
+end
+
 update_prediction = function()
   nstage_up_ = clone_stage(stage_)
   move_tiles(nstage_up_, 0, -1, true)
+  if deadlock_prediction(nstage_up_) then nstage_up_.deadlock = true end
   
   nstage_down_ = clone_stage(stage_)
   move_tiles(nstage_down_, 0, 1, true)
+  if deadlock_prediction(nstage_down_) then nstage_down_.deadlock = true end
   
   nstage_left_ = clone_stage(stage_)
   move_tiles(nstage_left_, -1, 0, true)
+  if deadlock_prediction(nstage_left_) then nstage_left_.deadlock = true end
   
   nstage_right_ = clone_stage(stage_)
   move_tiles(nstage_right_, 1, 0, true)
+  if deadlock_prediction(nstage_right_) then nstage_right_.deadlock = true end
 end
 
 local function init_game()
@@ -282,17 +337,6 @@ local function show_number_at(num, x, y, origx, origy, smallfont)
   end
 end
 
-local function check_identical(sa, sb)
-  for y = 1, 4 do
-    for x = 1, 4 do
-      if sa[y][x] ~= sb[y][x] then
-        return false
-      end
-    end
-  end
-  return true
-end
-
 local function show_stage(stage, origx, origy, smallfont)
   origx = origx or 250
   origy = origy or 250
@@ -309,6 +353,11 @@ local function show_stage(stage, origx, origy, smallfont)
       love.graphics.setColor(255, 128, 0, 255)
       love.graphics.line(origx,origy, origx+sidelength,origy+sidelength)
       love.graphics.line(origx+sidelength,origy, origx,origy+sidelength)
+    end
+    if stage.deadlock then
+      love.graphics.setColor(255, 128, 0, 255)
+      love.graphics.setFont(font25_)
+      love.graphics.print('WARNING', origx + 30, origy + (sidelength/2) - 15)
     end
   end
   
