@@ -113,10 +113,10 @@ local function move_tiles(stage, dx, dy, simulate)
       elseif simulate then
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
-        if #empty_side == 1 then 
+        if #empty_side == 1 and next_number_ <= 3 then 
           -- hackery, if only 1 possible position, then it's no longer a prediction
           stage[ 1 ][ empty_side[1] ] = next_number_
-        elseif #empty_side > 1 then    
+        else
           for i = 1, 4 do
             if stage[1][i] == 0 then
               stage[1][i] = - next_number_ -- hackery, using negative number to fill out possible positions
@@ -140,10 +140,10 @@ local function move_tiles(stage, dx, dy, simulate)
       elseif simulate then
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
-        if #empty_side == 1 then 
+        if #empty_side == 1 and next_number_ <= 3 then 
           -- hackery, if only 1 possible position, then it's no longer a prediction
           stage[ 4 ][ empty_side[1] ] = next_number_
-        elseif #empty_side > 1 then        
+        else     
           for i = 1, 4 do 
             if stage[4][i] == 0 then
               stage[4][i] = - next_number_ -- hackery, using negative number to fill out possible positions
@@ -169,10 +169,10 @@ local function move_tiles(stage, dx, dy, simulate)
       elseif simulate then
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
-        if #empty_side == 1 then 
+        if #empty_side == 1 and next_number_ <= 3 then 
           -- hackery, if only 1 possible position, then it's no longer a prediction
           stage[ empty_side[1] ][1] = next_number_
-        elseif #empty_side > 1 then
+        else
           for i = 1, 4 do 
             if stage[i][1] == 0 then
               stage[i][1] = - next_number_ -- hackery, using negative number to fill out possible positions
@@ -196,10 +196,10 @@ local function move_tiles(stage, dx, dy, simulate)
       elseif simulate then
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
-        if #empty_side == 1 then 
+        if #empty_side == 1 and next_number_ <= 3 then 
           -- hackery, if only 1 possible position, then it's no longer a prediction
           stage[ empty_side[1] ][4] = next_number_
-        elseif #empty_side > 1 then        
+        else    
           for i = 1, 4 do 
             if stage[i][4] == 0 then
               stage[i][4] = - next_number_ -- hackery, using negative number to fill out possible positions
