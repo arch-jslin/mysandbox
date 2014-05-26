@@ -99,7 +99,7 @@ local function move_tiles(stage, dx, dy, simulate)
       end
       if moved then 
         stage[1][ empty_side[urandom(#empty_side) + 1] ] = next_number_
-      elseif
+      else
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
         for i = 1, 4 do
@@ -121,7 +121,7 @@ local function move_tiles(stage, dx, dy, simulate)
       end
       if moved then
         stage[4][ empty_side[urandom(#empty_side) + 1] ] = next_number_
-      elseif
+      else
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
         for i = 1, 4 do 
@@ -145,7 +145,7 @@ local function move_tiles(stage, dx, dy, simulate)
       end
       if moved then
         stage[ empty_side[urandom(#empty_side) + 1] ][1] = next_number_
-      elseif
+      else
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
         for i = 1, 4 do 
@@ -167,7 +167,7 @@ local function move_tiles(stage, dx, dy, simulate)
       end
       if moved then
         stage[ empty_side[urandom(#empty_side) + 1] ][4] = next_number_
-      elseif
+      else
         -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
         -- and empty_side will still be populated 
         for i = 1, 4 do 
@@ -278,7 +278,7 @@ local function show_number_at(num, x, y, origx, origy, smallfont)
     love.graphics.setFont(font30_)
     love.graphics.print('6+', x0, y0)
   else  
-    love.graphics.print(tostring(num), x0, y0)  
+    love.graphics.print(tostring(math.abs(num)), x0, y0)  
   end
 end
 
