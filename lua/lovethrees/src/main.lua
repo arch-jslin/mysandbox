@@ -47,7 +47,11 @@ local function generate_next()
   local res = nil
   if highest_number_ >= 48 and chance == 20 then
     local threshold_number = highest_number_ / 8
-    local i = threshold_number / 6
+    local i = 0
+    while threshold_number >= 6 do
+      threshold_number = threshold_number / 2
+      i = i + 1
+    end
     res = big_num_choices[urandom(i) + 1]
   else
     res = current_deck_[deck_index_] 
@@ -103,23 +107,25 @@ local function move_tiles(stage, dx, dy, simulate)
           if can_add(stage[y + dy][x], stage[y][x]) then 
             stage[y + dy][x] = stage[y + dy][x] + stage[y][x]
             stage[y][x] = 0
-            moved = (not simulate) and true
+            moved = true
           end
         end
         if stage[1][x] == 0 then table.insert(empty_side, x) end
       end
       if moved then 
-        stage[1][ empty_side[urandom(#empty_side) + 1] ] = next_number_
-      elseif simulate then
-        -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
-        -- and empty_side will still be populated 
-        if #empty_side == 1 and next_number_ <= 3 then 
-          -- hackery, if only 1 possible position, then it's no longer a prediction
-          stage[ 1 ][ empty_side[1] ] = next_number_
+        if not simulate then
+          stage[1][ empty_side[urandom(#empty_side) + 1] ] = next_number_
         else
-          for i = 1, 4 do
-            if stage[1][i] == 0 then
-              stage[1][i] = - next_number_ -- hackery, using negative number to fill out possible positions
+          -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
+          -- and empty_side will still be populated 
+          if #empty_side == 1 and next_number_ <= 3 then 
+            -- hackery, if only 1 possible position, then it's no longer a prediction
+            stage[ 1 ][ empty_side[1] ] = next_number_
+          else
+            for i = 1, 4 do
+              if stage[1][i] == 0 then
+                stage[1][i] = - next_number_ -- hackery, using negative number to fill out possible positions
+              end
             end
           end
         end
@@ -130,23 +136,25 @@ local function move_tiles(stage, dx, dy, simulate)
           if can_add(stage[y + dy][x], stage[y][x]) then 
             stage[y + dy][x] = stage[y + dy][x] + stage[y][x]
             stage[y][x] = 0 
-            moved = (not simulate) and true
+            moved = true
           end
         end
         if stage[4][x] == 0 then table.insert(empty_side, x) end
       end
       if moved then
-        stage[4][ empty_side[urandom(#empty_side) + 1] ] = next_number_
-      elseif simulate then
-        -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
-        -- and empty_side will still be populated 
-        if #empty_side == 1 and next_number_ <= 3 then 
-          -- hackery, if only 1 possible position, then it's no longer a prediction
-          stage[ 4 ][ empty_side[1] ] = next_number_
-        else     
-          for i = 1, 4 do 
-            if stage[4][i] == 0 then
-              stage[4][i] = - next_number_ -- hackery, using negative number to fill out possible positions
+        if not simulate then 
+          stage[4][ empty_side[urandom(#empty_side) + 1] ] = next_number_
+        else
+          -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
+          -- and empty_side will still be populated 
+          if #empty_side == 1 and next_number_ <= 3 then 
+            -- hackery, if only 1 possible position, then it's no longer a prediction
+            stage[ 4 ][ empty_side[1] ] = next_number_
+          else     
+            for i = 1, 4 do 
+              if stage[4][i] == 0 then
+                stage[4][i] = - next_number_ -- hackery, using negative number to fill out possible positions
+              end
             end
           end
         end
@@ -159,23 +167,25 @@ local function move_tiles(stage, dx, dy, simulate)
           if can_add(stage[y][x + dx], stage[y][x]) then 
             stage[y][x + dx] = stage[y][x + dx] + stage[y][x]
             stage[y][x] = 0 
-            moved = (not simulate) and true
+            moved = true
           end
         end
         if stage[y][1] == 0 then table.insert(empty_side, y) end
       end
       if moved then
-        stage[ empty_side[urandom(#empty_side) + 1] ][1] = next_number_
-      elseif simulate then
-        -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
-        -- and empty_side will still be populated 
-        if #empty_side == 1 and next_number_ <= 3 then 
-          -- hackery, if only 1 possible position, then it's no longer a prediction
-          stage[ empty_side[1] ][1] = next_number_
+        if not simulate then
+          stage[ empty_side[urandom(#empty_side) + 1] ][1] = next_number_
         else
-          for i = 1, 4 do 
-            if stage[i][1] == 0 then
-              stage[i][1] = - next_number_ -- hackery, using negative number to fill out possible positions
+          -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
+          -- and empty_side will still be populated 
+          if #empty_side == 1 and next_number_ <= 3 then 
+            -- hackery, if only 1 possible position, then it's no longer a prediction
+            stage[ empty_side[1] ][1] = next_number_
+          else
+            for i = 1, 4 do 
+              if stage[i][1] == 0 then
+                stage[i][1] = - next_number_ -- hackery, using negative number to fill out possible positions
+              end
             end
           end
         end
@@ -186,23 +196,25 @@ local function move_tiles(stage, dx, dy, simulate)
           if can_add(stage[y][x + dx], stage[y][x]) then 
             stage[y][x + dx] = stage[y][x + dx] + stage[y][x]
             stage[y][x] = 0 
-            moved = (not simulate) and true
+            moved = true
           end
         end
         if stage[y][4] == 0 then table.insert(empty_side, y) end
       end
       if moved then
-        stage[ empty_side[urandom(#empty_side) + 1] ][4] = next_number_
-      elseif simulate then
-        -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
-        -- and empty_side will still be populated 
-        if #empty_side == 1 and next_number_ <= 3 then 
-          -- hackery, if only 1 possible position, then it's no longer a prediction
-          stage[ empty_side[1] ][4] = next_number_
-        else    
-          for i = 1, 4 do 
-            if stage[i][4] == 0 then
-              stage[i][4] = - next_number_ -- hackery, using negative number to fill out possible positions
+        if not simulate then
+          stage[ empty_side[urandom(#empty_side) + 1] ][4] = next_number_
+        else
+          -- if it's prediction stage, it will still create empty slots on the side, but not flag as moved
+          -- and empty_side will still be populated 
+          if #empty_side == 1 and next_number_ <= 3 then 
+            -- hackery, if only 1 possible position, then it's no longer a prediction
+            stage[ empty_side[1] ][4] = next_number_
+          else    
+            for i = 1, 4 do 
+              if stage[i][4] == 0 then
+                stage[i][4] = - next_number_ -- hackery, using negative number to fill out possible positions
+              end
             end
           end
         end
@@ -210,7 +222,7 @@ local function move_tiles(stage, dx, dy, simulate)
     end
   end
   
-  if moved then
+  if moved and (not simulate) then
     find_highest()
     set_next_number()
     update_prediction()
