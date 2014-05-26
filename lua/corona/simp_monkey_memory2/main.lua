@@ -25,7 +25,7 @@ t1 = new_text(count)
 t1.x = 750
 t1.y = 440
 
-uncover = function(o, e)
+uncover = function(o)
   remove(o)
 end
 

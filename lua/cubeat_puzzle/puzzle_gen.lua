@@ -1,5 +1,5 @@
 
-local jit = require 'jit'
+-- local jit = require 'jit'
 local MapUtils = require 'maputils'
 local Helper = require 'helpers'
 local random, Stack = Helper.random, Helper.stack
@@ -21,7 +21,7 @@ function PuzzleGen:init(chain_limit, w, h)
   self.h = h
   self.all_combinations, self.starters = MapUtils.create_all_combinations(w, h)
   
-  jit.flush()
+  -- jit.flush()
   
   self:reinit(chain_limit)
   

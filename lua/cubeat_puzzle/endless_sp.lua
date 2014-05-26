@@ -66,8 +66,8 @@ function SinglePlayerHolder:new()
     size = 24
   }
   
-  button1.x = 240
-  button1.y = 750
+  button1.x = 900
+  button1.y = 360
   
   scene:insert(button1)
 
