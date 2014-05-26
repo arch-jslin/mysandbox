@@ -255,11 +255,11 @@ local function show_number_at(num, x, y, origx, origy, smallfont)
   
   if num == 0 then return end
   if math.abs(num) == 1 then 
-    love.graphics.setColor(0, 128, 255, (num > 0) and 255 or 128)
+    love.graphics.setColor(0, 128, 255, (num > 0) and 255 or 96)
   elseif math.abs(num) == 2 then
-    love.graphics.setColor(255, 64, 64, (num > 0) and 255 or 128)
+    love.graphics.setColor(255, 64, 64, (num > 0) and 255 or 96)
   else
-    love.graphics.setColor(255, 255, 255, (num > 0) and 255 or 128)
+    love.graphics.setColor(255, 255, 255, (num > 0) and 255 or 96)
   end
   
   if num > 1000 then
