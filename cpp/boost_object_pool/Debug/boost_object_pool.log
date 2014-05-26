@@ -1,0 +1,21 @@
+﻿Build started 2013/1/14 20:31:52.
+     1>Project "C:\local_gitrepo\mysandbox\cpp\boost_object_pool\boost_object_pool.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Creating "Debug\boost_object_pool.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I. /Ic:\libs\cpp\boost_1_48_0 /Ic:\libs\cpp\ggpo\include /ZI /nologo /W3 /WX- /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Za /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /wd4996 /analyze- /errorReport:prompt main4.cpp
+         main4.cpp
+       Link:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\local_gitrepo\mysandbox\cpp\boost_object_pool\Debug\boost_object_pool.exe" /NOLOGO /LIBPATH:c:\libs\cpp\ggpo\lib Gdi32.lib ws2_32.lib opengl32.lib glu32.lib winmm.lib ggponet.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\boost_object_pool.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\local_gitrepo\mysandbox\cpp\boost_object_pool\Debug\boost_object_pool.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\local_gitrepo\mysandbox\cpp\boost_object_pool\Debug\boost_object_pool.lib" /MACHINE:X86 Debug\main4.obj
+         LINK : C:\local_gitrepo\mysandbox\cpp\boost_object_pool\Debug\boost_object_pool.exe not found or not built by the last incremental link; performing full link
+         boost_object_pool.vcxproj -> C:\local_gitrepo\mysandbox\cpp\boost_object_pool\Debug\boost_object_pool.exe
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\local_gitrepo\mysandbox\cpp\boost_object_pool\Debug\boost_object_pool.exe;#1" /manifest Debug\boost_object_pool.exe.intermediate.manifest
+       FinalizeBuildStatus:
+         Deleting file "Debug\boost_object_pool.unsuccessfulbuild".
+         Touching "Debug\boost_object_pool.lastbuildstate".
+     1>Done Building Project "C:\local_gitrepo\mysandbox\cpp\boost_object_pool\boost_object_pool.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:00.92

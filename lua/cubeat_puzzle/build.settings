@@ -1,0 +1,11 @@
+settings = 
+{
+  android =
+  {
+    versionCode = "4"
+  },
+  orientation =
+  {
+    default = "landscapeLeft"
+  },
+}

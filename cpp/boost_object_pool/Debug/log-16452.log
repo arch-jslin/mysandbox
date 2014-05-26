@@ -1,0 +1,7 @@
+udp | binding udp socket to port 7000.
+udpproto1 | send sync-request (13903).
+udp | unknown error in sendto (erro: -1  wsaerr: 10093).
+udp | Assertion: FALSE && "Unknown error in sendto" @ ..\source\network\udp.cpp:73 (pid:16452)
+udp | 
+udp | 
+udp | 
