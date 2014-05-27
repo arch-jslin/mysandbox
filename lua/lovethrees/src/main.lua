@@ -3,6 +3,7 @@ local highest_number_ = 0
 local current_deck_ = {0,0,0,0,0,0,0,0,0,0,0,0} -- #12
 local deck_index_ = 0
 local next_number_ = 0
+local num_bag_left_ = {0,0,0} -- #1, #2, #3
 
 local nstage_up_ = {}
 local nstage_down_ = {}
@@ -59,6 +60,11 @@ local function generate_next()
     if deck_index_ > 12 then
       generate_new_deck()
     end
+    num_bag_left_ = {0,0,0} -- #1, #2, #3
+    for i = deck_index_, 12 do
+      local tmp = current_deck_[i]
+      num_bag_left_[tmp] = num_bag_left_[tmp] + 1
+    end
   end
   return res
 end
@@ -75,6 +81,22 @@ local function find_highest()
       end
     end
   end
+end
+
+local function empty_count(stage)
+  local have_prediction = 0
+  local count = 0
+  for y = 1, 4 do 
+    for x = 1, 4 do
+      if stage[y][x] == 0 then
+        count = count + 1
+      elseif stage[y][x] < 0 then
+        count = count + 1
+        have_prediction = 1
+      end
+    end
+  end
+  return count - have_prediction
 end
 
 local function can_add(a, b) 
@@ -262,18 +284,22 @@ end
 update_prediction = function()
   nstage_up_ = clone_stage(stage_)
   move_tiles(nstage_up_, 0, -1, true)
+  nstage_up_.slot_left = empty_count(nstage_up_)
   if deadlock_prediction(nstage_up_) then nstage_up_.deadlock = true end
   
   nstage_down_ = clone_stage(stage_)
   move_tiles(nstage_down_, 0, 1, true)
+  nstage_down_.slot_left = empty_count(nstage_down_)
   if deadlock_prediction(nstage_down_) then nstage_down_.deadlock = true end
   
   nstage_left_ = clone_stage(stage_)
   move_tiles(nstage_left_, -1, 0, true)
+  nstage_left_.slot_left = empty_count(nstage_left_)
   if deadlock_prediction(nstage_left_) then nstage_left_.deadlock = true end
   
   nstage_right_ = clone_stage(stage_)
   move_tiles(nstage_right_, 1, 0, true)
+  nstage_right_.slot_left = empty_count(nstage_right_)
   if deadlock_prediction(nstage_right_) then nstage_right_.deadlock = true end
 end
 
@@ -371,6 +397,8 @@ local function show_stage(stage, origx, origy, smallfont)
       love.graphics.setFont(font25_)
       love.graphics.print('WARNING', origx + 30, origy + (sidelength/2) - 15)
     end
+    love.graphics.setFont(font20_)
+    love.graphics.print('emptyslot: '..stage.slot_left, origx + 10, origy + sidelength)
   end
   
   for y = 1, 4 do
@@ -406,13 +434,19 @@ function love.draw()
   
   love.graphics.setColor(255, 255, 255, 255)
   love.graphics.setFont(font45_)
-  love.graphics.print('Next: ', 525, 170)
+  love.graphics.print('Next: ', 30, 170)
   
   if next_number_ <= 3 then
-    show_number_at(next_number_, 6, 0)
+    show_number_at(next_number_, 0, 0)
   else
-    love.graphics.print('6+', 650, 170)
+    love.graphics.print('6+', 155, 170)
   end
+  
+  love.graphics.setFont(font34_)
+  love.graphics.setColor(255, 64, 64, 255)
+  love.graphics.print('1 left: '..num_bag_left_[1], 30, 50);
+  love.graphics.print('2 left: '..num_bag_left_[2], 30, 90);
+  love.graphics.print('3 left: '..num_bag_left_[3], 30, 130);
 end
 
 function love.keypressed(k)
