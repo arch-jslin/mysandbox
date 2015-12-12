@@ -38,8 +38,10 @@ function Bullet:update(dt)
   self.x = self.x + self.vx * dt
   self.y = self.y + self.vy * dt
   
+  self.shape:moveTo(self.x, self.y) --debug
+  
   for shape, delta in pairs(HC.collisions(self.shape)) do
-    logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s)", delta.x, delta.y)
+    logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s), object(%s)", delta.x, delta.y, self)
   end
 end
 
@@ -74,6 +76,9 @@ function love.load()
 
   bullets_ = {}
   
+  bullets_[#bullets_ + 1] = Bullet.new { x = 0, y = 260, vx = 100 }
+  bullets_[#bullets_ + 1] = Bullet.new { x = 1280, y = 460, vx = -100 }
+  
   debugbullet_ = Bullet.new { x=50, y=50 } 
 end
 
@@ -104,8 +109,12 @@ function love.update(dt)
   you.rect:scale(you.scale_change)
   you.scale_change = 1
   
+  -- update bullets 
+  for _, b in ipairs(bullets_) do
+    b:update(dt)
+  end
+  
   debugbullet_.x, debugbullet_.y = love.mouse.getPosition() --debug
-  debugbullet_.shape:moveTo(debugbullet_.x, debugbullet_.y) --debug
   debugbullet_:update(dt)
   
   --debug: on screen log texts
@@ -118,6 +127,12 @@ function love.draw()
   local scale = you.size / you.base_size
   
   love.graphics.draw(you.body, you.x, you.y, you.rot, scale, scale, you.base_size/2, you.base_size/2)
+  
+  -- draw bullets 
+  for _, b in ipairs(bullets_) do
+    b:draw()
+  end
+  
   debugbullet_:draw()
   
   love.graphics.setColor(64, 255, 128)
