@@ -17,6 +17,7 @@ function love.load()
   you.rot  = 0
   you.size = 64
   you.base_size = 64
+  you.scale_change = 1
   you.x = love.graphics.getWidth() / 2
   you.y = love.graphics.getHeight() / 2
   
@@ -34,7 +35,9 @@ end
 
 function love.update(dt)
   if key_left_ and key_right_ then
+    local oldsz = you.size
     you.size = you.size + 1
+    you.scale_change = you.size / oldsz
   elseif key_left_ then
     you.rot = you.rot - 0.05
   elseif key_right_ then
@@ -45,7 +48,8 @@ function love.update(dt)
   bullet.shape:moveTo(bullet.x, bullet.y)
   
   you.rect:setRotation(you.rot)
-  you.rect:scale(you.size / you.base_size)
+  you.rect:scale(you.scale_change)
+  you.scale_change = 1
   
   -- collision
   for shape, delta in pairs(HC.collisions(bullet.shape)) do
