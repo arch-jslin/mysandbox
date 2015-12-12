@@ -12,8 +12,6 @@ local bullets_to_be_deleted_
 local timers_ 
 local timers_to_be_deleted_
 
-local debugbullet_
-
 -- array to hold collision messages
 local logtext_ = {}
 
@@ -94,16 +92,15 @@ function Bullet:update(dt)
   self.x = self.x + self.vx * dt
   self.y = self.y + self.vy * dt
   
-  self.shape:moveTo(self.x, self.y) --debug
+  self.shape:moveTo(self.x, self.y) 
   
   for shape, delta in pairs(HC.collisions(self.shape)) do
     logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s), object(%s)", delta.x, delta.y, self)
     
     bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
-    
   end
   
-  if len_sq(you, self) > 810000 then -- roughly 900 in distance to the square
+  if len_sq(you, self) > 1000000 then -- roughly 1000 in distance to the square
     logtext_[#logtext_+1] = string.format("object(%s) too far, self-removal", self)
     bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
   end
@@ -155,8 +152,6 @@ function love.load()
   
   bullets_[#bullets_ + 1] = Bullet.new { x = 0, y = 260, vx = 300 }
   bullets_[#bullets_ + 1] = Bullet.new { x = 1280, y = 460, vx = -300 }
-  
-  debugbullet_ = Bullet.new { x=50, y=50 } 
   
   timers_[#timers_ + 1] = Timer.new { dur = 0.3, loop = 999, 
     action = function()
@@ -211,15 +206,13 @@ function love.update(dt)
     b:update(dt)
   end
   
-  debugbullet_.x, debugbullet_.y = love.mouse.getPosition() --debug
-  debugbullet_:update(dt)
-  
   --debug: on screen log texts
   while #logtext_ > 40 do
       table.remove(logtext_, 1)
   end
   
   for _, v in ipairs(bullets_to_be_deleted_) do
+    HC.remove(v.shape)
     unordered_remove(bullets_, v)
   end
   
@@ -238,12 +231,9 @@ function love.draw()
     b:draw()
   end
   
-  debugbullet_:draw()
-  
   love.graphics.setColor(64, 255, 128)
   --debug shape
   you.rect:draw('line')
-  debugbullet_.shape:draw('line')
   love.graphics.setColor(255, 255, 255)
   
   --debug: on screen log texts
