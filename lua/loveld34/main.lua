@@ -9,12 +9,19 @@ local you
 local bullets_
 local bullets_to_be_deleted_
 
+local timers_ 
+local timers_to_be_deleted_
+
 local debugbullet_
 
 -- array to hold collision messages
 local logtext_ = {}
 
 -- helpers
+
+local function LOG(str, ...)
+  logtext_[#logtext_+1] = string.format(str, unpack(arg))
+end
 
 local function unordered_remove(t, o)
   -- for simplicity's sake, we swap it with the last object
@@ -31,6 +38,34 @@ local function len_sq(o1, o2)
   local dx = o1.x - o2.x
   local dy = o1.y - o2.y
   return dx*dx + dy*dy
+end
+
+-- simple Timer class
+
+local Timer = {}
+function Timer.new(o)
+  o = o or {}
+  
+  o.loop   = o.loop or 0
+  o.dur    = o.dur or 1 -- in seconds
+  o.time   = 0           -- in seconds
+  o.action = o.action or nil
+  
+  setmetatable(o, {__index = Timer})
+  return o
+end
+
+function Timer:update(dt)
+  self.time = self.time + dt
+  if self.time > self.dur then
+    self.time = 0 
+    self.loop = self.loop - 1
+    self:action()
+  end
+  
+  if self.loop < 0 then 
+    timers_to_be_deleted_[#timers_to_be_deleted_ + 1] = self
+  end
 end
 
 -- simple Bullet class
@@ -86,6 +121,18 @@ function Bullet:draw()
                      self.size)      -- origin y
 end
 
+local function targeted_fire(from, to)
+  local dx = to.x - from.x
+  local dy = to.y - from.y
+  local length = math.sqrt(len_sq(from, to)) 
+  local rad = math.atan2(dy, dx)
+  local nx = dx / length
+  local ny = dy / length
+  
+  local b = Bullet.new{ x = from.x, y = from.y, vx = 200*nx, vy = 200*ny }
+  bullets_[#bullets_ + 1] = b
+end
+
 function love.load()
   math.randomseed(os.time())
   
@@ -104,16 +151,26 @@ function love.load()
   you.rect:setRotation(you.rot)
 
   bullets_ = {}
+  timers_  = {}
   
   bullets_[#bullets_ + 1] = Bullet.new { x = 0, y = 260, vx = 300 }
   bullets_[#bullets_ + 1] = Bullet.new { x = 1280, y = 460, vx = -300 }
   
   debugbullet_ = Bullet.new { x=50, y=50 } 
+  
+  timers_[#timers_ + 1] = Timer.new { dur = 0.3, loop = 999, 
+    action = function()
+      targeted_fire( {x=0, y=100}, you )
+    end
+  }
 end
 
 function love.update(dt)
   
   bullets_to_be_deleted_ = {} 
+  timers_to_be_deleted_  = {}
+  
+  -- update inputs
   
   if key_left_ and key_right_ then
     local oldsz = you.size
@@ -132,10 +189,18 @@ function love.update(dt)
     you.size = you.size - 0.2
     you.scale_change = you.size / oldsz
   else
-    local oldsz = you.size
-    you.size = you.size - 0.33
-    you.scale_change = you.size / oldsz
+    --local oldsz = you.size
+    --you.size = you.size - 0.33
+    --you.scale_change = you.size / oldsz
   end
+  
+  -- update timers
+  
+  for _, t in ipairs(timers_) do
+    t:update(dt)
+  end
+  
+  -- update main actor
     
   you.rect:setRotation(you.rot)
   you.rect:scale(you.scale_change)
@@ -158,6 +223,9 @@ function love.update(dt)
     unordered_remove(bullets_, v)
   end
   
+  for _, v in ipairs(timers_to_be_deleted_) do
+    unordered_remove(timers_, v)
+  end
 end
 
 function love.draw()
