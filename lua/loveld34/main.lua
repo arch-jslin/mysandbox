@@ -184,9 +184,9 @@ function love.update(dt)
     you.size = you.size - 0.2
     you.scale_change = you.size / oldsz
   else
-    --local oldsz = you.size
-    --you.size = you.size - 0.33
-    --you.scale_change = you.size / oldsz
+    local oldsz = you.size
+    you.size = you.size - 0.33
+    you.scale_change = you.size / oldsz
   end
   
   -- update timers
