@@ -1,5 +1,5 @@
 
-local names_ = { 'Team_A', 'Team_B', 'Team_C', 'Team_D', 'Team_E', 'Team_F', 'Team_G' }
+local names_ = { 'Team_A', 'Team_B', 'Team_D', 'Team_E', 'Team_F', 'Team_G', 'Team_H', 'Team_I', 'Team_J', 'Team_K', 'Team_L' }
 local font_
 
 local index_last_ = 1
@@ -12,7 +12,7 @@ local vx_ = 0
 local ax_ = 0
 
 function love.load()
-  font_ = love.graphics.newFont('msjhbd.ttf', 96)
+  font_ = love.graphics.setNewFont(96)
   love.graphics.setFont(font_)
 end
 
