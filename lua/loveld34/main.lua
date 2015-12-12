@@ -1,17 +1,64 @@
 local HC = require 'hardoncollider'
 
+local RES = {}
+
 local key_left_  = false
 local key_right_ = false
 
 local you 
+local bullets_
 
-local bullet
+local debugbullet_
 
 -- array to hold collision messages
 local logtext_ = {}
 
+-- simple Bullet class
+local Bullet = {}
+function Bullet.new(o)
+  o           = o or {}
+  o.x         = o.x or 50
+  o.y         = o.y or 50
+  o.base_size = o.base_size or 8
+  o.size      = o.size or 8
+  o.body      = RES.bullet_img1
+  o.shape     = HC.circle(0, 0, o.size)
+  
+  o.color     = {r=255, g=255, b=255, a=255} 
+  
+  o.vx        = o.vx or 0
+  o.vy        = o.vy or 0
+  
+  setmetatable(o, {__index = Bullet})
+  
+  return o
+end
+
+function Bullet:update(dt)
+  self.x = self.x + self.vx * dt
+  self.y = self.y + self.vy * dt
+  
+  for shape, delta in pairs(HC.collisions(self.shape)) do
+    logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s)", delta.x, delta.y)
+  end
+end
+
+function Bullet:draw()
+  love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
+  love.graphics.draw(self.body,    -- ref to img
+                     self.x,       -- x
+                     self.y,       -- y
+                     0,     -- orientation (radians)
+                     self.size / self.base_size,             -- scale x
+                     self.size / self.base_size,             -- scale y
+                     self.size,      -- origin x
+                     self.size)      -- origin y
+end
+
 function love.load()
   math.randomseed(os.time())
+  
+  RES.bullet_img1 = love.graphics.newImage('bullet.png')
   
   you = {}
   you.rot  = 0
@@ -25,12 +72,9 @@ function love.load()
   you.rect = HC.rectangle(you.x - you.size/2, you.y - you.size/2, you.size, you.size)
   you.rect:setRotation(you.rot)
 
-  bullet = {}
-  bullet.x = 50
-  bullet.y = 50
-  bullet.size = 8
-  bullet.body = love.graphics.newImage('bullet.png')
-  bullet.shape = HC.circle(0, 0, 8)
+  bullets_ = {}
+  
+  debugbullet_ = Bullet.new { x=50, y=50 } 
 end
 
 function love.update(dt)
@@ -55,18 +99,14 @@ function love.update(dt)
     you.size = you.size - 0.33
     you.scale_change = you.size / oldsz
   end
-  
-  bullet.x, bullet.y = love.mouse.getPosition()
-  bullet.shape:moveTo(bullet.x, bullet.y)
-  
+    
   you.rect:setRotation(you.rot)
   you.rect:scale(you.scale_change)
   you.scale_change = 1
   
-  -- collision
-  for shape, delta in pairs(HC.collisions(bullet.shape)) do
-    logtext_[#logtext_+1] = string.format("Colliding. Separating vector = (%s,%s)", delta.x, delta.y)
-  end
+  debugbullet_.x, debugbullet_.y = love.mouse.getPosition() --debug
+  debugbullet_.shape:moveTo(debugbullet_.x, debugbullet_.y) --debug
+  debugbullet_:update(dt)
   
   --debug: on screen log texts
   while #logtext_ > 40 do
@@ -78,12 +118,12 @@ function love.draw()
   local scale = you.size / you.base_size
   
   love.graphics.draw(you.body, you.x, you.y, you.rot, scale, scale, you.base_size/2, you.base_size/2)
-  love.graphics.draw(bullet.body, bullet.x, bullet.y, 0, 1, 1, bullet.size, bullet.size)
+  debugbullet_:draw()
   
   love.graphics.setColor(64, 255, 128)
   --debug shape
   you.rect:draw('line')
-  bullet.shape:draw('line')
+  debugbullet_.shape:draw('line')
   love.graphics.setColor(255, 255, 255)
   
   --debug: on screen log texts
