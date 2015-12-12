@@ -40,8 +40,20 @@ function love.update(dt)
     you.scale_change = you.size / oldsz
   elseif key_left_ then
     you.rot = you.rot - 0.05
+    
+    local oldsz = you.size
+    you.size = you.size - 0.2
+    you.scale_change = you.size / oldsz
   elseif key_right_ then
     you.rot = you.rot + 0.05
+  
+    local oldsz = you.size
+    you.size = you.size - 0.2
+    you.scale_change = you.size / oldsz
+  else
+    local oldsz = you.size
+    you.size = you.size - 0.33
+    you.scale_change = you.size / oldsz
   end
   
   bullet.x, bullet.y = love.mouse.getPosition()
