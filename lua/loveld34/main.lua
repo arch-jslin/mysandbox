@@ -7,13 +7,34 @@ local key_right_ = false
 
 local you 
 local bullets_
+local bullets_to_be_deleted_
 
 local debugbullet_
 
 -- array to hold collision messages
 local logtext_ = {}
 
+-- helpers
+
+local function unordered_remove(t, o)
+  -- for simplicity's sake, we swap it with the last object
+  for i = 1, #t do 
+    if o == t[i] then
+      t[i] = t[#t]
+      t[#t] = nil
+      break
+    end
+  end
+end
+
+local function len_sq(o1, o2)
+  local dx = o1.x - o2.x
+  local dy = o1.y - o2.y
+  return dx*dx + dy*dy
+end
+
 -- simple Bullet class
+
 local Bullet = {}
 function Bullet.new(o)
   o           = o or {}
@@ -42,6 +63,14 @@ function Bullet:update(dt)
   
   for shape, delta in pairs(HC.collisions(self.shape)) do
     logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s), object(%s)", delta.x, delta.y, self)
+    
+    bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
+    
+  end
+  
+  if len_sq(you, self) > 810000 then -- roughly 900 in distance to the square
+    logtext_[#logtext_+1] = string.format("object(%s) too far, self-removal", self)
+    bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
   end
 end
 
@@ -76,13 +105,16 @@ function love.load()
 
   bullets_ = {}
   
-  bullets_[#bullets_ + 1] = Bullet.new { x = 0, y = 260, vx = 100 }
-  bullets_[#bullets_ + 1] = Bullet.new { x = 1280, y = 460, vx = -100 }
+  bullets_[#bullets_ + 1] = Bullet.new { x = 0, y = 260, vx = 300 }
+  bullets_[#bullets_ + 1] = Bullet.new { x = 1280, y = 460, vx = -300 }
   
   debugbullet_ = Bullet.new { x=50, y=50 } 
 end
 
 function love.update(dt)
+  
+  bullets_to_be_deleted_ = {} 
+  
   if key_left_ and key_right_ then
     local oldsz = you.size
     you.size = you.size + 1
@@ -121,6 +153,11 @@ function love.update(dt)
   while #logtext_ > 40 do
       table.remove(logtext_, 1)
   end
+  
+  for _, v in ipairs(bullets_to_be_deleted_) do
+    unordered_remove(bullets_, v)
+  end
+  
 end
 
 function love.draw()
