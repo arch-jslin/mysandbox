@@ -21,6 +21,10 @@ local logtext_ = {}
 
 -- helpers
 
+local function random(n)
+  return math.floor(math.random()*n)
+end
+
 local function LOG(str, ...)
   logtext_[#logtext_+1] = string.format(str, ...)
 end
@@ -144,7 +148,7 @@ end
 local function shoot_bullet_1(o)
   o          = o or {}
   o.time_gap = o.time_gap or 0.1
-  o.times    = o.times or 3
+  o.times    = o.times or 1
   o.distance = o.distance or (you.size / 2) * 1.414  -- sz*sqrt(2) from the center
   o.from     = o.from or {x = 0, y = CENTER_Y - o.distance}
   o.to       = o.to   or {x = SCREEN_W, y = CENTER_Y - o.distance}
@@ -164,9 +168,13 @@ local function pattern_hori()
                  
   delay(2, function()
     shoot_bullet_1 { time_gap = 0.1, times = 3, 
-                     from = { x = SCREEN_W, y = CENTER_Y - distance }, 
-                     to   = { x = 0, y = CENTER_Y - distance } }
+                     from = { x = SCREEN_W, y = CENTER_Y + distance }, 
+                     to   = { x = 0, y = CENTER_Y + distance } }
   end)
+end
+
+local function pattern_basic_random_endless()
+
 end
 
 -- end of level patterns
