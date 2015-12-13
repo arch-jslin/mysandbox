@@ -177,7 +177,8 @@ local function pattern_basic_random_endless()
   timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999, 
     action = function()
       local distance = (you.size / 2) * (1.35 + math.random()*0.15)
-      local roll = random(3)
+      local diag_offset = (you.size / 2) * (1.35 + math.random()*0.1)
+      local roll = random(7)
       if roll == 0 then
         shoot_bullet_1 { time_gap = 0.1, times = 3,
                          from = { x = 0, y = CENTER_Y - distance },
@@ -194,6 +195,22 @@ local function pattern_basic_random_endless()
         shoot_bullet_1 { time_gap = 0.1, times = 3,
                          from = { x = CENTER_X + distance, y = SCREEN_H }, 
                          to   = { x = CENTER_X + distance, y = 0 } }
+      elseif roll == 4 then
+        shoot_bullet_1 { time_gap = 0.1, times = 3,                                         
+                         from = { x = 0 + diag_offset, y = CENTER_Y - CENTER_X },           
+                         to   = { x = SCREEN_W, y = CENTER_Y + CENTER_X - diag_offset } }   
+      elseif roll == 5 then
+        shoot_bullet_1 { time_gap = 0.1, times = 3, 
+                         from = { x = SCREEN_W - diag_offset, y = CENTER_Y + CENTER_X },
+                         to   = { x = 0, y = CENTER_Y - CENTER_X + diag_offset } }
+      elseif roll == 6 then
+        shoot_bullet_1 { time_gap = 0.1, times = 3, 
+                         from = { x = 0, y = CENTER_Y + CENTER_X - diag_offset }, 
+                         to   = { x = SCREEN_W - diag_offset, y = CENTER_Y - CENTER_X } }
+      elseif roll == 7 then
+        shoot_bullet_1 { time_gap = 0.1, times = 3, 
+                         from = { x = SCREEN_W, y = CENTER_Y - CENTER_X + diag_offset }, 
+                         to   = { x = 0 + diag_offset, y = CENTER_Y + CENTER_X } }
       end
     end
   }
