@@ -18,7 +18,7 @@ local logtext_ = {}
 -- helpers
 
 local function LOG(str, ...)
-  logtext_[#logtext_+1] = string.format(str, unpack(arg))
+  logtext_[#logtext_+1] = string.format(str, ...)
 end
 
 local function unordered_remove(t, o)
@@ -144,7 +144,13 @@ function love.load()
   you.y = love.graphics.getHeight() / 2
   
   you.body = love.graphics.newImage('you.png')
-  you.rect = HC.rectangle(you.x - you.size/2, you.y - you.size/2, you.size, you.size)
+  -- you.rect = HC.rectangle(you.x - you.size/2, you.y - you.size/2, you.size, you.size)
+  
+  you.rect = HC.polygon(you.x - you.size/2, you.y - you.size/2,
+                        you.x - you.size/2, you.y + you.size/2,
+                        you.x + you.size/2, you.y + you.size/2, 
+                        you.x + you.size/2, you.y - you.size/2)
+  
   you.rect:setRotation(you.rot)
 
   bullets_ = {}
@@ -152,7 +158,7 @@ function love.load()
   
   bullets_[#bullets_ + 1] = Bullet.new { x = 0, y = 260, vx = 300 }
   bullets_[#bullets_ + 1] = Bullet.new { x = 1280, y = 460, vx = -300 }
-  
+
   timers_[#timers_ + 1] = Timer.new { dur = 0.3, loop = 999, 
     action = function()
       targeted_fire( {x=0, y=100}, you )
@@ -200,6 +206,8 @@ function love.update(dt)
   you.rect:setRotation(you.rot)
   you.rect:scale(you.scale_change)
   you.scale_change = 1
+  
+  -- LOG("(%s,%s) (%s,%s) (%s,%s) (%s,%s)", you.rect._polygon:unpack())
   
   -- update bullets 
   for _, b in ipairs(bullets_) do
