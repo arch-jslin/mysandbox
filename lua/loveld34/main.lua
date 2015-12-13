@@ -70,6 +70,10 @@ function Timer:update(dt)
   end
 end
 
+local function delay(sec, func)
+  timers_[#timers_+1] = Timer.new { dur = sec, action = func }
+end
+
 -- simple Bullet class
 
 local Bullet = {}
@@ -99,9 +103,10 @@ function Bullet:update(dt)
   self.shape:moveTo(self.x, self.y) 
   
   for shape, delta in pairs(HC.collisions(self.shape)) do
-    logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s), object(%s)", delta.x, delta.y, self)
-    
-    bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
+    if shape == you.rect then -- make bullets only collide with you.rect
+      logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s), object(%s)", delta.x, delta.y, self)
+      bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
+    end
   end
   
   if len_sq(you, self) > 1000000 then -- roughly 1000 in distance to the square
@@ -136,24 +141,32 @@ end
 
 -- level patterns
 
-local function pattern_hori()
-  timers_[#timers_ + 1] = Timer.new { dur = 0.1, loop = 2, 
-    action = function()
-      local targeted_distance = (you.size / 2) * 1.414
-      targeted_fire( {x = 0, y = CENTER_Y-targeted_distance }, {x = SCREEN_W, y=CENTER_Y-targeted_distance } )
-    end
-  }
+local function shoot_bullet_1(o)
+  o          = o or {}
+  o.time_gap = o.time_gap or 0.1
+  o.times    = o.times or 3
+  o.distance = o.distance or (you.size / 2) * 1.414  -- sz*sqrt(2) from the center
+  o.from     = o.from or {x = 0, y = CENTER_Y - o.distance}
+  o.to       = o.to   or {x = SCREEN_W, y = CENTER_Y - o.distance}
   
-  timers_[#timers_ + 1] = Timer.new { dur = 2, 
+  timers_[#timers_ + 1] = Timer.new { dur = o.time_gap, loop = o.times - 1, -- loop 0 means "it doesn't loop but will do once" 
     action = function()
-      timers_[#timers_ + 1] = Timer.new { dur = 0.1, loop = 2, 
-        action = function() 
-          local targeted_distance = (you.size / 2) * 1.414
-          targeted_fire( {x = SCREEN_W, y = CENTER_Y+targeted_distance }, {x=0, y=CENTER_Y+targeted_distance } )
-        end
-      }
+      targeted_fire( o.from, o.to )
     end
   }
+end
+
+local function pattern_hori()
+  local distance = (you.size / 2) * 1.414
+  shoot_bullet_1 { time_gap = 0.1, times = 3, 
+                   from = { x = 0, y = CENTER_Y - distance },
+                   to   = { x = SCREEN_W, y = CENTER_Y - distance } }
+                 
+  delay(2, function()
+    shoot_bullet_1 { time_gap = 0.1, times = 3, 
+                     from = { x = SCREEN_W, y = CENTER_Y - distance }, 
+                     to   = { x = 0, y = CENTER_Y - distance } }
+  end)
 end
 
 -- end of level patterns
