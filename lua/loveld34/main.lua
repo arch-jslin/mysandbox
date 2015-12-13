@@ -130,9 +130,33 @@ local function targeted_fire(from, to)
   local nx = dx / length
   local ny = dy / length
   
-  local b = Bullet.new{ x = from.x, y = from.y, vx = 200*nx, vy = 200*ny }
+  local b = Bullet.new{ x = from.x, y = from.y, vx = 300*nx, vy = 300*ny }
   bullets_[#bullets_ + 1] = b
 end
+
+-- level patterns
+
+local function pattern_hori()
+  timers_[#timers_ + 1] = Timer.new { dur = 0.1, loop = 2, 
+    action = function()
+      local targeted_distance = (you.size / 2) * 1.414
+      targeted_fire( {x = 0, y = CENTER_Y-targeted_distance }, {x = SCREEN_W, y=CENTER_Y-targeted_distance } )
+    end
+  }
+  
+  timers_[#timers_ + 1] = Timer.new { dur = 2, 
+    action = function()
+      timers_[#timers_ + 1] = Timer.new { dur = 0.1, loop = 2, 
+        action = function() 
+          local targeted_distance = (you.size / 2) * 1.414
+          targeted_fire( {x = SCREEN_W, y = CENTER_Y+targeted_distance }, {x=0, y=CENTER_Y+targeted_distance } )
+        end
+      }
+    end
+  }
+end
+
+-- end of level patterns
 
 function love.load()
   math.randomseed(os.time())
@@ -160,11 +184,7 @@ function love.load()
   bullets_ = {}
   timers_  = {}
   
-  timers_[#timers_ + 1] = Timer.new { dur = 0.3, loop = 999, 
-    action = function()
-      targeted_fire( {x = 0, y = CENTER_Y-you.size }, {x=1280, y=CENTER_Y-you.size} )
-    end
-  }
+  pattern_hori()
 end
 
 function love.update(dt)
@@ -191,12 +211,9 @@ function love.update(dt)
     you.size = you.size - 0.2
     you.scale_change = you.size / oldsz
   else
-    --
     local oldsz = you.size
     you.size = you.size - 0.33
     you.scale_change = you.size / oldsz
-    --]]
-    LOG("you.size %d", you.size)
   end
   
   -- update timers
