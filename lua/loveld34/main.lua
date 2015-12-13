@@ -174,7 +174,29 @@ local function pattern_hori()
 end
 
 local function pattern_basic_random_endless()
-
+  timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999, 
+    action = function()
+      local distance = (you.size / 2) * (1.35 + math.random()*0.15)
+      local roll = random(3)
+      if roll == 0 then
+        shoot_bullet_1 { time_gap = 0.1, times = 3,
+                         from = { x = 0, y = CENTER_Y - distance },
+                         to   = { x = SCREEN_W, y = CENTER_Y - distance } }
+      elseif roll == 1 then
+        shoot_bullet_1 { time_gap = 0.1, times = 3,
+                         from = { x = SCREEN_W, y = CENTER_Y + distance }, 
+                         to   = { x = 0, y = CENTER_Y + distance } }
+      elseif roll == 2 then
+        shoot_bullet_1 { time_gap = 0.1, times = 3,
+                         from = { x = CENTER_X - distance, y = 0 }, 
+                         to   = { x = CENTER_X - distance, y = SCREEN_H } }
+      elseif roll == 3 then
+        shoot_bullet_1 { time_gap = 0.1, times = 3,
+                         from = { x = CENTER_X + distance, y = SCREEN_H }, 
+                         to   = { x = CENTER_X + distance, y = 0 } }
+      end
+    end
+  }
 end
 
 -- end of level patterns
@@ -205,7 +227,8 @@ function love.load()
   bullets_ = {}
   timers_  = {}
   
-  pattern_hori()
+  --pattern_hori()
+  pattern_basic_random_endless()
 end
 
 function love.update(dt)
