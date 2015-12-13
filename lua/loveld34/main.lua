@@ -1,6 +1,10 @@
 local HC = require 'hardoncollider'
 
 local RES = {}
+local SCREEN_W = love.window.getWidth()
+local SCREEN_H = love.window.getHeight()
+local CENTER_X = SCREEN_W / 2
+local CENTER_Y = SCREEN_H / 2
 
 local key_left_  = false
 local key_right_ = false
@@ -156,12 +160,9 @@ function love.load()
   bullets_ = {}
   timers_  = {}
   
-  bullets_[#bullets_ + 1] = Bullet.new { x = 0, y = 260, vx = 300 }
-  bullets_[#bullets_ + 1] = Bullet.new { x = 1280, y = 460, vx = -300 }
-
   timers_[#timers_ + 1] = Timer.new { dur = 0.3, loop = 999, 
     action = function()
-      targeted_fire( {x=0, y=100}, you )
+      targeted_fire( {x = 0, y = CENTER_Y-you.size }, {x=1280, y=CENTER_Y-you.size} )
     end
   }
 end
@@ -190,9 +191,12 @@ function love.update(dt)
     you.size = you.size - 0.2
     you.scale_change = you.size / oldsz
   else
+    --
     local oldsz = you.size
     you.size = you.size - 0.33
     you.scale_change = you.size / oldsz
+    --]]
+    LOG("you.size %d", you.size)
   end
   
   -- update timers
