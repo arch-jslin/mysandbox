@@ -78,6 +78,17 @@ local function delay(sec, func)
   timers_[#timers_+1] = Timer.new { dur = sec, action = func }
 end
 
+-- some functions that relates to you
+
+local function you_size_change(delta)
+  local oldsz = you.size
+  you.size = you.size + delta
+  you.scale_change = you.size / oldsz
+  
+  you.rect:scale(you.scale_change)
+  you.scale_change = 1 
+end
+
 -- simple Bullet class
 
 local Bullet = {}
@@ -110,6 +121,8 @@ function Bullet:update(dt)
     if shape == you.rect then -- make bullets only collide with you.rect
       logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s), object(%s)", delta.x, delta.y, self)
       bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
+      
+      you_size_change(-15) -- whatev', you is global, forget the argument thing
     end
   end
   
@@ -131,15 +144,16 @@ function Bullet:draw()
                      self.size)      -- origin y
 end
 
-local function targeted_fire(from, to)
+local function targeted_fire(from, to, speed)
   local dx = to.x - from.x
   local dy = to.y - from.y
   local length = math.sqrt(len_sq(from, to)) 
   local rad = math.atan2(dy, dx)
   local nx = dx / length
   local ny = dy / length
+  speed = speed or 300
   
-  local b = Bullet.new{ x = from.x, y = from.y, vx = 300*nx, vy = 300*ny }
+  local b = Bullet.new{ x = from.x, y = from.y, vx = speed*nx, vy = speed*ny }
   bullets_[#bullets_ + 1] = b
 end
 
@@ -152,10 +166,11 @@ local function shoot_bullet_1(o)
   o.distance = o.distance or (you.size / 2) * 1.414  -- sz*sqrt(2) from the center
   o.from     = o.from or {x = 0, y = CENTER_Y - o.distance}
   o.to       = o.to   or {x = SCREEN_W, y = CENTER_Y - o.distance}
+  o.speed    = o.speed or 300
   
   timers_[#timers_ + 1] = Timer.new { dur = o.time_gap, loop = o.times - 1, -- loop 0 means "it doesn't loop but will do once" 
     action = function()
-      targeted_fire( o.from, o.to )
+      targeted_fire( o.from, o.to, o.speed )
     end
   }
 end
@@ -176,39 +191,39 @@ end
 local function pattern_basic_random_endless()
   timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999, 
     action = function()
-      local distance = (you.size / 2) * (1.35 + math.random()*0.15)
-      local diag_offset = (you.size / 2) * (1.35 + math.random()*0.1)
+      local distance = (you.size / 2) * (1.3 + math.random()*0.12)
+      local diag_offset = (you.size / 2) * (1.5 + math.random()*0.15)
       local roll = random(7)
       if roll == 0 then
-        shoot_bullet_1 { time_gap = 0.1, times = 3,
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
                          from = { x = 0, y = CENTER_Y - distance },
                          to   = { x = SCREEN_W, y = CENTER_Y - distance } }
       elseif roll == 1 then
-        shoot_bullet_1 { time_gap = 0.1, times = 3,
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
                          from = { x = SCREEN_W, y = CENTER_Y + distance }, 
                          to   = { x = 0, y = CENTER_Y + distance } }
       elseif roll == 2 then
-        shoot_bullet_1 { time_gap = 0.1, times = 3,
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
                          from = { x = CENTER_X - distance, y = 0 }, 
                          to   = { x = CENTER_X - distance, y = SCREEN_H } }
       elseif roll == 3 then
-        shoot_bullet_1 { time_gap = 0.1, times = 3,
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
                          from = { x = CENTER_X + distance, y = SCREEN_H }, 
                          to   = { x = CENTER_X + distance, y = 0 } }
       elseif roll == 4 then
-        shoot_bullet_1 { time_gap = 0.1, times = 3,                                         
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4,                                 
                          from = { x = 0 + diag_offset, y = CENTER_Y - CENTER_X },           
                          to   = { x = SCREEN_W, y = CENTER_Y + CENTER_X - diag_offset } }   
       elseif roll == 5 then
-        shoot_bullet_1 { time_gap = 0.1, times = 3, 
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4,       
                          from = { x = SCREEN_W - diag_offset, y = CENTER_Y + CENTER_X },
                          to   = { x = 0, y = CENTER_Y - CENTER_X + diag_offset } }
       elseif roll == 6 then
-        shoot_bullet_1 { time_gap = 0.1, times = 3, 
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4, 
                          from = { x = 0, y = CENTER_Y + CENTER_X - diag_offset }, 
                          to   = { x = SCREEN_W - diag_offset, y = CENTER_Y - CENTER_X } }
       elseif roll == 7 then
-        shoot_bullet_1 { time_gap = 0.1, times = 3, 
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4, 
                          from = { x = SCREEN_W, y = CENTER_Y - CENTER_X + diag_offset }, 
                          to   = { x = 0 + diag_offset, y = CENTER_Y + CENTER_X } }
       end
@@ -256,25 +271,15 @@ function love.update(dt)
   -- update inputs
   
   if key_left_ and key_right_ then
-    local oldsz = you.size
-    you.size = you.size + 1
-    you.scale_change = you.size / oldsz
+    you_size_change(1)
   elseif key_left_ then
     you.rot = you.rot - 0.05
-    
-    local oldsz = you.size
-    you.size = you.size - 0.2
-    you.scale_change = you.size / oldsz
+    you_size_change(-0.2)
   elseif key_right_ then
     you.rot = you.rot + 0.05
-  
-    local oldsz = you.size
-    you.size = you.size - 0.2
-    you.scale_change = you.size / oldsz
+    you_size_change(-0.2)
   else
-    local oldsz = you.size
-    you.size = you.size - 0.33
-    you.scale_change = you.size / oldsz
+    you_size_change(-0.33)
   end
   
   -- update timers
@@ -283,18 +288,16 @@ function love.update(dt)
     t:update(dt)
   end
   
-  -- update main actor
-    
-  you.rect:setRotation(you.rot)
-  you.rect:scale(you.scale_change)
-  you.scale_change = 1
-  
-  -- LOG("(%s,%s) (%s,%s) (%s,%s) (%s,%s)", you.rect._polygon:unpack())
-  
   -- update bullets 
   for _, b in ipairs(bullets_) do
-    b:update(dt)
+    b:update(dt) -- bullet collision will happen here, so you.rect size change should be after this
   end
+  
+  -- update main actor
+    
+  you.rect:setRotation(you.rot) 
+  
+  -- LOG("(%s,%s) (%s,%s) (%s,%s) (%s,%s)", you.rect._polygon:unpack())
   
   --debug: on screen log texts
   while #logtext_ > 40 do
