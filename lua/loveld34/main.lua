@@ -241,6 +241,54 @@ local function pattern_basic_random_endless()
   }
 end
 
+local function pattern_basic_random_endless2()
+timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999, 
+    action = function()
+      local distance = (you.size / 2) * (1 + math.random()*(0.12 - (you.size/640)*1))
+      local diag_offset = (you.size / 2) * (1.2 + math.random()*(0.15 - (you.size/640)*0.7))
+      
+      if key_left_ and key_right_ then
+        distance = distance + (you.size/2) * 0.2
+      end
+      
+      local roll = random(7)
+      if roll == 0 then
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
+                         from = { x = 0, y = CENTER_Y - distance },
+                         to   = { x = SCREEN_W, y = CENTER_Y - distance } }
+      elseif roll == 1 then
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
+                         from = { x = SCREEN_W, y = CENTER_Y + distance }, 
+                         to   = { x = 0, y = CENTER_Y + distance } }
+      elseif roll == 2 then
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
+                         from = { x = CENTER_X - distance, y = 0 }, 
+                         to   = { x = CENTER_X - distance, y = SCREEN_H } }
+      elseif roll == 3 then
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
+                         from = { x = CENTER_X + distance, y = SCREEN_H }, 
+                         to   = { x = CENTER_X + distance, y = 0 } }
+      elseif roll == 4 then
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4,                                 
+                         from = { x = 0 + diag_offset, y = CENTER_Y - CENTER_X },           
+                         to   = { x = SCREEN_W, y = CENTER_Y + CENTER_X - diag_offset } }   
+      elseif roll == 5 then
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4,       
+                         from = { x = SCREEN_W - diag_offset, y = CENTER_Y + CENTER_X },
+                         to   = { x = 0, y = CENTER_Y - CENTER_X + diag_offset } }
+      elseif roll == 6 then
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4, 
+                         from = { x = 0, y = CENTER_Y + CENTER_X - diag_offset }, 
+                         to   = { x = SCREEN_W - diag_offset, y = CENTER_Y - CENTER_X } }
+      elseif roll == 7 then
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4, 
+                         from = { x = SCREEN_W, y = CENTER_Y - CENTER_X + diag_offset }, 
+                         to   = { x = 0 + diag_offset, y = CENTER_Y + CENTER_X } }
+      end
+    end
+  }
+end
+
 -- end of level patterns
 
 function love.load()
@@ -256,14 +304,17 @@ function love.load()
   you.x = love.graphics.getWidth() / 2
   you.y = love.graphics.getHeight() / 2
   
-  you.body = love.graphics.newImage('you.png')
+  --you.body = love.graphics.newImage('you2.png')
   -- you.rect = HC.rectangle(you.x - you.size/2, you.y - you.size/2, you.size, you.size)
-  
+  --[[
   you.rect = HC.polygon(you.x - you.size/2, you.y - you.size/2,
                         you.x - you.size/2, you.y + you.size/2,
                         you.x + you.size/2, you.y + you.size/2, 
                         you.x + you.size/2, you.y - you.size/2)
-  
+  ]]--
+  you.rect = HC.polygon(you.x - you.size/2 + you.size*0.05, you.y + you.size/2 - you.size*0.13398 - you.size*0.08,
+                        you.x + you.size/2 - you.size*0.05, you.y + you.size/2 - you.size*0.13398 - you.size*0.08,
+                        you.x, you.y - you.size/2)
   you.rect:setRotation(you.rot)
   
   you.charge = 0
@@ -272,7 +323,7 @@ function love.load()
   timers_  = {}
   
   --pattern_hori()
-  pattern_basic_random_endless()
+  pattern_basic_random_endless2()
 end
 
 function love.update(dt)
@@ -361,7 +412,7 @@ end
 function love.draw()
   local scale = you.size / you.base_size
   
-  love.graphics.draw(you.body, you.x, you.y, you.rot, scale, scale, you.base_size/2, you.base_size/2)
+  --love.graphics.draw(you.body, you.x, you.y, you.rot, scale, scale, you.base_size/2, you.base_size/2)
   
   -- draw bullets 
   for _, b in ipairs(bullets_) do
@@ -370,7 +421,8 @@ function love.draw()
   
   love.graphics.setColor(64, 255, 128)
   --debug shape
-  you.rect:draw('line')
+  --you.rect:draw('line')
+  you.rect:draw('fill')
   love.graphics.setColor(255, 255, 255)
   
   --debug: on screen log texts
