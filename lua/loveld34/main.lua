@@ -117,12 +117,17 @@ function Bullet:update(dt)
   
   self.shape:moveTo(self.x, self.y) 
   
+  local dmg = 25
+  if you.size > 220 then dmg = 32 
+  elseif you.size > 440 then dmg = 45
+  end
+  
   for shape, delta in pairs(HC.collisions(self.shape)) do
     if shape == you.rect then -- make bullets only collide with you.rect
       logtext_[#logtext_+1] = string.format("Hit! Separating vector = (%s,%s), object(%s)", delta.x, delta.y, self)
       bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
       
-      you_size_change(-15) -- whatev', you is global, forget the argument thing
+      you_size_change(-dmg) -- whatev', you is global, forget the argument thing
     end
   end
   
@@ -191,8 +196,13 @@ end
 local function pattern_basic_random_endless()
   timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999, 
     action = function()
-      local distance = (you.size / 2) * (1.3 + math.random()*0.12)
-      local diag_offset = (you.size / 2) * (1.5 + math.random()*0.15)
+      local distance = (you.size / 2) * (1.35 + math.random()*(0.12 - (you.size/640)*0.4))
+      local diag_offset = (you.size / 2) * (1.61 + math.random()*(0.15 - (you.size/640)*0.33))
+      
+      if key_left_ and key_right_ then
+        distance = distance + (you.size/2) * 0.2
+      end
+      
       local roll = random(7)
       if roll == 0 then
         shoot_bullet_1 { time_gap = 0.1, times = 5,
@@ -255,6 +265,8 @@ function love.load()
                         you.x + you.size/2, you.y - you.size/2)
   
   you.rect:setRotation(you.rot)
+  
+  you.charge = 0
 
   bullets_ = {}
   timers_  = {}
@@ -271,15 +283,33 @@ function love.update(dt)
   -- update inputs
   
   if key_left_ and key_right_ then
-    you_size_change(1)
+    you_size_change(-1.5)
+    you.charge = you.charge + 1
   elseif key_left_ then
     you.rot = you.rot - 0.05
-    you_size_change(-0.2)
+    --you_size_change(-0.2)
+    if you.charge > 0 then
+      you.charge = you.charge - 1
+      you_size_change(0.9)
+    else
+      you_size_change(0.2)
+    end
   elseif key_right_ then
     you.rot = you.rot + 0.05
-    you_size_change(-0.2)
+    --you_size_change(-0.2)
+    if you.charge > 0 then
+      you.charge = you.charge - 1
+      you_size_change(0.9)
+    else
+      you_size_change(0.2)
+    end
   else
-    you_size_change(-0.33)
+    if you.charge > 0 then
+      you.charge = you.charge - 1
+      you_size_change(1.8)
+    else
+      you_size_change(0.5)
+    end
   end
   
   -- update timers
