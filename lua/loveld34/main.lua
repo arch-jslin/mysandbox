@@ -196,8 +196,8 @@ end
 local function pattern_basic_random_endless()
   timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999, 
     action = function()
-      local distance = (you.size / 2) * (1.35 + math.random()*(0.12 - (you.size/640)*0.4))
-      local diag_offset = (you.size / 2) * (1.61 + math.random()*(0.15 - (you.size/640)*0.33))
+      local distance = (you.size / 2) * (1.41 + math.random()*(0.12 - (you.size/640)*0.5))
+      local diag_offset = (you.size / 2) * (1.61 + math.random()*(0.15 - (you.size/640)*0.35))
       
       if key_left_ and key_right_ then
         distance = distance + (you.size/2) * 0.2
@@ -285,23 +285,35 @@ function love.update(dt)
   if key_left_ and key_right_ then
     you_size_change(-1.5)
     you.charge = you.charge + 1
+    
+    delayed_trigger = 0
   elseif key_left_ then
-    you.rot = you.rot - 0.05
-    --you_size_change(-0.2)
-    if you.charge > 0 then
-      you.charge = you.charge - 1
-      you_size_change(0.9)
-    else
-      you_size_change(0.2)
+    
+    delayed_trigger = delayed_trigger + 1
+    
+    if delayed_trigger > 1 then 
+      you.rot = you.rot - 0.05
+      --you_size_change(-0.2)
+      if you.charge > 0 then
+        you.charge = you.charge - 1
+        you_size_change(0.9)
+      else
+        you_size_change(0.2)
+      end
     end
   elseif key_right_ then
-    you.rot = you.rot + 0.05
-    --you_size_change(-0.2)
-    if you.charge > 0 then
-      you.charge = you.charge - 1
-      you_size_change(0.9)
-    else
-      you_size_change(0.2)
+    
+    delayed_trigger = delayed_trigger + 1
+    
+    if delayed_trigger > 1 then
+      you.rot = you.rot + 0.05
+      --you_size_change(-0.2)
+      if you.charge > 0 then
+        you.charge = you.charge - 1
+        you_size_change(0.9)
+      else
+        you_size_change(0.2)
+      end
     end
   else
     if you.charge > 0 then
@@ -310,6 +322,8 @@ function love.update(dt)
     else
       you_size_change(0.5)
     end
+    
+    delayed_trigger = 0
   end
   
   -- update timers
