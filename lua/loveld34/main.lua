@@ -289,6 +289,59 @@ timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999,
   }
 end
 
+
+local function pattern_basic_random_endless3()
+timers_[#timers_ + 1] = Timer.new { dur = 2, loop = 999, 
+    action = function()
+      local distance = (you.size / 2) * (1 + math.random()*(0.12 - (you.size/640)*1))
+      local diag_offset = (you.size / 2) * (0.6 + math.random()*(0.15 - (you.size/640)*0.7))
+      
+      if key_left_ and key_right_ then
+        distance = distance + (you.size/2) * 0.2
+      end
+      
+      local roll = random(6)
+      if roll == 0 then
+        for i = 1, 10 do 
+          shoot_bullet_1 { time_gap = 0.1, 
+                           from = { x = 0 - i*20, y = CENTER_Y + CENTER_X - diag_offset - i*20 }, 
+                           to   = { x = 0 - i*20 + 1500, y = CENTER_Y + CENTER_X - diag_offset - i*20 - 1500 } }
+          --
+          shoot_bullet_1 { time_gap = 0.1,
+                           from = { x = SCREEN_W + i*20, y = CENTER_Y - CENTER_X + diag_offset + i*20 }, 
+                           to   = { x = SCREEN_W + i*20 - 1500, y = CENTER_Y - CENTER_X + diag_offset + i*20 + 1500} }
+          --
+        end     
+      elseif roll == 1 then
+        for i = 1, 10 do
+          shoot_bullet_1 { time_gap = 0.1,                                  
+                           from = { x = 0 + diag_offset + i*20, y = CENTER_Y - CENTER_X - i*20 },           
+                           to   = { x = 0 + diag_offset + i*20 + 1500, y = CENTER_Y - CENTER_X - i*20 + 1500} }   
+          shoot_bullet_1 { time_gap = 0.1,        
+                           from = { x = SCREEN_W - diag_offset - i*20, y = CENTER_Y + CENTER_X + i*20 },
+                           to   = { x = SCREEN_W - diag_offset - i*20 - 1500, y = CENTER_Y + CENTER_X + i*20 - 1500} }
+        end
+      elseif roll == 2 then
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
+                         from = { x = 0, y = CENTER_Y - distance },
+                         to   = { x = SCREEN_W, y = CENTER_Y - distance } }
+      elseif roll == 3 then
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
+                         from = { x = SCREEN_W, y = CENTER_Y + distance }, 
+                         to   = { x = 0, y = CENTER_Y + distance } }
+      elseif roll == 4 then
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
+                         from = { x = CENTER_X - distance, y = 0 }, 
+                         to   = { x = CENTER_X - distance, y = SCREEN_H } }
+      elseif roll == 5 then
+        shoot_bullet_1 { time_gap = 0.1, times = 5,
+                         from = { x = CENTER_X + distance, y = SCREEN_H }, 
+                         to   = { x = CENTER_X + distance, y = 0 } }
+      end
+    end
+  }
+end
+
 -- end of level patterns
 
 function love.load()
@@ -311,10 +364,16 @@ function love.load()
                         you.x - you.size/2, you.y + you.size/2,
                         you.x + you.size/2, you.y + you.size/2, 
                         you.x + you.size/2, you.y - you.size/2)
-  ]]--
+  --]]
+  --[[
   you.rect = HC.polygon(you.x - you.size/2 + you.size*0.05, you.y + you.size/2 - you.size*0.13398 - you.size*0.08,
                         you.x + you.size/2 - you.size*0.05, you.y + you.size/2 - you.size*0.13398 - you.size*0.08,
                         you.x, you.y - you.size/2)
+  --]]
+  you.rect = HC.polygon(you.x - you.size/3*2, you.y - you.size/4,
+                        you.x - you.size/3*2, you.y + you.size/4,
+                        you.x + you.size/3*2, you.y + you.size/4, 
+                        you.x + you.size/3*2, you.y - you.size/4)
   you.rect:setRotation(you.rot)
   
   you.charge = 0
@@ -323,18 +382,31 @@ function love.load()
   timers_  = {}
   
   --pattern_hori()
-  pattern_basic_random_endless2()
+  pattern_basic_random_endless3()
 end
 
 function love.update(dt)
-  
+  --[[
+  local speed_shrink = -1.5
+  local speed_bounce = 1.8
+  local speed_rotate_bounce = 0.9
+  local speed_rotate_grow = 0.2
+  local speed_grow   = 0.5
+  --]]
+  --
+  local speed_shrink = -3
+  local speed_bounce = 4
+  local speed_rotate_bounce = 2
+  local speed_rotate_grow = 0.2
+  local speed_grow   = 0.5
+  --]]
   bullets_to_be_deleted_ = {} 
   timers_to_be_deleted_  = {}
   
   -- update inputs
   
   if key_left_ and key_right_ then
-    you_size_change(-1.5)
+    you_size_change(speed_shrink)
     you.charge = you.charge + 1
     
     delayed_trigger = 0
@@ -347,9 +419,9 @@ function love.update(dt)
       --you_size_change(-0.2)
       if you.charge > 0 then
         you.charge = you.charge - 1
-        you_size_change(0.9)
+        you_size_change(speed_rotate_bounce)
       else
-        you_size_change(0.2)
+        you_size_change(speed_rotate_grow)
       end
     end
   elseif key_right_ then
@@ -361,17 +433,17 @@ function love.update(dt)
       --you_size_change(-0.2)
       if you.charge > 0 then
         you.charge = you.charge - 1
-        you_size_change(0.9)
+        you_size_change(speed_rotate_bounce)
       else
-        you_size_change(0.2)
+        you_size_change(speed_rotate_grow)
       end
     end
   else
     if you.charge > 0 then
       you.charge = you.charge - 1
-      you_size_change(1.8)
+      you_size_change(speed_bounce)
     else
-      you_size_change(0.5)
+      you_size_change(speed_grow)
     end
     
     delayed_trigger = 0
