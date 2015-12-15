@@ -16,6 +16,8 @@ local bullets_to_be_deleted_
 local timers_ 
 local timers_to_be_deleted_
 
+local gameover_
+
 -- array to hold collision messages
 local logtext_ = {}
 
@@ -83,6 +85,19 @@ end
 local function you_size_change(delta)
   local oldsz = you.size
   you.size = you.size + delta
+  
+  if you.size < 0 then 
+    gameover_ = true
+    you.size = 0.0001
+    
+    LOG("GAME OVER!")
+    -- gameover timer cleanup
+    for _, v in ipairs(timers_) do
+      timers_to_be_deleted_[#timers_to_be_deleted_ + 1] = v
+    end
+    
+  end
+  
   you.scale_change = you.size / oldsz
   
   you.rect:scale(you.scale_change)
@@ -347,6 +362,8 @@ end
 local function init(type)
 
   LOG("initing type %s", type)
+  
+  gameover_ = false
 
   you = {}
   you.type = type
@@ -424,54 +441,62 @@ function love.update(dt)
   
   -- update inputs
   
-  if key_left_ and key_right_ then
-    you_size_change(speed_shrink)
-    you.charge = you.charge + 1
-    
-    delayed_trigger = 0
-  elseif key_left_ then
-    
-    delayed_trigger = delayed_trigger + 1
-    
-    if delayed_trigger > 1 then 
-      you.rot = you.rot - speed_rot
+  if not gameover_ then
+  
+    if key_left_ and key_right_ then
+      you_size_change(speed_shrink)
+      you.charge = you.charge + 1
       
-      if you.charge > 0 then
-        you.charge = you.charge - 1
-        you_size_change(speed_rotate_bounce)
-      else
-        you_size_change(speed_rotate_grow)
-      end
-    end
-  elseif key_right_ then
-    
-    delayed_trigger = delayed_trigger + 1
-    
-    if delayed_trigger > 1 then
-      you.rot = you.rot + speed_rot
+      delayed_trigger = 0
+    elseif key_left_ then
       
-      if you.charge > 0 then
-        you.charge = you.charge - 1
-        you_size_change(speed_rotate_bounce)
-      else
-        you_size_change(speed_rotate_grow)
+      delayed_trigger = delayed_trigger + 1
+      
+      if delayed_trigger > 1 then 
+        you.rot = you.rot - speed_rot
+        
+        if you.charge > 0 then
+          you.charge = you.charge - 1
+          you_size_change(speed_rotate_bounce)
+        else
+          you_size_change(speed_rotate_grow)
+        end
       end
-    end
-  else
-    if you.charge > 0 then
-      you.charge = you.charge - 1
-      you_size_change(speed_bounce)
+    elseif key_right_ then
+      
+      delayed_trigger = delayed_trigger + 1
+      
+      if delayed_trigger > 1 then
+        you.rot = you.rot + speed_rot
+        
+        if you.charge > 0 then
+          you.charge = you.charge - 1
+          you_size_change(speed_rotate_bounce)
+        else
+          you_size_change(speed_rotate_grow)
+        end
+      end
     else
-      you_size_change(speed_grow)
+      if you.charge > 0 then
+        you.charge = you.charge - 1
+        you_size_change(speed_bounce)
+      else
+        you_size_change(speed_grow)
+      end
+      
+      delayed_trigger = 0
     end
-    
-    delayed_trigger = 0
-  end
   
-  -- update timers
+    -- update timers
   
-  for _, t in ipairs(timers_) do
-    t:update(dt)
+    for _, t in ipairs(timers_) do
+      t:update(dt)
+    end
+  
+  else
+  
+    -- do something? 
+
   end
   
   -- update bullets 
