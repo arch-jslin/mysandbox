@@ -5,6 +5,9 @@ local SCREEN_W = love.window.getWidth()
 local SCREEN_H = love.window.getHeight()
 local CENTER_X = SCREEN_W / 2
 local CENTER_Y = SCREEN_H / 2
+local BIGFONT = love.graphics.setNewFont(32)
+local MEDFONT = love.graphics.setNewFont(20)
+local SMALLFONT = love.graphics.setNewFont(12)
 
 local key_left_  = false
 local key_right_ = false
@@ -13,6 +16,7 @@ local you
 local bullets_
 local bullets_to_be_deleted_
 
+local time_left_
 local timers_ 
 local timers_to_be_deleted_
 
@@ -147,7 +151,7 @@ function Bullet:update(dt)
   end
   
   if len_sq(you, self) > 1000000 then -- roughly 1000 in distance to the square
-    logtext_[#logtext_+1] = string.format("object(%s) too far, self-removal", self)
+    -- logtext_[#logtext_+1] = string.format("object(%s) too far, self-removal", self)
     bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = self
   end
 end
@@ -359,10 +363,33 @@ end
 
 -- end of level patterns
 
+local function cleanup()
+  
+  LOG("Cleaning up")
+
+  for _, v in ipairs(bullets_) do
+    bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = v
+  end
+  
+  for _, v in ipairs(timers_) do
+    timers_to_be_deleted_[#timers_to_be_deleted_ + 1] = v
+  end
+
+  for _, v in ipairs(bullets_to_be_deleted_) do
+    HC.remove(v.shape)
+    unordered_remove(bullets_, v)
+  end
+  
+  for _, v in ipairs(timers_to_be_deleted_) do
+    unordered_remove(timers_, v)
+  end
+end
+
 local function init(type)
 
   LOG("initing type %s", type)
   
+  time_left_ = 30
   gameover_ = false
 
   you = {}
@@ -400,6 +427,18 @@ local function init(type)
   
   you.charge = 0
   you.rect:setRotation(you.rot)
+  
+  timers_[#timers_ + 1] = Timer.new { dur = 1, loop = 30, 
+    action = function() 
+      
+      time_left_ = time_left_ - 1 
+      
+      if time_left_ == 0 then
+        gameover_ = true
+        cleanup()
+      end
+    end
+  }
   
 end
 
@@ -541,7 +580,7 @@ function love.draw()
   you.rect:draw('fill')
   love.graphics.setColor(255, 255, 255)
   
-  --debug: on screen log texts
+  --[[debug: on screen log texts
   if key_left_ and key_right_ then
     love.graphics.print('both', 200, 180)  
   elseif key_left_ then
@@ -549,6 +588,23 @@ function love.draw()
   elseif key_right_ then
     love.graphics.print('right', 250, 200)
   end
+  --]]
+  
+  -- draw texts
+  love.graphics.setFont(MEDFONT)
+  love.graphics.print('Size: '..math.floor(you.size), SCREEN_W - 200, 50)
+  
+  love.graphics.print("[z]/[x]: Rotate Left/Right; [z+x]: Shrink temporarily; [1]/[2]/[3]: Restart game in mode 1, 2 or 3", 
+                    20, 
+                    SCREEN_H - 30)
+  
+  love.graphics.setFont(BIGFONT)
+  love.graphics.print(tostring(time_left_), CENTER_X - 32, 32)
+  
+  if gameover_ then
+    love.graphics.print('GAME OVER!', CENTER_X - 100, CENTER_Y - 30)
+  end
+  love.graphics.setFont(SMALLFONT)
   
   -- print messages
   for i = 1,#logtext_ do
@@ -559,30 +615,6 @@ function love.draw()
   love.graphics.setColor(255, 255, 255, 255) -- reset white
 end
 
-local function cleanup()
-  
-  LOG("Cleaning up")
-  
-  HC.remove(you.rect)
-  
-  for _, v in ipairs(bullets_) do
-    bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = v
-  end
-  
-  for _, v in ipairs(timers_) do
-    timers_to_be_deleted_[#timers_to_be_deleted_ + 1] = v
-  end
-
-  for _, v in ipairs(bullets_to_be_deleted_) do
-    HC.remove(v.shape)
-    unordered_remove(bullets_, v)
-  end
-  
-  for _, v in ipairs(timers_to_be_deleted_) do
-    unordered_remove(timers_, v)
-  end
-end
-
 function love.keypressed(k)
   if k == 'z' then
     key_left_ = true
@@ -590,12 +622,15 @@ function love.keypressed(k)
     key_right_ = true
   
   elseif k == '1' then
+    HC.remove(you.rect)
     cleanup()
     init(1)
   elseif k == '2' then
+    HC.remove(you.rect)
     cleanup()
     init(2)
   elseif k == '3' then
+    HC.remove(you.rect)
     cleanup()
     init(3)
   end
