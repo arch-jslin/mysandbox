@@ -242,7 +242,7 @@ local function pattern_basic_random_endless()
 end
 
 local function pattern_basic_random_endless2()
-timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999, 
+timers_[#timers_ + 1] = Timer.new { dur = 1.2, loop = 999, 
     action = function()
       local distance = (you.size / 2) * (1 + math.random()*(0.12 - (you.size/640)*1))
       local diag_offset = (you.size / 2) * (1.2 + math.random()*(0.15 - (you.size/640)*0.7))
@@ -253,35 +253,35 @@ timers_[#timers_ + 1] = Timer.new { dur = 1.5, loop = 999,
       
       local roll = random(7)
       if roll == 0 then
-        shoot_bullet_1 { time_gap = 0.1, times = 5,
+        shoot_bullet_1 { time_gap = 0.1, times = 5, speed = 400,
                          from = { x = 0, y = CENTER_Y - distance },
                          to   = { x = SCREEN_W, y = CENTER_Y - distance } }
       elseif roll == 1 then
-        shoot_bullet_1 { time_gap = 0.1, times = 5,
+        shoot_bullet_1 { time_gap = 0.1, times = 5, speed = 400,
                          from = { x = SCREEN_W, y = CENTER_Y + distance }, 
                          to   = { x = 0, y = CENTER_Y + distance } }
       elseif roll == 2 then
-        shoot_bullet_1 { time_gap = 0.1, times = 5,
+        shoot_bullet_1 { time_gap = 0.1, times = 5, speed = 400,
                          from = { x = CENTER_X - distance, y = 0 }, 
                          to   = { x = CENTER_X - distance, y = SCREEN_H } }
       elseif roll == 3 then
-        shoot_bullet_1 { time_gap = 0.1, times = 5,
+        shoot_bullet_1 { time_gap = 0.1, times = 5, speed = 400,
                          from = { x = CENTER_X + distance, y = SCREEN_H }, 
                          to   = { x = CENTER_X + distance, y = 0 } }
       elseif roll == 4 then
-        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4,                                 
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 550,                        
                          from = { x = 0 + diag_offset, y = CENTER_Y - CENTER_X },           
                          to   = { x = SCREEN_W, y = CENTER_Y + CENTER_X - diag_offset } }   
       elseif roll == 5 then
-        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4,       
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 550,      
                          from = { x = SCREEN_W - diag_offset, y = CENTER_Y + CENTER_X },
                          to   = { x = 0, y = CENTER_Y - CENTER_X + diag_offset } }
       elseif roll == 6 then
-        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4, 
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 550,
                          from = { x = 0, y = CENTER_Y + CENTER_X - diag_offset }, 
                          to   = { x = SCREEN_W - diag_offset, y = CENTER_Y - CENTER_X } }
       elseif roll == 7 then
-        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 300 * 1.4, 
+        shoot_bullet_1 { time_gap = 0.07, times = 5, speed = 550,
                          from = { x = SCREEN_W, y = CENTER_Y - CENTER_X + diag_offset }, 
                          to   = { x = 0 + diag_offset, y = CENTER_Y + CENTER_X } }
       end
@@ -344,12 +344,12 @@ end
 
 -- end of level patterns
 
-function love.load()
-  math.randomseed(os.time())
-  
-  RES.bullet_img1 = love.graphics.newImage('bullet.png')
-  
+local function init(type)
+
+  LOG("initing type %s", type)
+
   you = {}
+  you.type = type
   you.rot  = 0
   you.size = 64
   you.base_size = 64
@@ -357,49 +357,68 @@ function love.load()
   you.x = love.graphics.getWidth() / 2
   you.y = love.graphics.getHeight() / 2
   
-  --you.body = love.graphics.newImage('you2.png')
-  -- you.rect = HC.rectangle(you.x - you.size/2, you.y - you.size/2, you.size, you.size)
-  --[[
-  you.rect = HC.polygon(you.x - you.size/2, you.y - you.size/2,
-                        you.x - you.size/2, you.y + you.size/2,
-                        you.x + you.size/2, you.y + you.size/2, 
-                        you.x + you.size/2, you.y - you.size/2)
-  --]]
-  --[[
-  you.rect = HC.polygon(you.x - you.size/2 + you.size*0.05, you.y + you.size/2 - you.size*0.13398 - you.size*0.08,
-                        you.x + you.size/2 - you.size*0.05, you.y + you.size/2 - you.size*0.13398 - you.size*0.08,
-                        you.x, you.y - you.size/2)
-  --]]
-  you.rect = HC.polygon(you.x - you.size/3*2, you.y - you.size/4,
-                        you.x - you.size/3*2, you.y + you.size/4,
-                        you.x + you.size/3*2, you.y + you.size/4, 
-                        you.x + you.size/3*2, you.y - you.size/4)
-  you.rect:setRotation(you.rot)
+  if type == 1 then
+    you.rect = HC.polygon(you.x - you.size/2, you.y - you.size/2,
+                          you.x - you.size/2, you.y + you.size/2,
+                          you.x + you.size/2, you.y + you.size/2, 
+                          you.x + you.size/2, you.y - you.size/2)
+  
+    pattern_basic_random_endless()
+  
+  elseif type == 2 then
+    you.rect = HC.polygon(you.x - you.size/2 + you.size*0.05, you.y + you.size/2 - you.size*0.13398 - you.size*0.08,
+                          you.x + you.size/2 - you.size*0.05, you.y + you.size/2 - you.size*0.13398 - you.size*0.08,
+                          you.x, you.y - you.size/2)
+    
+    pattern_basic_random_endless2()
+    
+  elseif type == 3 then
+    you.rect = HC.polygon(you.x - you.size/3*2, you.y - you.size/4,
+                          you.x - you.size/3*2, you.y + you.size/4,
+                          you.x + you.size/3*2, you.y + you.size/4, 
+                          you.x + you.size/3*2, you.y - you.size/4)
+                        
+    pattern_basic_random_endless3()
+  end
   
   you.charge = 0
+  you.rect:setRotation(you.rot)
+  
+end
 
+function love.load()
+  math.randomseed(os.time())
+  
+  RES.bullet_img1 = love.graphics.newImage('bullet.png')
+  
   bullets_ = {}
   timers_  = {}
   
-  --pattern_hori()
-  pattern_basic_random_endless3()
+  init(1)
 end
 
 function love.update(dt)
-  --[[
   local speed_shrink = -1.5
   local speed_bounce = 1.8
   local speed_rotate_bounce = 0.9
   local speed_rotate_grow = 0.2
   local speed_grow   = 0.5
-  --]]
-  --
-  local speed_shrink = -3
-  local speed_bounce = 4
-  local speed_rotate_bounce = 2
-  local speed_rotate_grow = 0.2
-  local speed_grow   = 0.5
-  --]]
+  local speed_rot    = 0.05
+  
+  if you.type == 2 then
+    speed_shrink = -3
+    speed_bounce = 4
+    speed_rot = 0.066
+  end
+  
+  if you.type == 3 then    
+    speed_shrink = -3
+    speed_bounce = 4
+    speed_rotate_bounce = 2
+    speed_rotate_grow = 0.2
+    speed_grow   = 0.5
+  end
+  
   bullets_to_be_deleted_ = {} 
   timers_to_be_deleted_  = {}
   
@@ -415,8 +434,8 @@ function love.update(dt)
     delayed_trigger = delayed_trigger + 1
     
     if delayed_trigger > 1 then 
-      you.rot = you.rot - 0.05
-      --you_size_change(-0.2)
+      you.rot = you.rot - speed_rot
+      
       if you.charge > 0 then
         you.charge = you.charge - 1
         you_size_change(speed_rotate_bounce)
@@ -429,8 +448,8 @@ function love.update(dt)
     delayed_trigger = delayed_trigger + 1
     
     if delayed_trigger > 1 then
-      you.rot = you.rot + 0.05
-      --you_size_change(-0.2)
+      you.rot = you.rot + speed_rot
+      
       if you.charge > 0 then
         you.charge = you.charge - 1
         you_size_change(speed_rotate_bounce)
@@ -515,11 +534,45 @@ function love.draw()
   love.graphics.setColor(255, 255, 255, 255) -- reset white
 end
 
+local function cleanup()
+  
+  LOG("Cleaning up")
+  
+  HC.remove(you.rect)
+  
+  for _, v in ipairs(bullets_) do
+    bullets_to_be_deleted_[#bullets_to_be_deleted_ + 1] = v
+  end
+  
+  for _, v in ipairs(timers_) do
+    timers_to_be_deleted_[#timers_to_be_deleted_ + 1] = v
+  end
+
+  for _, v in ipairs(bullets_to_be_deleted_) do
+    HC.remove(v.shape)
+    unordered_remove(bullets_, v)
+  end
+  
+  for _, v in ipairs(timers_to_be_deleted_) do
+    unordered_remove(timers_, v)
+  end
+end
+
 function love.keypressed(k)
   if k == 'z' then
     key_left_ = true
   elseif k == 'x' then
     key_right_ = true
+  
+  elseif k == '1' then
+    cleanup()
+    init(1)
+  elseif k == '2' then
+    cleanup()
+    init(2)
+  elseif k == '3' then
+    cleanup()
+    init(3)
   end
 end
 
