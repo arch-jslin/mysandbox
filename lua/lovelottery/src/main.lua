@@ -1,5 +1,6 @@
 
-local names_ = { 'Team_A', 'Team_B', 'Team_D', 'Team_E', 'Team_F', 'Team_G', 'Team_H', 'Team_I', 'Team_J', 'Team_K', 'Team_L' }
+local names_ = { 'Team_A', 'Team_B', 'Team_C', 'Team_D', 'Team_E', 'Team_F', 'Team_G', 'Team_H' }
+
 local font_
 
 local index_last_ = 1
@@ -60,10 +61,10 @@ function love.mousepressed( x, y, button )
   if button == 'l' then
     if flag_ == 0 then
       flag_ = 1
-      ax_ = 2
+      ax_ = 10
     else 
       flag_ = 0
-      ax_ = -2
+      ax_ = -10
     end
   end
 end

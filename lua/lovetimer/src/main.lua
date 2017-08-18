@@ -1,12 +1,12 @@
-local endtime_ = {year=2014, month=8, day=3, hour=16, min=00, sec=0}
+local endtime_ = {year=2017, month=1, day=22, hour=16, min=00, sec=0}
 
 local time_left_ = 0
 local font1_ 
 local font2_
 
 function love.load()
-  font1_ = love.graphics.setNewFont(96)
-  font2_ = love.graphics.setNewFont(80)
+  font1_ = love.graphics.setNewFont(72)
+  font2_ = love.graphics.setNewFont(54)
 end
 
 function love.update(dt)
@@ -28,11 +28,11 @@ function love.draw()
   end
   
   love.graphics.setFont(font1_)
-  love.graphics.printf(str, 400, 100, 0, 'center')
+  love.graphics.printf(str, 300, 50, 0, 'center')
   
   love.graphics.setColor(255, 255, 255, 255)
   love.graphics.setFont(font2_)
-  love.graphics.printf('Until Final Upload', 0, 200, 800, 'center')
+  love.graphics.printf('UPLOAD NOW', 100, 150, 400, 'center')
   
   --love.graphics.setNewFont(64)
   --love.graphics.printf('UPLOAD the game NOW', 0, 300, 800, 'center')
