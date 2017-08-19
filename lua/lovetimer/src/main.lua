@@ -1,4 +1,4 @@
-local endtime_ = {year=2017, month=1, day=22, hour=16, min=00, sec=0}
+local endtime_ = {year=2017, month=8, day=19, hour=13, min=50, sec=0}
 
 local time_left_ = 0
 local font1_ 
@@ -20,9 +20,9 @@ function love.draw()
   local str = string.format("%02d:%02d:%02d\n", hr, min, sec)
   
   if time_left_ < 3600 then
-    love.graphics.setColor(255, 0, 0, 255)
+    love.graphics.setColor(255, 64, 64, 255)
   elseif time_left_ < 7200 then
-    love.graphics.setColor(255, 255, 0, 255)
+    love.graphics.setColor(255, 255, 32, 255)
   else
     love.graphics.setColor(255, 255, 255, 255)
   end
@@ -32,7 +32,7 @@ function love.draw()
   
   love.graphics.setColor(255, 255, 255, 255)
   love.graphics.setFont(font2_)
-  love.graphics.printf('UPLOAD NOW', 100, 150, 400, 'center')
+  love.graphics.printf('Concept Presentation', 100, 150, 400, 'center')
   
   --love.graphics.setNewFont(64)
   --love.graphics.printf('UPLOAD the game NOW', 0, 300, 800, 'center')

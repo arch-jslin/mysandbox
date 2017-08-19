@@ -16,13 +16,17 @@ local fontsize_big_ = 96
 local v_deg_ = 0
 local a_deg_ = 0
 
+-- big resources
 local pin_img_
+local beep_
 
 function love.load()
   font_ = love.graphics.setNewFont(fontsize_big_)
   love.graphics.setFont(font_)
   
   pin_img_ = love.graphics.newImage('block.png')
+  beep_ = love.audio.newSource('Blip_Select3.wav', 'static')
+  beep_:setVolume(0.3) 
 end
 
 function love.update(dt)
@@ -101,6 +105,12 @@ local function draw_clockwise()
     local x, y = get_clock_position(i)
     if is_pin_in_the_slice_of(i) then 
       love.graphics.setColor(64, 255, 64, 255)
+      --audio here
+      index_last_ = index_next_
+      index_next_ = i
+      if index_last_ ~= index_next_ then
+        beep_:play()
+      end
     end
     love.graphics.printf(names_[i], x, y - (fontsize_big_/2), 0, 'center')
     love.graphics.setColor(255, 255, 255, 255)
