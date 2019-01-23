@@ -1,5 +1,5 @@
 
-local names_ = { 'A', 'B', 'C', 'D', 'E', 'F', 'G' }
+local names_ = { 'A', 'C', 'D', 'F' }
 
 local font_
 
