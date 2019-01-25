@@ -4,7 +4,7 @@ using DG.Tweening;
 
 public class ClockAnimator : MonoBehaviour
 {
-    public DateTime next_deadline_ = new DateTime(2019, 1, 26, 3, 0, 0); 
+    public DateTime next_deadline_ = new DateTime(2019, 1, 26, 11, 0, 0); 
 
     private const int FONT_W = 3; // this cannot be changed, because voxel font design is by hand
     private const int SPACING = 1;
@@ -103,7 +103,7 @@ public class ClockAnimator : MonoBehaviour
                     else
                     {
                         Vector3 orig_scale = dots_[i, j].transform.localScale;
-                        Vector3 blip_scale = orig_scale + (new Vector3(.2f, .2f, 0f));
+                        Vector3 blip_scale = orig_scale + (new Vector3(.3f, .3f, 0f));
 
                         Sequence seqx = DOTween.Sequence();
                         Sequence seqy = DOTween.Sequence();
