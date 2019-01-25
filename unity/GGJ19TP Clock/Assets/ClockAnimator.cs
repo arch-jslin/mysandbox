@@ -4,7 +4,7 @@ using DG.Tweening;
 
 public class ClockAnimator : MonoBehaviour
 {
-    public DateTime next_deadline_ = new DateTime(2019, 1, 26, 1, 36, 0); 
+    public DateTime next_deadline_ = new DateTime(2019, 1, 26, 3, 0, 0); 
 
     private const int FONT_W = 3; // this cannot be changed, because voxel font design is by hand
     private const int SPACING = 1;
@@ -67,6 +67,16 @@ public class ClockAnimator : MonoBehaviour
 
             if (diff.TotalMilliseconds < 0) return; // If deadline arrived, stop doing anything
 
+            Color emergency_color = Color.white;
+            if (diff.Hours == 1)
+            {
+                emergency_color = Color.yellow;
+            }
+            else if( diff.Hours == 0)
+            {
+                emergency_color = Color.red;
+            }
+
             string_to_dots_display(diff.Hours.ToString("D2") + ":"+ diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
 
             for (int i = TOTAL_WIDTH - 1; i >= 0; --i)
@@ -97,6 +107,7 @@ public class ClockAnimator : MonoBehaviour
 
                         Sequence seqx = DOTween.Sequence();
                         Sequence seqy = DOTween.Sequence();
+                        
 
                         seqx.Append(dots_[i, j].transform.DOScaleX(blip_scale.x, .1f))
                             .Append(dots_[i, j].transform.DOScaleX(orig_scale.x, .23f))
@@ -108,6 +119,10 @@ public class ClockAnimator : MonoBehaviour
                             .PrependInterval(horizontal_delay)
                             .Play();
                     }
+                    Sequence color = DOTween.Sequence();
+                    color.Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(emergency_color, .1f))
+                         .Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(Color.white, .3f))
+                         .PrependInterval(horizontal_delay).Play();
                 }
             }
             dots_data_new_to_old();
