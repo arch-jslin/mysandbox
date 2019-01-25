@@ -102,12 +102,22 @@ public class ClockAnimator : MonoBehaviour
                     } 
                     else
                     {
-                        Vector3 orig_scale = dots_[i, j].transform.localScale;
-                        Vector3 blip_scale = orig_scale + (new Vector3(.3f, .3f, 0f));
+                        Vector3 orig_scale = Vector3.zero;
+                        Vector3 blip_scale = Vector3.zero;
+
+                        if ( dots_data_new_[i, j] == 0 )
+                        {
+                            orig_scale = new Vector3(.1f, .1f, 2f);
+                            blip_scale = new Vector3(.4f, .4f, 2f);
+                        }
+                        else if( dots_data_new_[i, j] == 1 )
+                        {
+                            orig_scale = new Vector3(.9f, .9f, 2f);
+                            blip_scale = new Vector3(1.2f, 1.2f, 2f);
+                        }
 
                         Sequence seqx = DOTween.Sequence();
                         Sequence seqy = DOTween.Sequence();
-                        
 
                         seqx.Append(dots_[i, j].transform.DOScaleX(blip_scale.x, .1f))
                             .Append(dots_[i, j].transform.DOScaleX(orig_scale.x, .23f))
