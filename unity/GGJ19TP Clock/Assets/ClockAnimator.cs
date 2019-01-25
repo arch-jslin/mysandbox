@@ -4,7 +4,7 @@ using DG.Tweening;
 
 public class ClockAnimator : MonoBehaviour
 {
-    public DateTime next_deadline_ = new DateTime(2019, 1, 26, 10, 0, 0); 
+    public DateTime next_deadline_ = new DateTime(2019, 1, 26, 1, 36, 0); 
 
     private const int FONT_W = 3; // this cannot be changed, because voxel font design is by hand
     private const int SPACING = 1;
@@ -64,6 +64,9 @@ public class ClockAnimator : MonoBehaviour
         {
             last_time_ = time;
             TimeSpan diff = (next_deadline_ - time);
+
+            if (diff.TotalMilliseconds < 0) return; // If deadline arrived, stop doing anything
+
             string_to_dots_display(diff.Hours.ToString("D2") + ":"+ diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
 
             for (int i = TOTAL_WIDTH - 1; i >= 0; --i)
