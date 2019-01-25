@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using DG.Tweening;
 
 public class ClockAnimator : MonoBehaviour
 {
@@ -26,6 +27,8 @@ public class ClockAnimator : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        DOTween.Init();
+
         dots_ = new GameObject[TOTAL_WIDTH, FONT_H];
         
         for( int i = 0; i < TOTAL_WIDTH; ++i )
@@ -34,7 +37,7 @@ public class ClockAnimator : MonoBehaviour
             {
                 dots_[i, j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 dots_[i, j].transform.position = BOTTOM_LEFT + (new Vector3(i*CUBE_SIZE, j*CUBE_SIZE, 0));
-                dots_[i, j].transform.localScale = new Vector3(.7f, .7f, .7f);
+                dots_[i, j].transform.localScale = new Vector3(.7f, .7f, 2f);
                 //dots_[i, j].GetComponent<Renderer>().material.SetColor("default_color", new Color(0, 0, 0));
             }
         }
@@ -216,11 +219,15 @@ public class ClockAnimator : MonoBehaviour
                     int invert_y = (FONT_H - n) - 1; // stupidly... y is inverted with the buffer array design;
                     if (buffer[n, m] == 1)          // stupidly... we need to transpose buffer here because of significant dimension
                     {
-                        dots_[starting_position + m, invert_y].transform.localScale = new Vector3(.9f, .9f, .9f);
+                        //dots_[starting_position + m, invert_y].transform.localScale = new Vector3(.9f, .9f, 2f);
+                        dots_[starting_position + m, invert_y].transform.DOScaleX(.9f, .33f);
+                        dots_[starting_position + m, invert_y].transform.DOScaleY(.9f, .33f);
                     }
                     else if (buffer[n, m] == 0)
                     {
-                        dots_[starting_position + m, invert_y].transform.localScale = new Vector3(.1f, .1f, .1f);
+                        dots_[starting_position + m, invert_y].transform.localScale = new Vector3(.1f, .1f, 2f);
+                        dots_[starting_position + m, invert_y].transform.DOScaleX(.1f, .33f);
+                        dots_[starting_position + m, invert_y].transform.DOScaleY(.1f, .33f);
                     }
                 }
             }
@@ -230,7 +237,7 @@ public class ClockAnimator : MonoBehaviour
             {
                 for (int m = 0; m < SPACING; ++m)
                 {
-                    dots_[starting_position + FONT_W + m, n].transform.localScale = new Vector3(.1f, .1f, .1f);
+                    dots_[starting_position + FONT_W + m, n].transform.localScale = new Vector3(.1f, .1f, 2f);
                 }
             }
         }
