@@ -5,15 +5,18 @@ public class ClockAnimator : MonoBehaviour
 {
     public Transform hours, minutes, seconds;
     public bool analog;
+    public DateTime next_deadline_ = new DateTime(2019, 1, 26, 10, 0, 0); 
+
     private const int FONT_W = 3; // this cannot be changed, because voxel font design is by hand
     private const int SPACING = 1;
     private const int FONT_H = 5; // this cannot be changed, because voxel font design is by hand
     private const int TEXT_COUNT = 8; // 88:88:88 
     private const int TOTAL_WIDTH = (FONT_W + SPACING) * TEXT_COUNT;
     private const float CUBE_SIZE = 1f;
-    private Vector3 BOTTOM_LEFT = new Vector3(0, 0, 0);
+    private Vector3 BOTTOM_LEFT = new Vector3((-TOTAL_WIDTH/2) * CUBE_SIZE, -FONT_H/2 * CUBE_SIZE, 0);
 
-    private GameObject[,] dots_; 
+    private GameObject[,] dots_;
+    private DateTime last_time_;
 
     private const float
         hoursToDegrees_ = 360f / 12f,
@@ -35,19 +38,45 @@ public class ClockAnimator : MonoBehaviour
                 //dots_[i, j].GetComponent<Renderer>().material.SetColor("default_color", new Color(0, 0, 0));
             }
         }
-
-        string_to_dots_display("12:34:56");
     }
-    
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (analog)
+        {
+            TimeSpan timespan = DateTime.Now.TimeOfDay;
+            hours.localRotation =
+                Quaternion.Euler(0f, 0f, (float)timespan.TotalHours * -hoursToDegrees_);
+            minutes.localRotation =
+                Quaternion.Euler(0f, 0f, (float)timespan.TotalMinutes * -minutesToDegrees_);
+            seconds.localRotation =
+                Quaternion.Euler(0f, 0f, (float)timespan.TotalSeconds * -secondsToDegrees_);
+        }
+        else
+        {
+            DateTime time = DateTime.Now;          
+            if (time != last_time_)
+            {
+                last_time_ = time;
+                TimeSpan diff = (next_deadline_ - time);
+                //hours.localRotation = Quaternion.Euler(0f, 0f, time.Hour * -hoursToDegrees_);
+                //minutes.localRotation = Quaternion.Euler(0f, 0f, time.Minute * -minutesToDegrees_);
+                //seconds.localRotation = Quaternion.Euler(0f, 0f, time.Second * -secondsToDegrees_);
+                string_to_dots_display(diff.Hours.ToString("D2") + ":"+ diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
+            }
+        }
+    }
+
     // <TEXT_COUNT> length only, and only works on "0123456789:", and only works for FONT_H = 5
     void string_to_dots_display(string str = "88:88:88")
     {
         int[,] buffer;
-        for( int i = 0; i < str.Length; ++i )
+        for (int i = 0; i < str.Length; ++i)
         {
             int starting_position = i * (FONT_W + SPACING);
-            if ( starting_position >= TOTAL_WIDTH ) continue;  // fail safe 
-            if( str[i] == '0' )
+            if (starting_position >= TOTAL_WIDTH) continue;  // fail safe 
+            if (str[i] == '0')
             {
                 buffer = new int[,]
                 {
@@ -58,7 +87,7 @@ public class ClockAnimator : MonoBehaviour
                     {1,1,1}
                 };
             }
-            else if( str[i] == '1' )
+            else if (str[i] == '1')
             {
                 buffer = new int[,]
                 {
@@ -69,7 +98,7 @@ public class ClockAnimator : MonoBehaviour
                     {1,1,1}
                 };
             }
-            else if( str[i] == '2' )
+            else if (str[i] == '2')
             {
                 buffer = new int[,]
                 {
@@ -180,16 +209,16 @@ public class ClockAnimator : MonoBehaviour
                 };
             }
 
-            for( int m = 0; m < FONT_W; ++m )
+            for (int m = 0; m < FONT_W; ++m)
             {
-                for( int n = 0; n < FONT_H; ++n)
+                for (int n = 0; n < FONT_H; ++n)
                 {
                     int invert_y = (FONT_H - n) - 1; // stupidly... y is inverted with the buffer array design;
-                    if( buffer[n, m] == 1 )          // stupidly... we need to transpose buffer here because of significant dimension
+                    if (buffer[n, m] == 1)          // stupidly... we need to transpose buffer here because of significant dimension
                     {
                         dots_[starting_position + m, invert_y].transform.localScale = new Vector3(.9f, .9f, .9f);
                     }
-                    else if ( buffer[n, m] == 0 )
+                    else if (buffer[n, m] == 0)
                     {
                         dots_[starting_position + m, invert_y].transform.localScale = new Vector3(.1f, .1f, .1f);
                     }
@@ -197,33 +226,13 @@ public class ClockAnimator : MonoBehaviour
             }
 
             // handle spacing
-            for( int n = 0; n < FONT_H; ++n )
+            for (int n = 0; n < FONT_H; ++n)
             {
                 for (int m = 0; m < SPACING; ++m)
                 {
                     dots_[starting_position + FONT_W + m, n].transform.localScale = new Vector3(.1f, .1f, .1f);
                 }
             }
-        }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if( analog ) {
-            TimeSpan timespan = DateTime.Now.TimeOfDay;
-            hours.localRotation =
-                Quaternion.Euler(0f, 0f, (float)timespan.TotalHours * -hoursToDegrees_);
-            minutes.localRotation =
-                Quaternion.Euler(0f, 0f, (float)timespan.TotalMinutes * -minutesToDegrees_);
-            seconds.localRotation =
-                Quaternion.Euler(0f, 0f, (float)timespan.TotalSeconds * -secondsToDegrees_);
-        }
-        else {
-            DateTime time = DateTime.Now;
-            hours.localRotation = Quaternion.Euler(0f, 0f, time.Hour * -hoursToDegrees_);
-            minutes.localRotation = Quaternion.Euler(0f, 0f, time.Minute * -minutesToDegrees_);
-            seconds.localRotation = Quaternion.Euler(0f, 0f, time.Second * -secondsToDegrees_);
         }
     }
 }
