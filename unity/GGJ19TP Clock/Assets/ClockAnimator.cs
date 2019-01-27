@@ -4,7 +4,7 @@ using DG.Tweening;
 
 public class ClockAnimator : MonoBehaviour
 {
-    public DateTime next_deadline_ = new DateTime(2019, 1, 26, 11, 0, 0); 
+    public DateTime next_deadline_ = new DateTime(2019, 1, 27, 15, 0, 0); 
 
     private const int FONT_W = 3; // this cannot be changed, because voxel font design is by hand
     private const int SPACING = 1;
@@ -29,6 +29,7 @@ public class ClockAnimator : MonoBehaviour
     void Start()
     {
         DOTween.Init();
+        DOTween.SetTweensCapacity(1280, 640);
 
         DateTime time = DateTime.Now;
         TimeSpan diff = next_deadline_ - time;
@@ -60,81 +61,15 @@ public class ClockAnimator : MonoBehaviour
     void Update()
     {
         DateTime time = DateTime.Now;      
-        if ( (time - last_time_).TotalMilliseconds > 1000 ) // WAIT SO DATETIME SMALLEST UNIT IS NOT SECOND!
+        if ( time.Second != last_time_.Second ) // WAIT SO DATETIME SMALLEST UNIT IS NOT SECOND!
         {
             last_time_ = time;
             TimeSpan diff = (next_deadline_ - time);
 
             if (diff.TotalMilliseconds < 0) return; // If deadline arrived, stop doing anything
 
-            Color emergency_color = Color.white;
-            if (diff.Hours == 1)
-            {
-                emergency_color = Color.yellow;
-            }
-            else if( diff.Hours == 0)
-            {
-                emergency_color = Color.red;
-            }
-
             string_to_dots_display(diff.Hours.ToString("D2") + ":"+ diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
-
-            for (int i = TOTAL_WIDTH - 1; i >= 0; --i)
-            {
-                float horizontal_delay = (TOTAL_WIDTH - i) * .01f;
-
-                if (second_count_ == 0)
-                {
-                    horizontal_delay = 0;
-                }
-
-                for (int j = 0; j < FONT_H; ++j) 
-                {
-                    if (dots_data_old_[i, j] == 0 && dots_data_new_[i, j] == 1)
-                    {
-                        dots_[i, j].transform.DOScaleX(.9f, .33f).SetDelay(horizontal_delay);
-                        dots_[i, j].transform.DOScaleY(.9f, .33f).SetDelay(horizontal_delay);
-                    }
-                    else if (dots_data_old_[i, j] == 1 && dots_data_new_[i, j] == 0)
-                    {
-                        dots_[i, j].transform.DOScaleX(.1f, .33f).SetDelay(horizontal_delay);
-                        dots_[i, j].transform.DOScaleY(.1f, .33f).SetDelay(horizontal_delay);
-                    } 
-                    else
-                    {
-                        Vector3 orig_scale = Vector3.zero;
-                        Vector3 blip_scale = Vector3.zero;
-
-                        if ( dots_data_new_[i, j] == 0 )
-                        {
-                            orig_scale = new Vector3(.1f, .1f, 2f);
-                            blip_scale = new Vector3(.4f, .4f, 2f);
-                        }
-                        else if( dots_data_new_[i, j] == 1 )
-                        {
-                            orig_scale = new Vector3(.9f, .9f, 2f);
-                            blip_scale = new Vector3(1.2f, 1.2f, 2f);
-                        }
-
-                        Sequence seqx = DOTween.Sequence();
-                        Sequence seqy = DOTween.Sequence();
-
-                        seqx.Append(dots_[i, j].transform.DOScaleX(blip_scale.x, .1f))
-                            .Append(dots_[i, j].transform.DOScaleX(orig_scale.x, .23f))
-                            .PrependInterval(horizontal_delay)
-                            .Play();
-
-                        seqy.Append(dots_[i, j].transform.DOScaleY(blip_scale.y, .1f))
-                            .Append(dots_[i, j].transform.DOScaleY(orig_scale.y, .23f))
-                            .PrependInterval(horizontal_delay)
-                            .Play();
-                    }
-                    Sequence color = DOTween.Sequence();
-                    color.Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(emergency_color, .1f))
-                         .Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(Color.white, .3f))
-                         .PrependInterval(horizontal_delay).Play();
-                }
-            }
+            clock_display_animate(diff);
             dots_data_new_to_old();
             second_count_ += 1;
         }
@@ -148,6 +83,76 @@ public class ClockAnimator : MonoBehaviour
             for (int j = 0; j < FONT_H; ++j)
             {
                 dots_data_old_[i, j] = dots_data_new_[i, j];
+            }
+        }
+    }
+
+    void clock_display_animate(TimeSpan diff)
+    {
+        Color emergency_color = Color.white;
+        if (diff.Hours == 1)
+        {
+            emergency_color = Color.yellow;
+        }
+        else if (diff.Hours == 0)
+        {
+            emergency_color = Color.red;
+        }
+
+        for (int i = TOTAL_WIDTH - 1; i >= 0; --i)
+        {
+            float horizontal_delay = (TOTAL_WIDTH - i) * .01f;
+
+            if (second_count_ == 0)
+            {
+                horizontal_delay = 0;
+            }
+
+            for (int j = 0; j < FONT_H; ++j)
+            {
+                if (dots_data_old_[i, j] == 0 && dots_data_new_[i, j] == 1)
+                {
+                    dots_[i, j].transform.DOScaleX(.9f, .33f).SetDelay(horizontal_delay);
+                    dots_[i, j].transform.DOScaleY(.9f, .33f).SetDelay(horizontal_delay);
+                }
+                else if (dots_data_old_[i, j] == 1 && dots_data_new_[i, j] == 0)
+                {
+                    dots_[i, j].transform.DOScaleX(.1f, .33f).SetDelay(horizontal_delay);
+                    dots_[i, j].transform.DOScaleY(.1f, .33f).SetDelay(horizontal_delay);
+                }
+                else
+                {
+                    Vector3 orig_scale = Vector3.zero;
+                    Vector3 blip_scale = Vector3.zero;
+
+                    if (dots_data_new_[i, j] == 0)
+                    {
+                        orig_scale = new Vector3(.1f, .1f, 2f);
+                        blip_scale = new Vector3(.4f, .4f, 2f);
+                    }
+                    else if (dots_data_new_[i, j] == 1)
+                    {
+                        orig_scale = new Vector3(.9f, .9f, 2f);
+                        blip_scale = new Vector3(1.2f, 1.2f, 2f);
+                    }
+
+                    Sequence seqx = DOTween.Sequence();
+                    Sequence seqy = DOTween.Sequence();
+
+                    seqx.Append(dots_[i, j].transform.DOScaleX(blip_scale.x, .1f))
+                        .Append(dots_[i, j].transform.DOScaleX(orig_scale.x, .23f))
+                        .PrependInterval(horizontal_delay)
+                        .Play();
+
+                    seqy.Append(dots_[i, j].transform.DOScaleY(blip_scale.y, .1f))
+                        .Append(dots_[i, j].transform.DOScaleY(orig_scale.y, .23f))
+                        .PrependInterval(horizontal_delay)
+                        .Play();
+                }
+                Sequence color = DOTween.Sequence();
+                color.Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(emergency_color, .1f))
+                     .Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(Color.white, .3f))
+                     .PrependInterval(horizontal_delay).Play();
             }
         }
     }
