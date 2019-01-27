@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using DG.Tweening;
+using HoloPlay;
 
 public class ClockAnimator : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class ClockAnimator : MonoBehaviour
     private int[,] dots_data_old_ = new int[TOTAL_WIDTH, FONT_H];
     private DateTime last_time_;
     private int second_count_ = 0;
+    private bool clock_mode_ = true;
 
     private const float
         hoursToDegrees_ = 360f / 12f,
@@ -61,18 +63,51 @@ public class ClockAnimator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        DateTime time = DateTime.Now;      
-        if ( time.Second != last_time_.Second ) // WAIT SO DATETIME SMALLEST UNIT IS NOT SECOND!
+        handle_input();
+        
+        if (clock_mode_)
         {
-            last_time_ = time;
-            TimeSpan diff = (next_deadline_ - time);
+            DateTime time = DateTime.Now;
+            if (time.Second != last_time_.Second) // WAIT SO DATETIME SMALLEST UNIT IS NOT SECOND!
+            {
+                last_time_ = time;
+                TimeSpan diff = (next_deadline_ - time);
 
-            if (diff.TotalMilliseconds < 0) return; // If deadline arrived, stop doing anything
+                if (diff.TotalMilliseconds < 0) return; // If deadline arrived, stop doing anything
 
-            string_to_dots_display(diff.Hours.ToString("D2") + ":"+ diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
-            clock_display_animate(diff);
-            dots_data_new_to_old();
-            second_count_ += 1;
+                Color emergency_color = Color.white;
+                if (diff.Hours == 1)
+                {
+                    emergency_color = Color.yellow;
+                }
+                else if (diff.Hours == 0)
+                {
+                    emergency_color = Color.red;
+                }
+
+                string_to_dots_display(diff.Hours.ToString("D2") + ":" + diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
+                clock_display_animate(emergency_color);
+                dots_data_new_to_old();
+                second_count_ += 1;
+            }
+        }
+        else
+        {
+            
+        }
+    }
+
+    void handle_input()
+    {
+        if (Buttons.GetButtonDown(ButtonType.ONE))
+        {
+            clock_mode_ = !clock_mode_;
+            if (!clock_mode_)
+            { // Transition effect...? 
+                string_to_dots_display("        ");
+                clock_display_animate(Color.white);
+                dots_data_new_to_old();
+            }
         }
     }
 
@@ -88,18 +123,8 @@ public class ClockAnimator : MonoBehaviour
         }
     }
 
-    void clock_display_animate(TimeSpan diff)
+    void clock_display_animate(Color color)
     {
-        Color emergency_color = Color.white;
-        if (diff.Hours == 1)
-        {
-            emergency_color = Color.yellow;
-        }
-        else if (diff.Hours == 0)
-        {
-            emergency_color = Color.red;
-        }
-
         for (int i = TOTAL_WIDTH - 1; i >= 0; --i)
         {
             float horizontal_delay = (TOTAL_WIDTH - i) * .01f;
@@ -150,10 +175,14 @@ public class ClockAnimator : MonoBehaviour
                         .PrependInterval(horizontal_delay)
                         .Play();
                 }
-                Sequence color = DOTween.Sequence();
-                color.Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(emergency_color, .1f))
-                     .Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(Color.white, .3f))
-                     .PrependInterval(horizontal_delay).Play();
+
+                if (color != Color.white)
+                {
+                    Sequence seq_color = DOTween.Sequence();
+                    seq_color.Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(color, .1f))
+                             .Append(dots_[i, j].GetComponent<Renderer>().material.DOColor(Color.white, .3f))
+                             .PrependInterval(horizontal_delay).Play();
+                }
             }
         }
     }
@@ -284,6 +313,17 @@ public class ClockAnimator : MonoBehaviour
                     {0,1,0},
                     {0,0,0},
                     {0,1,0},
+                    {0,0,0},
+                };
+            }
+            else if (str[i] == ' ')
+            {
+                buffer = new int[,]
+                {
+                    {0,0,0},
+                    {0,0,0},
+                    {0,0,0},
+                    {0,0,0},
                     {0,0,0},
                 };
             }
