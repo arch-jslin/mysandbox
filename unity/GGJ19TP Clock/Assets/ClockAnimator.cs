@@ -43,6 +43,7 @@ public class ClockAnimator : MonoBehaviour
             for (int j = 0; j < FONT_H; ++j)
             {
                 dots_[i, j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                dots_[i, j].transform.SetParent(transform);
                 dots_[i, j].transform.position = BOTTOM_LEFT + (new Vector3(i * CUBE_SIZE, j * CUBE_SIZE, 0));
 
                 if ( dots_data_new_[i, j] == 1 ) {
