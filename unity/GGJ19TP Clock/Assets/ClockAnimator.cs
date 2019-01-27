@@ -5,7 +5,7 @@ using HoloPlay;
 
 public class ClockAnimator : MonoBehaviour
 {
-    public DateTime next_deadline_ = new DateTime(2019, 1, 27, 15, 0, 0); 
+    public DateTime next_deadline_ = new DateTime(2019, 1, 27, 15, 00, 0); 
 
     private const int FONT_W = 3; // this cannot be changed, because voxel font design is by hand
     private const int SPACING = 1;
@@ -21,6 +21,9 @@ public class ClockAnimator : MonoBehaviour
     private DateTime last_time_;
     private int second_count_ = 0;
     private bool clock_mode_ = true;
+    private string lottery_string_ = "ACDFGHIK";
+    private int[] lottery_killorder_ = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    private int lottery_taken_ = 0;
 
     private const float
         hoursToDegrees_ = 360f / 12f,
@@ -32,11 +35,18 @@ public class ClockAnimator : MonoBehaviour
     {
         DOTween.Init();
         DOTween.SetTweensCapacity(1280, 640);
-
+        
         DateTime time = DateTime.Now;
         TimeSpan diff = next_deadline_ - time;
         last_time_ = time;
-        string_to_dots_display(diff.Hours.ToString("D2") + ":" + diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
+        if (diff.TotalMilliseconds >= 0)
+        {
+            string_to_dots_display(diff.Hours.ToString("D2") + ":" + diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
+        }
+        else
+        {
+            string_to_dots_display("00:00:00");
+        }
 
         dots_ = new GameObject[TOTAL_WIDTH, FONT_H];
 
@@ -88,12 +98,8 @@ public class ClockAnimator : MonoBehaviour
                 string_to_dots_display(diff.Hours.ToString("D2") + ":" + diff.Minutes.ToString("D2") + ":" + diff.Seconds.ToString("D2"));
                 clock_display_animate(emergency_color);
                 dots_data_new_to_old();
-                second_count_ += 1;
+                //second_count_ += 1;
             }
-        }
-        else
-        {
-            
         }
     }
 
@@ -104,9 +110,43 @@ public class ClockAnimator : MonoBehaviour
             clock_mode_ = !clock_mode_;
             if (!clock_mode_)
             { // Transition effect...? 
-                string_to_dots_display("        ");
+                lottery_string_ = "ACDFGHIK";
+                lottery_taken_ = 0;
+                //shuffle
+                for( int i = 0; i < lottery_killorder_.Length; ++i)
+                {
+                    int j = UnityEngine.Random.Range(i, lottery_killorder_.Length);
+                    int tmp = lottery_killorder_[i];
+                    lottery_killorder_[i] = lottery_killorder_[j];
+                    lottery_killorder_[j] = tmp;
+                }
+
+                string_to_dots_display(lottery_string_);
                 clock_display_animate(Color.white);
                 dots_data_new_to_old();
+            }
+            else if( (next_deadline_ - DateTime.Now).TotalMilliseconds <= 0 )
+            {
+                string_to_dots_display("00:00:00");
+                clock_display_animate(Color.white);
+                dots_data_new_to_old();
+            }
+        }
+
+        if (Buttons.GetButtonDown(ButtonType.TWO))
+        {
+            if(!clock_mode_)
+            {
+                if (lottery_taken_ < lottery_killorder_.Length)
+                {
+                    lottery_string_ = lottery_string_.Remove(lottery_killorder_[lottery_taken_], 1);
+                    lottery_string_ = lottery_string_.Insert(lottery_killorder_[lottery_taken_], " ");
+                    lottery_taken_ += 1;
+
+                    string_to_dots_display(lottery_string_);
+                    clock_display_animate(Color.white);
+                    dots_data_new_to_old();
+                }
             }
         }
     }
@@ -129,10 +169,10 @@ public class ClockAnimator : MonoBehaviour
         {
             float horizontal_delay = (TOTAL_WIDTH - i) * .01f;
 
-            if (second_count_ == 0)
-            {
-                horizontal_delay = 0;
-            }
+            //if (second_count_ == 0)
+            //{
+            //    horizontal_delay = 0;
+            //}
 
             for (int j = 0; j < FONT_H; ++j)
             {
@@ -325,6 +365,94 @@ public class ClockAnimator : MonoBehaviour
                     {0,0,0},
                     {0,0,0},
                     {0,0,0},
+                };
+            }
+            else if (str[i] == 'A')
+            {
+                buffer = new int[,]
+                {
+                    {0,1,0},
+                    {1,0,1},
+                    {1,1,1},
+                    {1,0,1},
+                    {1,0,1},
+                };
+            }
+            else if (str[i] == 'C')
+            {
+                buffer = new int[,]
+                {
+                    {1,1,1},
+                    {1,0,0},
+                    {1,0,0},
+                    {1,0,0},
+                    {1,1,1},
+                };
+            }
+            else if (str[i] == 'D')
+            {
+                buffer = new int[,]
+                {
+                    {1,1,0},
+                    {1,0,1},
+                    {1,0,1},
+                    {1,0,1},
+                    {1,1,0},
+                };
+            }
+            else if (str[i] == 'F')
+            {
+                buffer = new int[,]
+                {
+                    {1,1,1},
+                    {1,0,0},
+                    {1,1,1},
+                    {1,0,0},
+                    {1,0,0},
+                };
+            }
+            else if (str[i] == 'G')
+            {
+                buffer = new int[,]
+                {
+                    {0,1,1},
+                    {1,0,0},
+                    {1,0,1},
+                    {1,0,1},
+                    {1,1,0},
+                };
+            }
+            else if (str[i] == 'H')
+            {
+                buffer = new int[,]
+                {
+                    {1,0,1},
+                    {1,0,1},
+                    {1,1,1},
+                    {1,0,1},
+                    {1,0,1},
+                };
+            }
+            else if (str[i] == 'I')
+            {
+                buffer = new int[,]
+                {
+                    {1,1,1},
+                    {0,1,0},
+                    {0,1,0},
+                    {0,1,0},
+                    {1,1,1},
+                };
+            }
+            else if( str[i] == 'K')
+            {
+                buffer = new int[,]
+                {
+                    {1,0,1},
+                    {1,0,1},
+                    {1,1,0},
+                    {1,0,1},
+                    {1,0,1},
                 };
             }
             else // default is ? 
