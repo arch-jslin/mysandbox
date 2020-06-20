@@ -4,7 +4,9 @@ using DG.Tweening;
 
 public class ClockAnimator : MonoBehaviour
 {
-    public DateTime next_deadline_ = new DateTime(2020, 1, 31, 22, 00, 0); 
+    public DateTime next_deadline_ = new DateTime(2020, 2, 2, 16, 00, 0); 
+    public GameObject camera_anchor_;
+    public Material mat_ref_;
 
     private const int FONT_W = 3; // this cannot be changed, because voxel font design is by hand
     private const int SPACING = 1;
@@ -21,12 +23,12 @@ public class ClockAnimator : MonoBehaviour
     private DateTime last_time_;
     private int second_count_ = 0;
     private bool clock_mode_ = true;
-    private string orig_lottery_string_ = "ABCDEFGHIJ";
+    private string orig_lottery_string_ = "ABCEFHI";
     private string lottery_string_ = "";
     private int[] lottery_killorder_;
     private int lottery_taken_ = 0;
     private int space_prefill_ = 0;
-
+    
     private const float
         hoursToDegrees_ = 360f / 12f,
         minutesToDegrees_ = 360f / 60f,
@@ -61,6 +63,7 @@ public class ClockAnimator : MonoBehaviour
                 dots_[i, j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 dots_[i, j].transform.SetParent(transform);
                 dots_[i, j].transform.position = BOTTOM_LEFT + (new Vector3(i * CUBE_SIZE, j * CUBE_SIZE, 0));
+                dots_[i, j].GetComponent<Renderer>().material = mat_ref_;
 
                 if ( dots_data_new_[i, j] == 1 ) {
                     dots_[i, j].transform.localScale = new Vector3(DOT_SIZE, DOT_SIZE, 2f);
@@ -171,6 +174,19 @@ public class ClockAnimator : MonoBehaviour
                 }
             }
         }
+        
+        // Mouse-induced camera rotation
+        if( camera_anchor_ )
+        {
+            int center_x = Screen.width / 2;
+            int center_y = Screen.height / 2;
+            float delta_x  = center_x - Input.mousePosition.x;
+            float delta_y  = center_y - Input.mousePosition.y;
+            float y_tilt = (delta_x / center_x) * 10;    // difference in x influences rotation on y axis (horizontal rotation)
+            float x_tilt = (delta_y / center_y) * 5;     // difference in y influences rotation on x axis (vertical rotation) 
+            Quaternion target_rot = Quaternion.Euler((x_tilt > 5f ? 5f : x_tilt), (y_tilt > 10f ? 10f : y_tilt), 0f);
+            camera_anchor_.transform.rotation = target_rot;
+        }    
     }
 
     // overriding old data with new data (if the data indeed is different), for the next cycle's update to compare them
