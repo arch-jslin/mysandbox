@@ -25,28 +25,28 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O3" />
-					<Add directory="D:/libs/cpp/SDLw64/include" />
+					<Add directory="D:/libs/cpp/SDL2-2.0.12/x86_64-w64-mingw32/include/SDL2" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add directory="D:/libs/cpp/SDLw64/lib" />
+					<Add directory="D:/libs/cpp/SDL2-2.0.12/x86_64-w64-mingw32/lib" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add directory="D:/libs/cpp/SDL/include" />
+			<Add directory="D:/libs/cpp/SDL2-2.0.12/i686-w64-mingw32/include/SDL2" />
 		</Compiler>
 		<Linker>
 			<Add library="mingw32" />
-			<Add library="SDLmain" />
-			<Add library="SDL" />
+			<Add library="SDL2main" />
+			<Add library="SDL2" />
 			<Add library="user32" />
 			<Add library="gdi32" />
 			<Add library="winmm" />
 			<Add library="dxguid" />
 			<Add library="opengl32" />
-			<Add directory="D:/libs/cpp/SDL/lib" />
+			<Add directory="D:/libs/cpp/SDL2-2.0.12/i686-w64-mingw32/lib" />
 		</Linker>
 		<Unit filename="cb.bmp">
 			<Option target="Release" />
