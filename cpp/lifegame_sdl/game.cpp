@@ -1,5 +1,4 @@
-
-
+#include <cstdio>
 #include <cstdlib>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -48,7 +47,7 @@ void setupARBAPI()
 Game::Game(int const& argc, char* argv[])
   :RENDER_OPT( argc > 1 ? atoi(argv[1]) : 2 ),
    csize(2), model_w(120), model_h(90), WIDTH(csize * model_w), HEIGHT(csize * model_h),
-   t(clock()), iter(1), vboID1(0), pboID1(0), texID1(0), count(0), vertices(0), bitmap(0), screen(0)
+   t(clock()), iter(1), vboID1(0), pboID1(0), texID1(0), count(0), vertices(0), bitmap(0), screen(0), glcontext(0)
 {
     srand(time(0)); // randomize at game initialization
     if ( argc > 2 ) csize = static_cast<size_t>(atoi(argv[2]));
@@ -98,7 +97,7 @@ Game::Game(int const& argc, char* argv[])
 
 Game::~Game()
 {
-    SDL_FreeSurface(screen);
+    SDL_GL_DeleteContext(glcontext);
     SDL_Quit();
     for( size_t y = 0; y < model_h + 2; ++y ) {
         delete [] grids[0][y];
@@ -126,7 +125,7 @@ bool Game::run()
             return false;
         }
         else if (etype == SDL_KEYDOWN) {
-            SDLKey sym = e.key.keysym.sym;
+            SDL_Keycode sym = e.key.keysym.sym;
             if (sym == SDLK_q || sym == SDLK_ESCAPE) {
                 return false;
             }
@@ -155,7 +154,7 @@ void Game::render(std::tr1::function<void()> render_)
     glLoadIdentity();
     glPointSize(csize-1);
     render_();
-    SDL_GL_SwapBuffers();
+    SDL_GL_SwapWindow(screen);
 }
 
 //-----------------------------------------------------
@@ -164,7 +163,13 @@ void Game::setupSDL()
 {
     SDL_Init(SDL_INIT_EVERYTHING);
 
-    SDL_WM_SetCaption("SDL + OpenGL Game of Life", "SDL");
+    screen = SDL_CreateWindow("SDL2 + OpenGL Game of Life",
+                              SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED,
+                              WIDTH, HEIGHT,
+                              SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+    glcontext = SDL_GL_CreateContext(screen);
+
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE,        8);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,      8);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,       8);
@@ -180,8 +185,6 @@ void Game::setupSDL()
 
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,  1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,  2);
-
-    screen = SDL_SetVideoMode(WIDTH, HEIGHT, 32, SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL);
 }
 
 void Game::setupGL()

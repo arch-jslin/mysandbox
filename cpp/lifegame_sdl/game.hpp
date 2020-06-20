@@ -1,10 +1,11 @@
 #ifndef _LIFEGAME_GAME_
 #define _LIFEGAME_GAME_
 
+#include "SDL_video.h"
 #include <tr1/functional>
 #include <ctime>
 
-struct SDL_Surface;
+struct SDL_Window;
 
 struct Game {
     Game(int const& argc, char* argv[]);
@@ -32,7 +33,9 @@ struct Game {
     SVertex* vertices;      //these will be allocated, have to free them in d'tor
     unsigned char* bitmap;  //these will be allocated, have to free them in d'tor
 
-    SDL_Surface* screen;
+    //SDL_Surface* screen;
+    SDL_Window* screen;
+    SDL_GLContext glcontext;
 
     void render1();  //using GL_POINTS
     void render2();  //using GL's VERTEX ARRAY
