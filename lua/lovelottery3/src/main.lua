@@ -1,5 +1,5 @@
 
-local names_ = { 'A', 'B', 'E', 'F', 'G', 'H' }
+local names_ = { 'C', 'D', 'E' }
 
 local font_
 
@@ -15,6 +15,7 @@ local fontsize_big_ = 96
 
 local v_deg_ = 0
 local a_deg_ = 0
+local flag_  = 0
 
 -- big resources
 local pin_img_
@@ -33,6 +34,8 @@ function love.update(dt)
   v_deg_ = v_deg_ + a_deg_ 
   if v_deg_ > 2000 then 
     v_deg_ = 2000 
+  elseif v_deg_ > 0 and v_deg_ < 180 and flag_ == 0 then
+    a_deg_ = -1
   elseif v_deg_ < 0 then
     v_deg_ = 0
     --[[if x_last_ < 800 then
@@ -121,8 +124,6 @@ function love.draw()
   draw_pin()
   draw_clockwise()
 end
-
-local flag_ = 0
 
 function love.mousepressed( x, y, button )
   if button == 'l' then
